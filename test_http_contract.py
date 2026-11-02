@@ -302,7 +302,7 @@ class HttpContractTests(unittest.TestCase):
                         'id="exportAllDashboardsBtn"',
                         'id="importAllDashboardsBtn"',
                         'id="fpsPanel"',
-                        'id="fpsPanelCollapseBtn"',
+                        'id="fpsPanelCompactBtn"',
                         'id="addFpsCardBtn"',
                         'id="fpsProcessSelect"',
                         'id="fpsAutoProcess"',
@@ -312,6 +312,11 @@ class HttpContractTests(unittest.TestCase):
                         'id="mobileQrImage"',
                     ):
                         self.assertIn(control, response.get_data(as_text=True))
+                    html = response.get_data(as_text=True)
+                    self.assertIn(".fps-panel-hidden { display: none !important; }", html)
+                    self.assertIn(".dashboard-compact .fps-panel-heading {\npadding-right: 64px;", html)
+                    self.assertIn('id="fpsStatus"', html)
+                    self.assertNotIn('id="fpsPanelCollapseBtn"', html)
                     self.assertIn('createFpsCardMetric("fpsCardCurrent"', response.get_data(as_text=True))
 
     def test_mobile_dashboard_exposes_mobile_controls_and_minimum_refresh_interval(self):
