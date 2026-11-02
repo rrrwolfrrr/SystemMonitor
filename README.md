@@ -10,12 +10,34 @@ per-process FPS monitoring through PresentMon and Windows ETW.
 
 <p align="center">
   <a href="https://www.donationalerts.com/r/monsterhairy" target="_blank" rel="noopener noreferrer">
-    <img src="assets/coffee-donation.gif" width="140" alt="Animated steaming coffee cup - support SystemMonitor">
+    <img src="assets/coffee-donation.gif" width="140" alt="Rotating 3D-style steaming coffee cup - support SystemMonitor">
   </a>
   <br>
   <a href="https://www.donationalerts.com/r/monsterhairy"><strong>Buy the author a coffee</strong></a>
   <br>
   Support the continued development of SystemMonitor.
+</p>
+
+### Desktop Dashboard / Десктопный Dashboard
+
+<p align="center">
+  <a href="assets/screenshots/desktop-dashboard-overview.png"><img src="assets/screenshots/desktop-dashboard-overview.png" width="32%" alt="SystemMonitor desktop Dashboard overview"></a>
+  <a href="assets/screenshots/desktop-dashboard-temperature-alerts.png"><img src="assets/screenshots/desktop-dashboard-temperature-alerts.png" width="32%" alt="Desktop Dashboard temperature threshold settings"></a>
+  <a href="assets/screenshots/desktop-dashboard-custom-card.png"><img src="assets/screenshots/desktop-dashboard-custom-card.png" width="32%" alt="Desktop Dashboard custom card sensor selection"></a>
+</p>
+<p align="center">
+  <sub>Dashboard overview / Общий вид · Temperature alerts / Пороги температур · Custom card sensor selection / Выбор датчиков карточки</sub>
+</p>
+
+### Mobile Dashboard / Мобильный Dashboard
+
+<p align="center">
+  <a href="assets/screenshots/mobile-dashboard-blue-theme.png"><img src="assets/screenshots/mobile-dashboard-blue-theme.png" width="32%" alt="SystemMonitor mobile Dashboard in blue theme"></a>
+  <a href="assets/screenshots/mobile-dashboard-dark-theme.png"><img src="assets/screenshots/mobile-dashboard-dark-theme.png" width="32%" alt="SystemMonitor mobile Dashboard in dark theme"></a>
+  <a href="assets/screenshots/mobile-dashboard-settings.png"><img src="assets/screenshots/mobile-dashboard-settings.png" width="32%" alt="SystemMonitor mobile Dashboard settings"></a>
+</p>
+<p align="center">
+  <sub>Blue theme / Синяя тема · Dark theme / Тёмная тема · Settings / Настройки</sub>
 </p>
 
 ### Requirements
@@ -49,7 +71,7 @@ SystemMonitor — настольное приложение для Windows, пр
 
 <p align="center">
   <a href="https://www.donationalerts.com/r/monsterhairy" target="_blank" rel="noopener noreferrer">
-    <img src="assets/coffee-donation.gif" width="140" alt="Анимированная чашка кофе с паром — поддержать SystemMonitor">
+    <img src="assets/coffee-donation.gif" width="140" alt="Вращающаяся объёмная чашка кофе с паром — поддержать SystemMonitor">
   </a>
   <br>
   <a href="https://www.donationalerts.com/r/monsterhairy"><strong>Угостить автора кофе</strong></a>
