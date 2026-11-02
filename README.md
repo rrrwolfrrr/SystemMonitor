@@ -15,7 +15,7 @@ per-process FPS monitoring through PresentMon and Windows ETW.
   <br>
   <a href="https://www.donationalerts.com/r/monsterhairy"><strong>Buy the author a coffee</strong></a>
   <br>
-  Support the continued development of SystemMonitor.
+  Support the continued development of SystemMonitor ❤️
 </p>
 
 ### Desktop Dashboard / Десктопный Dashboard
