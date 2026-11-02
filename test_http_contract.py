@@ -315,6 +315,8 @@ class HttpContractTests(unittest.TestCase):
                     html = response.get_data(as_text=True)
                     self.assertIn(".fps-panel-hidden { display: none !important; }", html)
                     self.assertIn(".dashboard-compact .fps-panel-heading {\npadding-right: 64px;", html)
+                    self.assertIn(".dashboard-compact .dashboard-tabs {\npadding-right: 72px;", html)
+                    self.assertIn(".dashboard-compact .source-status {\nflex: 1 1 auto;\nmin-width: 0;", html)
                     self.assertIn('id="fpsStatus"', html)
                     self.assertNotIn('id="fpsPanelCollapseBtn"', html)
                     self.assertIn('createFpsCardMetric("fpsCardCurrent"', response.get_data(as_text=True))
