@@ -8,6 +8,9 @@ SystemMonitor is a Windows desktop application for monitoring PC hardware and
 viewing sensor data in desktop and mobile dashboards. It also provides optional
 per-process FPS monitoring through PresentMon and Windows ETW.
 
+You can also view this computer's sensor data from other computers or mobile
+devices using a web browser, regardless of the device's operating system.
+
 <p align="center">
   <a href="https://www.donationalerts.com/r/monsterhairy" target="_blank" rel="noopener noreferrer">
     <img src="assets/coffee-donation.gif" width="140" alt="Animated steaming coffee cup - support SystemMonitor">
@@ -15,7 +18,7 @@ per-process FPS monitoring through PresentMon and Windows ETW.
   <br>
   <a href="https://www.donationalerts.com/r/monsterhairy"><strong>Buy the author a coffee</strong></a>
   <br>
-  Support the continued development of SystemMonitor.
+  Support the continued development of SystemMonitor ❤️
 </p>
 
 ### Desktop Dashboard / Десктопный Dashboard
