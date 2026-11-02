@@ -94,6 +94,14 @@ body.dashboard-compact .page-title { display: none !important; }
 flex: 1;
 margin: 6px;
 }
+.dashboard-compact .fps-panel-heading {
+padding-right: 64px;
+}
+.dashboard-compact .fps-panel-status {
+min-width: 0;
+overflow-wrap: anywhere;
+text-align: right;
+}
 .dashboard-compact-toggle {
 position: absolute;
 top: 4px;
@@ -105,6 +113,18 @@ padding: 0;
 line-height: 1;
 font-size: 14px;
 }
+.fps-panel-toggle {
+position: absolute;
+top: 4px;
+right: 36px;
+z-index: 100;
+width: 26px;
+height: 26px;
+padding: 0;
+line-height: 1;
+font-size: 14px;
+}
+.fps-panel-hidden { display: none !important; }
 .titlebar {
 display: flex;
 flex-wrap: wrap;
@@ -196,8 +216,6 @@ background: var(--card-bg);
 }
 .fps-panel-heading { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; justify-content: space-between; }
 .fps-panel-heading h2 { margin: 0; font-size: 16px; }
-.fps-panel-heading-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.fps-panel-collapse { white-space: nowrap; }
 .fps-panel-status { color: var(--muted); font-size: 13px; }
 .fps-metrics { display: grid; grid-template-columns: repeat(4, minmax(100px, 1fr)); gap: 8px; margin: 10px 0; }
 .fps-metric { min-width: 0; padding: 8px; border: 1px solid var(--line); }
@@ -206,11 +224,6 @@ background: var(--card-bg);
 .fps-metric span { color: var(--muted); font-size: 12px; }
 .fps-controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .fps-controls select { min-width: 220px; max-width: 100%; }
-.fps-panel-compact .fps-metrics { display: flex; margin: 8px 0 0; }
-.fps-panel-compact .fps-metric { padding: 4px 8px; }
-.fps-panel-compact .fps-metric:not(:first-child),
-.fps-panel-compact .fps-controls,
-.fps-panel-compact #fpsTarget { display: none; }
 .fps-card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 .fps-card-metric { min-width: 0; padding: 6px; border: 1px solid var(--line); }
 .fps-card-metric strong, .fps-card-metric span { display: block; }
@@ -255,6 +268,7 @@ background: #0c0c0c;
 }
 body.terminal-mode #appTitle,
 body.terminal-mode #compactDashboardBtn,
+body.terminal-mode #fpsPanelCompactBtn,
 body.terminal-mode #fullscreenBtn,
 body.terminal-mode #addCustomBtn,
 body.terminal-mode #addFpsCardBtn,
@@ -979,6 +993,7 @@ body { padding: 8px; }
 <h1 class="page-title" id="appTitle">📊 Системный монитор</h1>
 <div class="window">
 <button id="compactDashboardBtn" class="dashboard-compact-toggle" type="button" aria-label="Свернуть заголовок Dashboard" aria-pressed="false" title="Компактный вид">▴</button>
+<button id="fpsPanelCompactBtn" class="fps-panel-toggle" type="button" aria-label="Свернуть панель FPS" aria-controls="fpsPanel" aria-expanded="true" title="Свернуть панель FPS">▾</button>
 <div class="titlebar">
 <div class="toolbar">
 <label for="intervalSelect">Обновление:</label>
@@ -1044,10 +1059,7 @@ body { padding: 8px; }
 <section class="fps-panel" id="fpsPanel" aria-label="Мониторинг FPS">
 <div class="fps-panel-heading">
 <h2>🎮 FPS игры или приложения</h2>
-<div class="fps-panel-heading-actions">
 <span class="fps-panel-status" id="fpsStatus" role="status" aria-live="polite">Ожидание активного приложения…</span>
-<button class="fps-panel-collapse" id="fpsPanelCollapseBtn" type="button" aria-controls="fpsPanelBody" aria-expanded="true">Свернуть</button>
-</div>
 </div>
 <div id="fpsPanelBody">
 <div class="fps-metrics">
@@ -2479,12 +2491,14 @@ renderFpsCard(fps);
 }
 function setFpsPanelCollapsed(collapsed, persist) {
 var panel = document.getElementById("fpsPanel");
-var button = document.getElementById("fpsPanelCollapseBtn");
-if (!panel || !button) return;
+var quickButton = document.getElementById("fpsPanelCompactBtn");
+if (!panel || !quickButton) return;
 state.fpsPanelCollapsed = !!collapsed;
-panel.classList.toggle("fps-panel-compact", state.fpsPanelCollapsed);
-button.textContent = state.fpsPanelCollapsed ? "Развернуть" : "Свернуть";
-button.setAttribute("aria-expanded", state.fpsPanelCollapsed ? "false" : "true");
+panel.classList.toggle("fps-panel-hidden", state.fpsPanelCollapsed);
+quickButton.textContent = state.fpsPanelCollapsed ? "▴" : "▾";
+quickButton.title = state.fpsPanelCollapsed ? "Показать панель FPS" : "Свернуть панель FPS";
+quickButton.setAttribute("aria-label", state.fpsPanelCollapsed ? "Показать панель FPS" : "Свернуть панель FPS");
+quickButton.setAttribute("aria-expanded", state.fpsPanelCollapsed ? "false" : "true");
 if (persist) saveState();
 }
 setFpsPanelCollapsed(state.fpsPanelCollapsed, false);
@@ -3261,7 +3275,7 @@ renderTerminalSensorList();
 renderTerminalOutput(latestData);
 });
 document.getElementById("refreshBtn").addEventListener("click", refresh);
-document.getElementById("fpsPanelCollapseBtn").addEventListener("click", function () { setFpsPanelCollapsed(!state.fpsPanelCollapsed, true); });
+document.getElementById("fpsPanelCompactBtn").addEventListener("click", function () { setFpsPanelCollapsed(!state.fpsPanelCollapsed, true); });
 document.getElementById("fpsRefreshProcesses").addEventListener("click", refreshFpsProcesses);
 document.getElementById("fpsSelectProcess").addEventListener("click", function () {
 var pid = Number(document.getElementById("fpsProcessSelect").value);

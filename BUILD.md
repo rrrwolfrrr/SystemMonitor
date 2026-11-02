@@ -182,16 +182,22 @@ build.bat
 ```
 
 Этот скрипт:
-1. Проверяет и устанавливает зависимости
+1. Выбирает Python из локального `.venv`/`venv` (если он есть), затем проверяет Python и PyInstaller
 2. Очищает старые файлы сборки
 3. Собирает .exe через PyInstaller
-4. (Опционально) Собирает установщик через Inno Setup
+4. Проверяет комплектность дистрибутива и совпадение встроенного Dashboard с текущим `templates\dashboard.html`
+
+Скрипт собирает исходники из своей папки и создаёт
+`dist\SystemMonitor\SystemMonitor.exe`. Он **не устанавливает и не обновляет**
+уже установленное приложение и не пересобирает Setup-файл. Для проверки новой
+версии запускайте EXE из `dist\SystemMonitor`; для распространения через Setup
+отдельно соберите установщик по инструкции ниже.
 
 ### Вариант B: Ручная сборка
 
 ```cmd
 # Установить зависимости
-pip install pyinstaller flask flask-cors psutil wmi pywin32 websockets pystray Pillow python-dotenv
+python -m pip install -r requirements.txt pyinstaller
 
 # Очистить старые файлы
 rmdir /s /q build 2>nul
