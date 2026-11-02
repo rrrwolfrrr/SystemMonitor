@@ -20,12 +20,12 @@ printed in the upstream README and source headers. The complete GPL text is in
 exception. PawnPP is licensed under MPL-2.0; its unmodified license is in
 `source/PawnPP/LICENSE`.
 
-The official [PawnIO.Setup release repository](https://github.com/namazso/PawnIO.Setup)
-contains only a README and publishes no buildable installer source or license
-grant for redistribution of the setup executable. Therefore this bundle
-provides the driver source and notices, but does not establish permission to
-redistribute the installer wrapper; `PawnIO_setup.exe` remains excluded from
-Git until that permission is confirmed.
+The [PawnIO.Setup release repository](https://github.com/namazso/PawnIO.Setup)
+contains only a README and does not publish buildable installer source. The
+author has granted permission to include the unchanged setup executable in this
+private SystemMonitor repository. This records permission for this private
+repository only; it does not assert permission for public redistribution or
+distribution with separate application releases.
 
 Upstream references:
 

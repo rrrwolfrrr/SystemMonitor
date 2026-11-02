@@ -94,4 +94,4 @@ env/
 /LhmVisitorAdapter.dll
 /*.exe
 !/PresentMon-2.6.0-x64.exe
-/PawnIO_setup.exe
+!/PawnIO_setup.exe
