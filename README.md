@@ -18,6 +18,28 @@ per-process FPS monitoring through PresentMon and Windows ETW.
   Support the continued development of SystemMonitor.
 </p>
 
+### Desktop Dashboard / Десктопный Dashboard
+
+<p align="center">
+  <a href="assets/screenshots/desktop-dashboard-overview.png"><img src="assets/screenshots/desktop-dashboard-overview.png" width="32%" alt="SystemMonitor desktop Dashboard overview"></a>
+  <a href="assets/screenshots/desktop-dashboard-temperature-alerts.png"><img src="assets/screenshots/desktop-dashboard-temperature-alerts.png" width="32%" alt="Desktop Dashboard temperature threshold settings"></a>
+  <a href="assets/screenshots/desktop-dashboard-custom-card.png"><img src="assets/screenshots/desktop-dashboard-custom-card.png" width="32%" alt="Desktop Dashboard custom card sensor selection"></a>
+</p>
+<p align="center">
+  <sub>Dashboard overview / Общий вид · Temperature alerts / Пороги температур · Custom card sensor selection / Выбор датчиков карточки</sub>
+</p>
+
+### Mobile Dashboard / Мобильный Dashboard
+
+<p align="center">
+  <a href="assets/screenshots/mobile-dashboard-blue-theme.png"><img src="assets/screenshots/mobile-dashboard-blue-theme.png" width="32%" alt="SystemMonitor mobile Dashboard in blue theme"></a>
+  <a href="assets/screenshots/mobile-dashboard-dark-theme.png"><img src="assets/screenshots/mobile-dashboard-dark-theme.png" width="32%" alt="SystemMonitor mobile Dashboard in dark theme"></a>
+  <a href="assets/screenshots/mobile-dashboard-settings.png"><img src="assets/screenshots/mobile-dashboard-settings.png" width="32%" alt="SystemMonitor mobile Dashboard settings"></a>
+</p>
+<p align="center">
+  <sub>Blue theme / Синяя тема · Dark theme / Тёмная тема · Settings / Настройки</sub>
+</p>
+
 ### Requirements
 
 - Windows 10/11, 64-bit
