@@ -29,6 +29,8 @@ phone, or tablet.
   drivers. The exact sensors vary by computer.
 - Show data in desktop and mobile dashboards, with configurable cards,
   layouts, themes, and sensor selections.
+- Show available sensors in a separate card for each detected GPU; custom
+  cards can combine sensors from different adapters.
 - Display temperature history and configure CPU/GPU warning thresholds.
 - Show battery information on supported laptops and GPU memory information
   when Windows and the graphics driver provide it.
@@ -253,6 +255,9 @@ SystemMonitor — программа для Windows, которая помога
   конкретного компьютера.
 - Отображает показатели в настольной и мобильной панелях. Можно настраивать
   карточки, их расположение, темы и список датчиков.
+- Показывает доступные датчики каждой обнаруженной видеокарты в отдельной
+  карточке; в пользовательской карточке можно объединять датчики разных
+  адаптеров.
 - Позволяет просматривать историю температур и задавать пороги
   предупреждений для CPU и GPU.
 - Может показывать сведения о батарее на поддерживаемых ноутбуках и

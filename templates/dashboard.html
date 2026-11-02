@@ -1793,7 +1793,7 @@ if (parsed.cards && typeof parsed.cards === "object") {
 CARD_TYPES.forEach(function (type) { if (typeof parsed.cards[type] === "boolean") result.cards[type] = parsed.cards[type]; });
 }
 if (Array.isArray(parsed.customCards)) {
-result.customCards = parsed.customCards.filter(function (c) { return c && typeof c.id === "string" && typeof c.name === "string" && Array.isArray(c.sensors); }).map(function (c) { return { id: c.id, name: String(c.name).slice(0, 80), sensors: c.sensors.filter(function (k) { return typeof k === "string"; }) }; });
+result.customCards = parsed.customCards.filter(function (c) { return c && typeof c.id === "string" && typeof c.name === "string" && Array.isArray(c.sensors); }).map(function (c) { return { id: c.id, name: String(c.name).slice(0, 80), sensors: c.sensors.filter(function (k) { return typeof k === "string"; }), autoGpu: c.autoGpu === true, gpuDeviceId: typeof c.gpuDeviceId === "string" ? c.gpuDeviceId : null }; });
 }
 if (parsed.cardConfig && typeof parsed.cardConfig === "object") result.cardConfig = parsed.cardConfig;
 if (typeof parsed.fpsPanelCollapsed === "boolean") result.fpsPanelCollapsed = parsed.fpsPanelCollapsed;
@@ -1833,7 +1833,7 @@ function line(l, v, c, sensorOrderKey) { var r = el("div", "line"); if (sensorOr
 function progressBar(p, sensorOrderKey) { var w = el("div", "progress"), f = el("div", "fill"); if (sensorOrderKey) w.dataset.sensorOrderKey = sensorOrderKey; if (isNumber(p)) { var s = Math.max(0, Math.min(100, p)); f.style.width = s + "%"; if (p >= 90) f.classList.add("danger"); else if (p >= 70) f.classList.add("warning"); } else { f.style.width = "0%"; } w.appendChild(f); return w; }
 function applyCardSensorOrder(id, container) { if (!container) return; var order = normalizeCardConfig(id).sensorOrder; if (!order.length) return; var orderIndex = new Map(); order.forEach(function (key, index) { if (!orderIndex.has(key)) orderIndex.set(key, index); }); var groups = [], pending = [], current = null; Array.prototype.forEach.call(container.children, function (node) { var key = node.dataset.sensorOrderKey; if (key) { if (node.classList.contains("progress") && current && current.key === key) { current.nodes.push(node); return; } current = { key: key, nodes: pending.concat([node]), originalIndex: groups.length }; pending = []; groups.push(current); return; } if (node.classList.contains("section-title")) { pending.push(node); current = null; } else if (current) current.nodes.push(node); else pending.push(node); }); groups.sort(function (a, b) { var ai = orderIndex.has(a.key) ? orderIndex.get(a.key) : order.length + a.originalIndex, bi = orderIndex.has(b.key) ? orderIndex.get(b.key) : order.length + b.originalIndex; return ai - bi; }); var fragment = document.createDocumentFragment(); groups.forEach(function (group) { group.nodes.forEach(function (node) { fragment.appendChild(node); }); }); pending.forEach(function (node) { fragment.appendChild(node); }); container.appendChild(fragment); }
 function showToast(msg, type) { var c = document.getElementById("toastContainer"); if (!c) return; var t = el("div", "toast" + (type ? " " + type : ""), msg); c.appendChild(t); setTimeout(function () { t.classList.add("show"); }, 10); setTimeout(function () { t.classList.remove("show"); setTimeout(function () { t.remove(); }, 300); }, 3000); }
-function sensorKey(s) { return (s.hardware || "") + "||" + (s.name || "") + "||" + (s.type || ""); }
+function sensorKey(s) { var base = (s.hardware || "") + "||" + (s.name || "") + "||" + (s.type || ""), gpuId = s && s.gpu_identifier; return typeof gpuId === "string" && gpuId ? "gpu:" + encodeURIComponent(gpuId) + "||" + base + "||" + (s.identifier || "") : base; }
 function terminalSensorKey(sensor) { return typeof sensor.identifier === "string" && sensor.identifier ? sensor.identifier : JSON.stringify([sensor.hardware || "", sensor.subhardware || sensor.hardware_path || "", sensor.name || "", sensor.type || ""]); }
 function terminalSensorCatalog(data) {
 var sensors = data && Array.isArray(data.raw_sensors) ? data.raw_sensors : data && Array.isArray(data.other) ? data.other : [];
@@ -1956,7 +1956,9 @@ renderTerminalSensorList();
 openModal("terminalSensorsPanel", "terminalSensorsOverlay");
 }
 function closeTerminalSensorsPanel() { closeModal("terminalSensorsPanel", "terminalSensorsOverlay"); }
-function parseSensorKey(k) { var p = String(k || "").split("||"); return { hardware: p[0] || "", name: p[1] || "", type: p[2] || "" }; }
+function parseSensorKey(k) { var p = String(k || "").split("||"); if (p[0] && p[0].startsWith("gpu:")) return { hardware: p[1] || "", name: p[2] || "", type: p[3] || "" }; return { hardware: p[0] || "", name: p[1] || "", type: p[2] || "" }; }
+function gpuAdapterLabel(identifier, hardwareType) { var match = String(identifier || "").match(/(?:\/|:)(\d+)$/), vendors = { GpuNvidia: "NVIDIA", GpuAmd: "AMD", GpuIntel: "Intel" }, vendor = vendors[hardwareType] || "GPU"; return match ? vendor + " " + (Number(match[1]) + 1) : vendor; }
+function sensorDeviceLabel(sensor) { var labels = []; if (sensor && sensor.gpu_name) labels.push(sensor.gpu_name + " · " + gpuAdapterLabel(sensor.gpu_identifier, sensor.gpu_hardware_type)); if (sensor && sensor.hardware) labels.push(sensor.hardware); return labels.join(" · "); }
 function defaultLabelForSensorKey(k) { var p = parseSensorKey(k); if (p.hardware && p.name) return p.hardware + " · " + p.name; if (p.name) return p.name; if (p.hardware) return p.hardware; return "Датчик"; }
 function selectableSensorEntries(data) {
 var entries = [], seen = new Set(), others = data && Array.isArray(data.other) ? data.other : [], raw = data && Array.isArray(data.raw_sensors) ? data.raw_sensors : [];
@@ -2093,13 +2095,15 @@ card.style.height = Math.max(140, Number(pos.height || 250)) + "px";
 card.style.zIndex = Math.min(4000, Number(pos.z || 1));
 zCounter = Math.min(4000, Math.max(zCounter, Number(pos.z || 1)));
 var header = el("div", "card-header");
-header.appendChild(el("span", "icon", "🧩"));
+header.appendChild(el("span", "icon", def.autoGpu ? "🎮" : "🧩"));
 header.appendChild(el("span", "title", def.name));
 header.appendChild(createSourceBadge(def.id));
 header.appendChild(createCardSettingsButton(def.id));
+if (!def.autoGpu) {
 var del = el("button", "card-delete", "✕"); del.type = "button"; del.title = "Удалить карточку";
 del.addEventListener("click", function (e) { e.stopPropagation(); removeCustomCard(def.id); });
 header.appendChild(del);
+}
 var body = el("div", "card-body"); body.id = "card-body-" + def.id;
 card.appendChild(header); card.appendChild(body);
 RESIZE_DIRS.forEach(function (d) { var h = el("div", "resize-handle " + d); h.dataset.dir = d; card.appendChild(h); });
@@ -2110,8 +2114,9 @@ return card;
 function createCards() {
 renderedCardSignatures = Object.create(null);
 clearNode(board); var idx = 0;
-CARD_TYPES.forEach(function (t) { if (state.cards[t] && t !== "coffee") { board.appendChild(createStandardCard(t, idx)); idx++; } });
-state.customCards.forEach(function (d) { board.appendChild(createCustomCard(d, idx)); idx++; });
+var localData = sourceData.local, gpuSourceData = sourceData[cardSourceId("gpu")] || localData, hasPerGpuData = !!(gpuSourceData && Array.isArray(gpuSourceData.gpu_devices) && gpuSourceData.gpu_devices.length);
+CARD_TYPES.forEach(function (t) { if (state.cards[t] && t !== "coffee" && !(t === "gpu" && hasPerGpuData)) { board.appendChild(createStandardCard(t, idx)); idx++; } });
+state.customCards.forEach(function (d) { if (d.autoGpu) { if (!state.cards.gpu) return; var data = sourceData[cardSourceId(d.id)], devices = data && Array.isArray(data.gpu_devices) ? data.gpu_devices : []; if (!devices.some(function (device) { return device && device.identifier === d.gpuDeviceId; })) return; } board.appendChild(createCustomCard(d, idx)); idx++; });
 adjustBoardHeight(); applyBoardGrid();
 if (latestFpsStatus) renderFpsCard(latestFpsStatus);
 }
@@ -2588,10 +2593,44 @@ function onData(d, sourceId) { if (!d || typeof d !== "object") return; sourceId
 function renderCachedSources() { dataSources.forEach(function (source) { if (sourceData[source.id]) onData(sourceData[source.id], source.id); }); }
 function cardSourceId(id) { return normalizeCardConfig(id).sourceId || "local"; }
 function cardUsesSource(id, sourceId) { return cardSourceId(id) === (sourceId || "local"); }
+function gpuAutoCardId(sourceId, gpuId) { var text = (sourceId || "local") + "||" + gpuId, hash = 2166136261; for (var i = 0; i < text.length; i++) { hash ^= text.charCodeAt(i); hash = Math.imul(hash, 16777619); } return "custom-gpu-" + (hash >>> 0).toString(36); }
+function ensureDefaultGpuCards(data, sourceId) {
+var devices = data && Array.isArray(data.gpu_devices) ? data.gpu_devices : [];
+if (!state.cards.gpu) return false;
+var added = false, entries = selectableSensorEntries(data);
+devices.forEach(function (device, index) {
+if (!device || typeof device.identifier !== "string" || !device.identifier) return;
+var id = gpuAutoCardId(sourceId, device.identifier);
+if (state.customCards.some(function (card) { return card.id === id; })) return;
+var sameModel = devices.filter(function (candidate) { return candidate && candidate.name === device.name; }).length > 1;
+var duplicateIndex = sameModel ? devices.filter(function (candidate, candidateIndex) { return candidateIndex <= index && candidate && candidate.name === device.name; }).length : 0;
+var name = "GPU — " + (device.name || "Видеокарта");
+if (sameModel) name += " (адаптер " + duplicateIndex + ")";
+var sensors = entries.filter(function (entry) { return entry.sensor && entry.sensor.gpu_identifier === device.identifier; }).map(function (entry) { return entry.key; });
+state.customCards.push({ id: id, name: name, sensors: sensors, autoGpu: true, gpuDeviceId: device.identifier });
+normalizeCardConfig(id).sourceId = sourceId || "local";
+added = true;
+});
+var visibilityChanged = state.customCards.some(function (card) {
+if (!card.autoGpu) return false;
+var cardData = sourceData[cardSourceId(card.id)], cardDevices = cardData && Array.isArray(cardData.gpu_devices) ? cardData.gpu_devices : [];
+return !!document.getElementById(card.id) !== cardDevices.some(function (device) { return device && device.identifier === card.gpuDeviceId; });
+});
+if (added || visibilityChanged) { if (added) saveState(); createCards(); }
+return added;
+}
+function findCustomSensor(key) {
+var sensor = otherIndex.get(key);
+if (sensor || String(key).startsWith("gpu:") || String(key).startsWith("raw:")) return sensor || null;
+var parts = parseSensorKey(key), matches = [];
+otherIndex.forEach(function (candidate) { if (candidate && candidate.gpu_identifier && candidate.hardware === parts.hardware && candidate.name === parts.name && candidate.type === parts.type) matches.push(candidate); });
+return matches.length === 1 ? matches[0] : null;
+}
 function updateAll(d, sourceId) {
 if (!d || typeof d !== "object" || document.hidden) return;
 sourceId = sourceId || "local";
 buildOtherIndex(d, sourceId);
+ensureDefaultGpuCards(d, sourceId);
 if (sourceId === "local" && document.body.classList.contains("terminal-mode")) renderTerminalOutput(d);
 if (cardUsesSource("cpu", sourceId)) renderCardIfChanged("cpu", [d.cpu, d.cpu_percent, addedSensorData("cpu")], function () { updateCpu(d); renderAdditionalCardSensors("cpu"); });
 if (cardUsesSource("gpu", sourceId)) renderCardIfChanged("gpu", [d.gpu, addedSensorData("gpu")], function () { updateGpu(d); renderAdditionalCardSensors("gpu"); });
@@ -2755,7 +2794,7 @@ shown++;
 if (shown === 0) lst.appendChild(line("Поиск", "Ничего не найдено"));
 if (items.length > mx) lst.appendChild(line("Примечание", "Показаны первые " + mx + " датчиков"));
 }
-function updateCustomCards(sourceId) { state.customCards.forEach(function (def) { if (!cardUsesSource(def.id, sourceId)) return; renderCardIfChanged(def.id, [def.sensors, def.sensors.map(function (key) { return otherIndex.get(key) || null; })], function (b) { clearNode(b); if (!Array.isArray(def.sensors) || def.sensors.length === 0) { b.appendChild(line("Датчики", "Не выбраны")); return; } var vc = 0; def.sensors.forEach(function (k) { if (isSensorHidden(def.id, k)) return; var s = otherIndex.get(k), dl = s ? (s.hardware ? s.hardware + " · " + s.name : s.name) : defaultLabelForSensorKey(k), lb = getSensorLabel(def.id, k, dl); if (s) b.appendChild(line(lb, fmt(s.value, 1, s.unit), null, k)); else b.appendChild(line(lb, "—", null, k)); vc++; }); if (vc === 0) b.appendChild(line("Датчики", "Все датчики скрыты")); }); }); }
+function updateCustomCards(sourceId) { state.customCards.forEach(function (def) { if (!cardUsesSource(def.id, sourceId)) return; renderCardIfChanged(def.id, [def.sensors, def.sensors.map(function (key) { return findCustomSensor(key) || null; })], function (b) { clearNode(b); if (!Array.isArray(def.sensors) || def.sensors.length === 0) { b.appendChild(line("Датчики", "Не выбраны")); return; } var vc = 0; def.sensors.forEach(function (k) { if (isSensorHidden(def.id, k)) return; var s = findCustomSensor(k), dl = s ? [sensorDeviceLabel(s), s.name].filter(Boolean).join(" · ") : defaultLabelForSensorKey(k), lb = getSensorLabel(def.id, k, dl); if (s) b.appendChild(line(lb, fmt(s.value, 1, s.unit), null, k)); else b.appendChild(line(lb, "—", null, k)); vc++; }); if (vc === 0) b.appendChild(line("Датчики", "Все датчики скрыты")); }); }); }
 function showError(m) { errorBanner.textContent = "Ошибка: " + m; errorBanner.classList.remove("hidden"); }
 function hideError() { errorBanner.textContent = ""; errorBanner.classList.add("hidden"); }
 async function fetchSource(source) {
@@ -2918,7 +2957,8 @@ if (term && text.indexOf(term) === -1) return;
 var item = el("div", "sensor-item"), label = document.createElement("label"), checkbox = document.createElement("input");
 checkbox.type = "checkbox"; checkbox.dataset.key = entry.key; checkbox.checked = customSelection.has(entry.key);
 checkbox.addEventListener("change", (function (key, cb) { return function () { if (cb.checked) customSelection.add(key); else customSelection.delete(key); updateSelectedCount(); }; })(entry.key, checkbox));
-var value = el("span", "", (sensor.hardware || "—") + " · " + (sensor.name || "—") + " [" + (sensor.type || "—") + "] = " + fmt(sensor.value, 1, sensor.unit));
+var deviceName = sensor.gpu_name ? sensor.gpu_name + " · " : "";
+var value = el("span", "", (sensor.gpu_identifier ? sensorDeviceLabel(sensor) + " · " : deviceName) + (sensor.hardware || "—") + " · " + (sensor.name || "—") + " [" + (sensor.type || "—") + "] = " + fmt(sensor.value, 1, sensor.unit));
 label.appendChild(checkbox); label.appendChild(value); item.appendChild(label); frag.appendChild(item); shown++;
 });
 if (shown === 0) lst.appendChild(el("div", "muted", "Ничего не найдено."));
@@ -2961,7 +3001,7 @@ row.appendChild(lbl); row.appendChild(inp); return row; }
 function lstInsertByPointer(target, dragged, after) { if (target.parentNode !== dragged.parentNode) return; if (after) target.parentNode.insertBefore(dragged, target.nextSibling); else target.parentNode.insertBefore(dragged, target); }
 function renderCardSettingsList() { var lst = document.getElementById("cardSettingsList"); if (!lst || !currentCardSettingsId) return; clearNode(lst); var id = currentCardSettingsId, se = document.getElementById("cardSettingsSearch"), term = se ? se.value.trim().toLowerCase() : "", items = getCardSensorList(id), cfg = normalizeCardConfig(id), activeItems = [], availableItems = [], sensors = selectableSensorEntries(latestData), standard = STANDARD_SENSOR_CARD_IDS.includes(id);
 items.forEach(function (item) { if (item && typeof item === "object") activeItems.push(item); });
-if (standard) { var knownSensorKeys = new Set(); sensors.forEach(function (entry) { var sensor = entry.sensor, key = entry.key, label = (sensor.hardware || "—") + " · " + (sensor.name || "—") + " [" + (sensor.type || "—") + "]"; if (knownSensorKeys.has(key)) return; knownSensorKeys.add(key); if (activeItems.some(function (item) { return item.key === key; })) return; var item = { key: key, defaultLabel: label }; if (cfg.addedSensors.includes(key)) activeItems.push(item); else availableItems.push(item); }); cfg.addedSensors.forEach(function (key) { if (!knownSensorKeys.has(key) && !activeItems.some(function (item) { return item.key === key; })) activeItems.push({ key: key, defaultLabel: defaultLabelForSensorKey(key) }); }); }
+if (standard) { var knownSensorKeys = new Set(); sensors.forEach(function (entry) { var sensor = entry.sensor, key = entry.key, label = (sensor.gpu_identifier ? sensorDeviceLabel(sensor) : (sensor.hardware || "—")) + " · " + (sensor.name || "—") + " [" + (sensor.type || "—") + "]"; if (knownSensorKeys.has(key)) return; knownSensorKeys.add(key); if (activeItems.some(function (item) { return item.key === key; })) return; var item = { key: key, defaultLabel: label }; if (cfg.addedSensors.includes(key)) activeItems.push(item); else availableItems.push(item); }); cfg.addedSensors.forEach(function (key) { if (!knownSensorKeys.has(key) && !activeItems.some(function (item) { return item.key === key; })) activeItems.push({ key: key, defaultLabel: defaultLabelForSensorKey(key) }); }); }
 var typeFilter = document.getElementById("cardSettingsTypeFilter"), selectedType = typeFilter ? typeFilter.value : "", deviceFilter = document.getElementById("cardDeviceFilter"), selectedDevice = deviceFilter ? deviceFilter.value : "";
 if (standard) availableItems = availableItems.filter(function (item) { var sensor = otherIndex.get(item.key); return (!selectedType || (sensor && sensor.type === selectedType)) && (!selectedDevice || (sensor && sensorDeviceKind(sensor) === selectedDevice)); });
 activeItems = getOrderedSensorItems(id, activeItems);
@@ -3043,6 +3083,7 @@ function savePresets(p) { try { localStorage.setItem(PRESETS_STORAGE_KEY, JSON.s
 function normalizePresetStateBase(raw) { var r = defaultState(); if (!raw || typeof raw !== "object") return r; var ai = [1000, 2000, 5000, 10000, 30000, 60000], iv = Number(raw.interval); if (ai.includes(iv)) r.interval = iv; if (typeof raw.dark === "boolean") r.dark = raw.dark; if (raw.cards && typeof raw.cards === "object") CARD_TYPES.forEach(function (t) { if (typeof raw.cards[t] === "boolean") r.cards[t] = raw.cards[t]; }); if (Array.isArray(raw.customCards)) r.customCards = raw.customCards.filter(function (c) { return c && typeof c.id === "string" && /^[A-Za-z0-9_-]+$/.test(c.id) && typeof c.name === "string" && Array.isArray(c.sensors); }).map(function (c) { return { id: c.id, name: String(c.name).slice(0, 80), sensors: c.sensors.filter(function (k) { return typeof k === "string"; }) }; }); if (raw.cardConfig && typeof raw.cardConfig === "object") { var cfg = {}; Object.keys(raw.cardConfig).forEach(function (cid) { var item = raw.cardConfig[cid]; if (!item || typeof item !== "object") return; var h = Array.isArray(item.hidden) ? item.hidden.filter(function (k) { return typeof k === "string"; }) : [], l = {}, a = Array.isArray(item.addedSensors) ? item.addedSensors.filter(function (k) { return typeof k === "string"; }) : [], o = Array.isArray(item.sensorOrder) ? item.sensorOrder.filter(function (k) { return typeof k === "string"; }) : []; if (item.labels && typeof item.labels === "object") Object.keys(item.labels).forEach(function (k) { var v = item.labels[k]; if (typeof k === "string" && typeof v === "string" && v.trim()) l[k] = v.trim().slice(0, 120); }); cfg[cid] = { hidden: h, labels: l, addedSensors: a, sensorOrder: o }; }); r.cardConfig = cfg; } if (raw.snap && typeof raw.snap === "object") { if (typeof raw.snap.enabled === "boolean") r.snap.enabled = raw.snap.enabled; var sz = Number(raw.snap.size); if (GRID_SIZES.includes(sz)) r.snap.size = sz; } return r; }
 function normalizePresetState(raw) {
 var result = normalizePresetStateBase(raw);
+if (raw && Array.isArray(raw.customCards)) result.customCards.forEach(function (card) { var saved = raw.customCards.find(function (item) { return item && item.id === card.id; }); if (!saved) return; card.autoGpu = saved.autoGpu === true; card.gpuDeviceId = typeof saved.gpuDeviceId === "string" ? saved.gpuDeviceId : null; });
 if (raw && Array.isArray(raw.terminalSensors)) result.terminalSensors = raw.terminalSensors.filter(function (key, index, values) { return typeof key === "string" && values.indexOf(key) === index; });
 if (raw && raw.cardConfig && typeof raw.cardConfig === "object") Object.keys(raw.cardConfig).forEach(function (id) {
 var config = result.cardConfig[id], sourceId = raw.cardConfig[id] && raw.cardConfig[id].sourceId;

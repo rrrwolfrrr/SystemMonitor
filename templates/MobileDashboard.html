@@ -712,7 +712,7 @@
                     <label><strong>Отображаемые карточки</strong></label>
                     <div class="checkbox-grid" id="cardToggles">
                         <label><input type="checkbox" data-card="cpu" checked> CPU</label>
-                        <label><input type="checkbox" data-card="gpu" checked> GPU</label>
+                        <label><input type="checkbox" data-card="gpu" checked> GPU (все карты)</label>
                         <label><input type="checkbox" data-card="ram" checked> Память</label>
                         <label><input type="checkbox" data-card="network" checked> Сеть</label>
                         <label><input type="checkbox" data-card="disks" checked> Диски</label>
@@ -884,7 +884,7 @@
                     const merged = { ...defaultSettings, ...parsed };
                     merged.showCards = { ...defaultSettings.showCards, ...(parsed.showCards || {}) };
                     merged.cardOrder = Array.isArray(parsed.cardOrder)
-                        ? cardKeys.filter(key => parsed.cardOrder.includes(key))
+                        ? [...new Set(parsed.cardOrder.filter(key => typeof key === 'string' && (cardKeys.includes(key) || isGpuDeviceCardKey(key))))]
                         : defaultSettings.cardOrder.slice();
                     cardKeys.forEach(key => { if (!merged.cardOrder.includes(key)) merged.cardOrder.push(key); });
                     merged.refreshInterval = Math.max(1000, Number(parsed.refreshInterval) || defaultSettings.refreshInterval);
@@ -895,7 +895,7 @@
                     merged.hiddenBuiltIn = parsed.hiddenBuiltIn && typeof parsed.hiddenBuiltIn === 'object' ? parsed.hiddenBuiltIn : {};
                     merged.sensorLabels = parsed.sensorLabels && typeof parsed.sensorLabels === 'object' ? parsed.sensorLabels : {};
                     merged.favorites = Array.isArray(parsed.favorites) ? [...new Set(parsed.favorites.filter(key => typeof key === 'string'))] : [];
-                    merged.collapsedCards = Array.isArray(parsed.collapsedCards) ? [...new Set(parsed.collapsedCards.filter(key => cardKeys.includes(key)))] : [];
+                    merged.collapsedCards = Array.isArray(parsed.collapsedCards) ? [...new Set(parsed.collapsedCards.filter(key => cardKeys.includes(key) || isGpuDeviceCardKey(key)))] : [];
                     merged.compactMode = parsed.compactMode === true;
                     cardKeys.forEach(key => {
                         merged.cardSensors[key] = Array.isArray(merged.cardSensors[key])
@@ -1031,8 +1031,72 @@
         }
 
         // --- Построение данных ---
+        function isGpuDeviceCardKey(key) {
+            return typeof key === 'string' && key.startsWith('gpu-device:');
+        }
+
+        function getGpuDeviceCardKey(device) {
+            return 'gpu-device:' + encodeURIComponent(device.identifier);
+        }
+
+        function getGpuAdapterLabel(identifier, hardwareType) {
+            const match = String(identifier || '').match(/(?:\/|:)(\d+)$/);
+            const vendors = { GpuNvidia: 'NVIDIA', GpuAmd: 'AMD', GpuIntel: 'Intel' };
+            const vendor = vendors[hardwareType] || 'GPU';
+            return match ? vendor + ' ' + (Number(match[1]) + 1) : vendor;
+        }
+
+        function syncGpuCardOrder(data) {
+            const devices = Array.isArray(data.gpu_devices) ? data.gpu_devices.filter(device => device && typeof device.identifier === 'string' && device.identifier) : [];
+            if (!devices.length) {
+                const firstGpuIndex = settings.cardOrder.findIndex(key => key === 'gpu' || isGpuDeviceCardKey(key));
+                if (firstGpuIndex >= 0 && isGpuDeviceCardKey(settings.cardOrder[firstGpuIndex])) {
+                    const insertAt = settings.cardOrder.slice(0, firstGpuIndex).filter(key => key !== 'gpu').length;
+                    const order = settings.cardOrder.filter(key => key !== 'gpu');
+                    order.splice(insertAt, 0, 'gpu');
+                    settings.cardOrder = [...new Set(order)];
+                }
+                return;
+            }
+            const deviceKeys = devices.map(getGpuDeviceCardKey);
+            const existing = settings.cardOrder.filter(isGpuDeviceCardKey);
+            const orderedKeys = [...existing, ...deviceKeys.filter(key => !existing.includes(key))];
+            const gpuIndex = settings.cardOrder.findIndex(key => key === 'gpu' || isGpuDeviceCardKey(key));
+            const baseOrder = settings.cardOrder.filter(key => key !== 'gpu' && !isGpuDeviceCardKey(key));
+            const insertAt = gpuIndex >= 0
+                ? settings.cardOrder.slice(0, gpuIndex).filter(key => key !== 'gpu' && !isGpuDeviceCardKey(key)).length
+                : baseOrder.length;
+            baseOrder.splice(insertAt, 0, ...orderedKeys);
+            settings.cardOrder = [...new Set(baseOrder)];
+        }
+
         function getCardData(cardKey, data) {
             let result = { title: '', icon: '', lines: [], hasProgress: false, progressValue: null };
+            if (isGpuDeviceCardKey(cardKey)) {
+                let identifier;
+                try {
+                    identifier = decodeURIComponent(cardKey.slice('gpu-device:'.length));
+                } catch (error) {
+                    return null;
+                }
+                const device = (Array.isArray(data.gpu_devices) ? data.gpu_devices : [])
+                    .find(candidate => candidate && candidate.identifier === identifier);
+                if (!device) return null;
+                result.title = 'GPU — ' + (device.name || 'Видеокарта') +
+                    (data.gpu_devices.length > 1 ? ' · ' + getGpuAdapterLabel(identifier, device.hardware_type) : '');
+                result.icon = '🎮';
+                result.lines = (Array.isArray(device.sensors) ? device.sensors : []).map(sensor => ({
+                    label: [sensor.hardware, sensor.name].filter(Boolean).join(' · ') || 'Датчик',
+                    value: formatSensorValue(sensor),
+                    cls: sensor.type === 'Temperature' && Number.isFinite(sensor.value)
+                        ? sensor.value >= 85 ? 'danger' : sensor.value >= 70 ? 'warning' : ''
+                        : ''
+                }));
+                result.hasProgress = Number.isFinite(device.load);
+                result.progressValue = result.hasProgress ? device.load : null;
+                if (!result.lines.length) return null;
+                return result;
+            }
             switch(cardKey) {
                 case 'cpu': {
                     const cpu = data.cpu || {};
@@ -1277,6 +1341,7 @@
         function getDisplayCardData(cardKey, data) {
             const cardData = getCardData(cardKey, data);
             if (cardData) return cardData;
+            if (isGpuDeviceCardKey(cardKey)) return null;
             return (settings.cardSensors[cardKey] || []).length
                 ? { ...mobileCardMeta[cardKey], lines: [], hasProgress: false, progressValue: null }
                 : null;
@@ -1413,7 +1478,10 @@
             let shown = 0;
             sorted.forEach(sensor => {
                 const key = sensorKey(sensor);
-                const labelText = [sensor.hardware, sensor.subhardware || sensor.hardware_path, sensor.name, sensor.type, sensor.unit].filter(Boolean).join(' ').toLocaleLowerCase();
+                const gpuDeviceLabel = sensor.gpu_identifier
+                    ? [sensor.gpu_name, getGpuAdapterLabel(sensor.gpu_identifier, sensor.gpu_hardware_type)].filter(Boolean).join(' ')
+                    : '';
+                const labelText = [gpuDeviceLabel, sensor.hardware, sensor.subhardware || sensor.hardware_path, sensor.name, sensor.type, sensor.unit].filter(Boolean).join(' ').toLocaleLowerCase();
                 if (search && !labelText.includes(search)) return;
                 shown++;
                 const row = document.createElement('div');
@@ -1437,7 +1505,7 @@
                 const name = document.createElement('span');
                 name.textContent = sensorLabel(sensor, key);
                 const details = document.createElement('small');
-                details.textContent = [sensor.hardware, sensor.type, sensor.unit].filter(Boolean).join(' · ');
+                details.textContent = [gpuDeviceLabel, sensor.hardware, sensor.type, sensor.unit].filter(Boolean).join(' · ');
                 info.append(name, details);
                 if (selectedSet.has(key)) {
                     const rename = document.createElement('input');
@@ -1533,7 +1601,10 @@
                 row.className = 'cmd-sensor-row';
                 const device = document.createElement('span');
                 device.className = 'cmd-sensor-device';
-                device.textContent = sensor.subhardware || sensor.hardware_path || sensor.hardware || 'Устройство';
+                device.textContent = [
+                    sensor.gpu_identifier ? [sensor.gpu_name, getGpuAdapterLabel(sensor.gpu_identifier, sensor.gpu_hardware_type)].filter(Boolean).join(' · ') : '',
+                    sensor.subhardware || sensor.hardware_path || sensor.hardware || 'Устройство'
+                ].filter(Boolean).join(' · ');
                 const name = document.createElement('span');
                 name.className = 'cmd-sensor-name';
                 name.textContent = sensorLabel(sensor, key) + (sensor.type ? ' [' + sensor.type + ']' : '');
@@ -1633,9 +1704,13 @@
                 return;
             }
             container.className = 'cards-grid ' + settings.layout;
+            const gpuDevices = Array.isArray(data.gpu_devices) ? data.gpu_devices : [];
+            syncGpuCardOrder(data);
 
             let visibleCards = settings.cardOrder.filter(key => {
-                if (!settings.showCards[key]) return false;
+                if (key === 'gpu' && gpuDevices.length) return false;
+                if (isGpuDeviceCardKey(key) && settings.showCards.gpu === false) return false;
+                if (settings.showCards[key] === false) return false;
                 return getDisplayCardData(key, data) !== null;
             });
 
@@ -1912,7 +1987,9 @@
             const defaults = JSON.parse(JSON.stringify(defaultSettings));
             const merged = { ...defaults, ...source };
             merged.showCards = { ...defaults.showCards, ...(source.showCards || {}) };
-            merged.cardOrder = Array.isArray(source.cardOrder) ? cardKeys.filter(key => source.cardOrder.includes(key)) : defaults.cardOrder;
+            merged.cardOrder = Array.isArray(source.cardOrder)
+                ? [...new Set(source.cardOrder.filter(key => typeof key === 'string' && (cardKeys.includes(key) || isGpuDeviceCardKey(key))))]
+                : defaults.cardOrder;
             cardKeys.forEach(key => { if (!merged.cardOrder.includes(key)) merged.cardOrder.push(key); });
             merged.refreshInterval = Math.max(1000, Number(source.refreshInterval) || defaults.refreshInterval);
             merged.layout = ['responsive', 'horizontal', 'vertical'].includes(source.layout) ? source.layout : 'responsive';
@@ -1922,7 +1999,7 @@
             merged.hiddenBuiltIn = source.hiddenBuiltIn && typeof source.hiddenBuiltIn === 'object' ? source.hiddenBuiltIn : {};
             merged.sensorLabels = source.sensorLabels && typeof source.sensorLabels === 'object' ? source.sensorLabels : {};
             merged.favorites = Array.isArray(source.favorites) ? source.favorites.filter(key => typeof key === 'string') : [];
-            merged.collapsedCards = Array.isArray(source.collapsedCards) ? source.collapsedCards.filter(key => cardKeys.includes(key)) : [];
+            merged.collapsedCards = Array.isArray(source.collapsedCards) ? source.collapsedCards.filter(key => cardKeys.includes(key) || isGpuDeviceCardKey(key)) : [];
             merged.compactMode = source.compactMode === true;
             cardKeys.forEach(key => {
                 merged.cardSensors[key] = Array.isArray(merged.cardSensors[key])

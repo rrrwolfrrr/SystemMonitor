@@ -14,6 +14,7 @@ from typing import Any, Optional
 from fallback import apply_fallbacks
 from system_detect import log_system_warnings, is_admin, is_memory_integrity_enabled
 from validator import validate_reading, validate_sensor_value, validate_sensor_reading, suspicious_jump
+from gpu_catalog import GPU_HARDWARE_TYPES, build_gpu_devices
 from update_visitor import create_visitor
 
 try:
@@ -345,6 +346,21 @@ class LibreMonitorDirect:
     def _identifier(sensor):
         try:
             return str(sensor.Identifier)
+        except (AttributeError, TypeError):
+            return None
+
+    @staticmethod
+    def _hardware_type(hw):
+        try:
+            return str(hw.HardwareType)
+        except (AttributeError, TypeError):
+            return "unknown"
+
+    @staticmethod
+    def _hardware_identifier(hw):
+        try:
+            identifier = str(hw.Identifier)
+            return identifier or None
         except (AttributeError, TypeError):
             return None
 
@@ -683,10 +699,22 @@ class LibreMonitorDirect:
         for child in hw.SubHardware:
             self._collect_fans(child, fans_list)
 
-    def _collect_other(self, hw, other_list, parent_name=None):
+    def _collect_other(
+        self, hw, other_list, parent_name=None, gpu_identifier=None,
+        gpu_name=None, gpu_hardware_type=None,
+    ):
         """Собирает все остальные сенсоры для карточки Прочие."""
         hardware_name = str(hw.Name)
+        hardware_type = self._hardware_type(hw)
         path = f"{parent_name} / {hardware_name}" if parent_name else hardware_name
+        if hardware_type in GPU_HARDWARE_TYPES:
+            gpu_identifier = (
+                self._hardware_identifier(hw)
+                or gpu_identifier
+                or f"{hardware_type}:{path.replace(' / ', '/')}"
+            )
+            gpu_name = hardware_name
+            gpu_hardware_type = hardware_type
         for sensor in hw.Sensors:
             try:
                 stype = str(sensor.SensorType)
@@ -702,11 +730,15 @@ class LibreMonitorDirect:
                 other_list.append({
                     "hardware": hardware_name,
                     "hardware_path": path,
+                    "hardware_type": hardware_type,
                     "name": str(sensor.Name),
                     "type": stype,
                     "value": round(float(raw_value), 2),
                     "unit": self._unit(stype),
                     "identifier": self._identifier(sensor),
+                    "gpu_identifier": gpu_identifier,
+                    "gpu_name": gpu_name,
+                    "gpu_hardware_type": gpu_hardware_type,
                 })
             except (TypeError, ValueError, AttributeError) as exc:
                 logger.debug(
@@ -714,13 +746,27 @@ class LibreMonitorDirect:
                     path, getattr(sensor, "Name", "unknown"), exc,
                 )
         for child in hw.SubHardware:
-            self._collect_other(child, other_list, path)
+            self._collect_other(
+                child, other_list, path, gpu_identifier, gpu_name,
+                gpu_hardware_type,
+            )
 
-    def _collect_raw(self, hw, raw_list, parent_name=None):
+    def _collect_raw(
+        self, hw, raw_list, parent_name=None, gpu_identifier=None,
+        gpu_name=None, gpu_hardware_type=None,
+    ):
         """Collect every LHM sensor without filtering unknown types/values."""
         hardware = str(getattr(hw, "Name", "") or "unknown")
         hardware_type = str(getattr(hw, "HardwareType", "") or "unknown")
         path = f"{parent_name}/{hardware}" if parent_name else hardware
+        if hardware_type in GPU_HARDWARE_TYPES:
+            gpu_identifier = (
+                self._hardware_identifier(hw)
+                or gpu_identifier
+                or f"{hardware_type}:{path}"
+            )
+            gpu_name = hardware
+            gpu_hardware_type = hardware_type
         for sensor in getattr(hw, "Sensors", ()) or ():
             try:
                 sensor_type = str(getattr(sensor, "SensorType", "") or "unknown")
@@ -752,6 +798,9 @@ class LibreMonitorDirect:
                     "raw_value": None if raw_value is None else str(raw_value),
                     "unit": unit,
                     "identifier": identifier,
+                    "gpu_identifier": gpu_identifier,
+                    "gpu_name": gpu_name,
+                    "gpu_hardware_type": gpu_hardware_type,
                     "valid": bool(checked.valid),
                     "reason": checked.reason,
                     "suspicious": bool(jump),
@@ -768,12 +817,18 @@ class LibreMonitorDirect:
                     "value": None,
                     "unit": "unknown",
                     "identifier": None,
+                    "gpu_identifier": gpu_identifier,
+                    "gpu_name": gpu_name,
+                    "gpu_hardware_type": gpu_hardware_type,
                     "valid": False,
                     "reason": type(exc).__name__,
                     "suspicious": False,
                 })
         for child in getattr(hw, "SubHardware", ()) or ():
-            self._collect_raw(child, raw_list, path)
+            self._collect_raw(
+                child, raw_list, path, gpu_identifier, gpu_name,
+                gpu_hardware_type,
+            )
 
     def _unit(self, stype: str) -> str:
         """Возвращает единицу измерения для типа сенсора."""
@@ -833,19 +888,28 @@ class LibreMonitorDirect:
                 "fans": [],
                 "other": [],
                 "raw_sensors": [],
+                "gpu_devices": [],
                 "unknown_sensors": [],
             }
 
-            for hw in self._computer.Hardware:
+            for hardware_index, hw in enumerate(self._computer.Hardware):
                 self._parse_cpu(hw, result)
                 self._parse_gpu(hw, result)
                 self._parse_ram(hw, result)
                 self._parse_motherboard(hw, result)
                 self._parse_storage(hw, result)
                 self._collect_fans(hw, result["fans"])
-                self._collect_other(hw, result["other"])
-                self._collect_raw(hw, result["raw_sensors"])
+                gpu_identifier = None
+                gpu_hardware_type = self._hardware_type(hw)
+                if gpu_hardware_type in GPU_HARDWARE_TYPES:
+                    gpu_identifier = (
+                        self._hardware_identifier(hw)
+                        or f"{gpu_hardware_type}:{hardware_index}:{hw.Name}"
+                    )
+                self._collect_other(hw, result["other"], gpu_identifier=gpu_identifier)
+                self._collect_raw(hw, result["raw_sensors"], gpu_identifier=gpu_identifier)
 
+            result["gpu_devices"] = build_gpu_devices(result["raw_sensors"])
             result["unknown_sensors"] = [
                 sensor for sensor in result["raw_sensors"]
                 if sensor.get("type") == "unknown"
