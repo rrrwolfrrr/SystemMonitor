@@ -1848,7 +1848,12 @@ return true;
 }
 function terminalSensorDevice(sensor) {
 var subhardware = sensor.subhardware || sensor.hardware_path;
-return subhardware && subhardware !== sensor.hardware ? subhardware : (sensor.hardware || "Устройство");
+var hardware = subhardware && subhardware !== sensor.hardware ? subhardware : sensor.hardware;
+var gpuLabel = sensor.gpu_identifier ? (sensor.gpu_name || "GPU") + " · " + gpuAdapterLabel(sensor.gpu_identifier, sensor.gpu_hardware_type) : "";
+var deviceParts = [];
+if (gpuLabel) deviceParts.push(gpuLabel);
+if (hardware && hardware !== sensor.gpu_name) deviceParts.push(hardware);
+return deviceParts.join(" · ") || hardware || "Устройство";
 }
 function renderTerminalOutput(data) {
 var rows = document.getElementById("terminalRows"), summary = document.getElementById("terminalSummary");
@@ -1980,7 +1985,7 @@ function setSensorLabel(id, k, l) { var c = normalizeCardConfig(id); if (l && l.
 function resetCardConfig(id) { if (state.cardConfig && state.cardConfig[id]) { delete state.cardConfig[id]; saveState(); } }
 function getCardSensorList(id) {
 if (!id) return [];
-if (id.startsWith("custom-")) { var d = state.customCards.find(function (i) { return i.id === id; }); if (!d) return []; return d.sensors.map(function (k) { return { key: k, defaultLabel: defaultLabelForSensorKey(k) }; }); }
+if (id.startsWith("custom-")) { var d = state.customCards.find(function (i) { return i.id === id; }); if (!d) return []; if (d.autoGpu) return [{ key: "temperature", defaultLabel: "Температура GPU" }, { key: "hotspot_temperature", defaultLabel: "Температура Hotspot" }, { key: "temperature_difference_percent", defaultLabel: "Разница температур" }, { key: "load", defaultLabel: "Загрузка" }, { key: "frequency", defaultLabel: "Частота" }, { key: "voltage", defaultLabel: "Напряжение" }, { key: "power", defaultLabel: "Мощность" }, { key: "memory", defaultLabel: "Выделенная память" }, { key: "shared_memory", defaultLabel: "Общая память" }]; return d.sensors.map(function (k) { return { key: k, defaultLabel: defaultLabelForSensorKey(k) }; }); }
 if (id === "cpu") return [{ key: "temperature", defaultLabel: "Температура" }, { key: "load", defaultLabel: "Загрузка" }, { key: "frequency", defaultLabel: "Частота (факт.)" }, { key: "frequency_effective", defaultLabel: "Частота (эффект.)" }, { key: "voltage", defaultLabel: "Напряжение" }, { key: "power", defaultLabel: "Мощность" }];
 if (id === "gpu") return [{ key: "temperature", defaultLabel: "Температура GPU" }, { key: "hotspot_temperature", defaultLabel: "Температура Hotspot" }, { key: "temperature_difference_percent", defaultLabel: "Разница температур" }, { key: "load", defaultLabel: "Загрузка" }, { key: "frequency", defaultLabel: "Частота" }, { key: "voltage", defaultLabel: "Напряжение" }, { key: "power", defaultLabel: "Мощность" }, { key: "memory", defaultLabel: "Память" }];
 if (id === "ram") return [{ key: "used", defaultLabel: "Использовано" }, { key: "total", defaultLabel: "Всего" }, { key: "percent", defaultLabel: "Занято" }];
@@ -2794,7 +2799,41 @@ shown++;
 if (shown === 0) lst.appendChild(line("Поиск", "Ничего не найдено"));
 if (items.length > mx) lst.appendChild(line("Примечание", "Показаны первые " + mx + " датчиков"));
 }
-function updateCustomCards(sourceId) { state.customCards.forEach(function (def) { if (!cardUsesSource(def.id, sourceId)) return; renderCardIfChanged(def.id, [def.sensors, def.sensors.map(function (key) { return findCustomSensor(key) || null; })], function (b) { clearNode(b); if (!Array.isArray(def.sensors) || def.sensors.length === 0) { b.appendChild(line("Датчики", "Не выбраны")); return; } var vc = 0; def.sensors.forEach(function (k) { if (isSensorHidden(def.id, k)) return; var s = findCustomSensor(k), dl = s ? [sensorDeviceLabel(s), s.name].filter(Boolean).join(" · ") : defaultLabelForSensorKey(k), lb = getSensorLabel(def.id, k, dl); if (s) b.appendChild(line(lb, fmt(s.value, 1, s.unit), null, k)); else b.appendChild(line(lb, "—", null, k)); vc++; }); if (vc === 0) b.appendChild(line("Датчики", "Все датчики скрыты")); }); }); }
+function renderGpuDeviceCard(def, device, data, body) {
+clearNode(body);
+if (!device) return;
+var gpu = data.gpu || {}, devices = Array.isArray(data.gpu_devices) ? data.gpu_devices : [], canUseAggregateMemory = devices.length === 1;
+function appendMetric(key, label, value, cls) { if (!isSensorHidden(def.id, key)) body.appendChild(line(getSensorLabel(def.id, key, label), value, cls, key)); }
+appendMetric("temperature", "Температура GPU", fmt(device.temperature, 1, "°C"), tempClass(device.temperature));
+appendMetric("hotspot_temperature", "Температура Hotspot", fmt(device.hotspot_temperature, 1, "°C"), tempClass(device.hotspot_temperature));
+var temperatureDifference = isNumber(device.temperature) && isNumber(device.hotspot_temperature) && device.temperature !== 0 ? ((device.hotspot_temperature - device.temperature) / Math.abs(device.temperature)) * 100 : null;
+appendMetric("temperature_difference_percent", "Разница температур", fmt(temperatureDifference, 1, "%"));
+if (!isSensorHidden(def.id, "load")) { body.appendChild(line(getSensorLabel(def.id, "load", "Загрузка"), fmt(device.load, 1, "%"), percentClass(device.load), "load")); body.appendChild(progressBar(device.load, "load")); }
+appendMetric("frequency", "Частота", fmt(device.frequency, 0, "МГц"));
+appendMetric("voltage", "Напряжение", fmt(device.voltage, 3, "В"));
+appendMetric("power", "Мощность", fmt(device.power, 1, "Вт"));
+var memoryUsed = device.memory_used, memoryTotal = device.memory_total, sharedMemoryUsed = null, sharedMemoryTotal = null;
+if (canUseAggregateMemory) {
+if (memoryUsed === null || memoryUsed === undefined) memoryUsed = gpu.dedicated_memory_used_mb !== null && gpu.dedicated_memory_used_mb !== undefined ? gpu.dedicated_memory_used_mb : gpu.memory_used;
+if (memoryTotal === null || memoryTotal === undefined) memoryTotal = gpu.dedicated_memory_total_mb !== null && gpu.dedicated_memory_total_mb !== undefined ? gpu.dedicated_memory_total_mb : gpu.memory_total;
+sharedMemoryUsed = gpu.shared_memory_used_mb;
+sharedMemoryTotal = gpu.shared_memory_total_mb;
+}
+appendMetric("memory", "Выделенная память", formatMB(memoryUsed) + " / " + formatMB(memoryTotal));
+appendMetric("shared_memory", "Общая память", formatMB(sharedMemoryUsed) + " / " + formatMB(sharedMemoryTotal));
+renderAdditionalCardSensors(def.id);
+}
+function updateCustomCards(sourceId) {
+state.customCards.forEach(function (def) {
+if (!cardUsesSource(def.id, sourceId)) return;
+if (def.autoGpu) {
+var data = sourceData[cardSourceId(def.id)] || {}, devices = Array.isArray(data.gpu_devices) ? data.gpu_devices : [], device = devices.find(function (candidate) { return candidate && candidate.identifier === def.gpuDeviceId; });
+renderCardIfChanged(def.id, [device, data.gpu, addedSensorData(def.id)], function (body) { renderGpuDeviceCard(def, device, data, body); });
+return;
+}
+renderCardIfChanged(def.id, [def.sensors, def.sensors.map(function (key) { return findCustomSensor(key) || null; })], function (body) { clearNode(body); if (!Array.isArray(def.sensors) || def.sensors.length === 0) { body.appendChild(line("Датчики", "Не выбраны")); return; } var visibleCount = 0; def.sensors.forEach(function (key) { if (isSensorHidden(def.id, key)) return; var sensor = findCustomSensor(key), defaultLabel = sensor ? [sensorDeviceLabel(sensor), sensor.name].filter(Boolean).join(" · ") : defaultLabelForSensorKey(key), label = getSensorLabel(def.id, key, defaultLabel); if (sensor) body.appendChild(line(label, fmt(sensor.value, 1, sensor.unit), null, key)); else body.appendChild(line(label, "—", null, key)); visibleCount++; }); if (visibleCount === 0) body.appendChild(line("Датчики", "Все датчики скрыты")); });
+});
+}
 function showError(m) { errorBanner.textContent = "Ошибка: " + m; errorBanner.classList.remove("hidden"); }
 function hideError() { errorBanner.textContent = ""; errorBanner.classList.add("hidden"); }
 async function fetchSource(source) {
@@ -2999,7 +3038,7 @@ var inp = document.createElement("input"); inp.type = "text"; inp.className = "c
 inp.addEventListener("change", function () { setSensorLabel(id, item.key, inp.value); if (latestData) updateAll(latestData, cardSourceId(id)); });
 row.appendChild(lbl); row.appendChild(inp); return row; }
 function lstInsertByPointer(target, dragged, after) { if (target.parentNode !== dragged.parentNode) return; if (after) target.parentNode.insertBefore(dragged, target.nextSibling); else target.parentNode.insertBefore(dragged, target); }
-function renderCardSettingsList() { var lst = document.getElementById("cardSettingsList"); if (!lst || !currentCardSettingsId) return; clearNode(lst); var id = currentCardSettingsId, se = document.getElementById("cardSettingsSearch"), term = se ? se.value.trim().toLowerCase() : "", items = getCardSensorList(id), cfg = normalizeCardConfig(id), activeItems = [], availableItems = [], sensors = selectableSensorEntries(latestData), standard = STANDARD_SENSOR_CARD_IDS.includes(id);
+function renderCardSettingsList() { var lst = document.getElementById("cardSettingsList"); if (!lst || !currentCardSettingsId) return; clearNode(lst); var id = currentCardSettingsId, se = document.getElementById("cardSettingsSearch"), term = se ? se.value.trim().toLowerCase() : "", items = getCardSensorList(id), cfg = normalizeCardConfig(id), activeItems = [], availableItems = [], autoGpuCard = state.customCards.find(function (card) { return card.id === id && card.autoGpu; }), sensors = selectableSensorEntries(latestData), standard = STANDARD_SENSOR_CARD_IDS.includes(id) || !!autoGpuCard; if (autoGpuCard) sensors = sensors.filter(function (entry) { return entry.sensor && entry.sensor.gpu_identifier === autoGpuCard.gpuDeviceId; });
 items.forEach(function (item) { if (item && typeof item === "object") activeItems.push(item); });
 if (standard) { var knownSensorKeys = new Set(); sensors.forEach(function (entry) { var sensor = entry.sensor, key = entry.key, label = (sensor.gpu_identifier ? sensorDeviceLabel(sensor) : (sensor.hardware || "—")) + " · " + (sensor.name || "—") + " [" + (sensor.type || "—") + "]"; if (knownSensorKeys.has(key)) return; knownSensorKeys.add(key); if (activeItems.some(function (item) { return item.key === key; })) return; var item = { key: key, defaultLabel: label }; if (cfg.addedSensors.includes(key)) activeItems.push(item); else availableItems.push(item); }); cfg.addedSensors.forEach(function (key) { if (!knownSensorKeys.has(key) && !activeItems.some(function (item) { return item.key === key; })) activeItems.push({ key: key, defaultLabel: defaultLabelForSensorKey(key) }); }); }
 var typeFilter = document.getElementById("cardSettingsTypeFilter"), selectedType = typeFilter ? typeFilter.value : "", deviceFilter = document.getElementById("cardDeviceFilter"), selectedDevice = deviceFilter ? deviceFilter.value : "";
