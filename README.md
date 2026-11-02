@@ -13,11 +13,11 @@ view that data locally or open the dashboards in a browser on another computer,
 phone, or tablet.
 
 <p align="center">
-  <a href="https://www.donationalerts.com/r/monsterhairy" target="_blank" rel="noopener noreferrer">
+  <a href="https://dalink.to/monsterhairy" target="_blank" rel="noopener noreferrer">
     <img src="assets/coffee-donation.gif" width="140" alt="Animated steaming coffee cup - support SystemMonitor">
   </a>
   <br>
-  <a href="https://www.donationalerts.com/r/monsterhairy"><strong>Buy the author a coffee</strong></a>
+  <a href="https://dalink.to/monsterhairy"><strong>Buy the author a coffee</strong></a>
   <br>
   Support the continued development of SystemMonitor ❤️
 </p>
@@ -238,11 +238,11 @@ SystemMonitor — программа для Windows, которая помога
 другом компьютере, телефоне либо планшете.
 
 <p align="center">
-  <a href="https://www.donationalerts.com/r/monsterhairy" target="_blank" rel="noopener noreferrer">
+  <a href="https://dalink.to/monsterhairy" target="_blank" rel="noopener noreferrer">
     <img src="assets/coffee-donation.gif" width="140" alt="Анимированная чашка кофе с паром — поддержать SystemMonitor">
   </a>
   <br>
-  <a href="https://www.donationalerts.com/r/monsterhairy"><strong>Угостить автора кофе</strong></a>
+  <a href="https://dalink.to/monsterhairy"><strong>Угостить автора кофе</strong></a>
   <br>
   На развитие программы ❤️
 </p>

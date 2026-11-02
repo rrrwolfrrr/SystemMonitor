@@ -286,7 +286,7 @@ class HttpContractTests(unittest.TestCase):
                 self.assertEqual(response.status_code, 200)
                 if path == "/dashboard":
                     self.assertIn(
-                        'href="https://www.donationalerts.com/r/monsterhairy"',
+                        'href="https://dalink.to/monsterhairy"',
                         response.get_data(as_text=True),
                     )
                     for control in (
@@ -343,7 +343,7 @@ class HttpContractTests(unittest.TestCase):
         self.assertIn('<option value="1000">1 сек</option>', html)
         self.assertIn('<option value="cmd">CMD (Windows 11)</option>', html)
         self.assertIn(
-            'href="https://www.donationalerts.com/r/monsterhairy"', html
+            'href="https://dalink.to/monsterhairy"', html
         )
         self.assertNotIn('<option value="200">0.2 сек</option>', html)
         self.assertNotIn('<option value="500">0.5 сек</option>', html)
