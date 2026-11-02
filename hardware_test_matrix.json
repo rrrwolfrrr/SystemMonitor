@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "description": "Non-invasive real-hardware validation matrix. Values are observations, not hard-coded fixtures.",
+  "cases": [
+    {"id": "amd_cpu", "hardware": "CPU", "types": ["Temperature", "Clock", "Load", "Voltage"], "zero": ["Load"]},
+    {"id": "intel_cpu", "hardware": "CPU", "types": ["Temperature", "Clock", "Load"], "zero": ["Load"]},
+    {"id": "nvidia_gpu", "hardware": "GPU", "types": ["Temperature", "Load", "Clock", "Data"], "zero": ["Load"]},
+    {"id": "amd_gpu", "hardware": "GPU", "types": ["Temperature", "Load", "Clock"], "zero": ["Load"]},
+    {"id": "nvme_storage", "hardware": "Storage", "types": ["Temperature"], "missing_temperature": "keep_disk"},
+    {"id": "superio", "hardware": "Motherboard", "types": ["Temperature", "Voltage", "Fan"], "zero": ["Fan"]},
+    {"id": "unknown_vendor_sensor", "hardware": "Any", "types": ["unknown"], "must_preserve": true}
+  ]
+}

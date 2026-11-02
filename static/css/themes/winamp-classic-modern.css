@@ -1,0 +1,839 @@
+/* ============================================================
+   WINAMP CLASSIC MODERN THEME
+   Вдохновлено скином Winamp Classic Modern by Victhor
+   Ностальгический стиль музыкального плеера
+   ============================================================ */
+
+/* ---------- Корневые переменные ---------- */
+:root {
+    --bg-color: #2d2d2d !important;
+    --card-bg: #3a3a3a !important;
+    --text-color: #e8e8e8 !important;
+    --border-light: #4a4a4a !important;
+    --border-dark: #2a2a2a !important;
+    --title-color: #00cc66 !important;
+    --accent-color: #00cc66 !important;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+    --font-family: 'Tahoma', 'Arial', sans-serif !important;
+    --header-bg: #2d2d2d !important;
+    --header-text: #00cc66 !important;
+    --grid-opacity: 0.05 !important;
+    --snap-transition: 0.15s ease-out !important;
+}
+
+/* ---------- Глобальные стили ---------- */
+body {
+    background: #1a1a1a !important;
+    color: #e8e8e8 !important;
+    font-family: 'Tahoma', 'Arial', sans-serif !important;
+    font-size: 12px !important;
+    padding: 16px !important;
+    margin: 0 !important;
+    /* Лёгкая текстура для фона */
+    background-image: 
+        radial-gradient(circle at 30% 40%, rgba(0, 204, 102, 0.03) 0%, transparent 60%),
+        radial-gradient(circle at 70% 80%, rgba(0, 204, 102, 0.02) 0%, transparent 50%) !important;
+}
+
+/* ---------- Окно дашборда ---------- */
+.window {
+    background: #2d2d2d !important;
+    border: 1px solid #4a4a4a !important;
+    border-radius: 0 !important;
+    padding: 2px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* ---------- Заголовок окна (стиль Winamp) ---------- */
+.window-title {
+    background: #2d2d2d !important;
+    color: #00cc66 !important;
+    border-bottom: 1px solid #4a4a4a !important;
+    font-family: 'Tahoma', 'Arial', sans-serif !important;
+    font-size: 13px !important;
+    font-weight: bold !important;
+    padding: 6px 10px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    text-shadow: 0 0 8px rgba(0, 204, 102, 0.3) !important;
+    letter-spacing: 0.5px !important;
+}
+
+/* Иконка "плей" в заголовке */
+.window-title::before {
+    content: "▶ " !important;
+    color: #00cc66 !important;
+    font-size: 14px !important;
+    display: inline-block !important;
+    margin-right: 4px !important;
+}
+
+.window-title .controls select,
+.window-title .controls input[type="range"],
+.window-title .controls button {
+    background: #3a3a3a !important;
+    border: 1px solid #4a4a4a !important;
+    border-radius: 0 !important;
+    color: #e8e8e8 !important;
+    font-family: 'Tahoma', 'Arial', sans-serif !important;
+    font-size: 11px !important;
+    padding: 3px 8px !important;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3) !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+
+.window-title .controls select:hover,
+.window-title .controls input[type="range"]:hover,
+.window-title .controls button:hover {
+    background: #444444 !important;
+    border-color: #00cc66 !important;
+    color: #00cc66 !important;
+}
+
+.window-title .controls select:active,
+.window-title .controls input[type="range"]:active,
+.window-title .controls button:active {
+    background: #222222 !important;
+}
+
+.window-title .controls input[type="range"] {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    background: #1a1a1a !important;
+    border: 1px solid #4a4a4a !important;
+    height: 4px !important;
+    padding: 0 !important;
+    width: 70px !important;
+    border-radius: 0 !important;
+}
+
+.window-title .controls input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    background: #00cc66 !important;
+    border: 1px solid #00cc66 !important;
+    border-radius: 0 !important;
+    width: 10px !important;
+    height: 16px !important;
+    box-shadow: 0 0 8px rgba(0, 204, 102, 0.4) !important;
+    cursor: pointer !important;
+}
+
+.window-title .controls input[type="range"]::-moz-range-thumb {
+    background: #00cc66 !important;
+    border: 1px solid #00cc66 !important;
+    border-radius: 0 !important;
+    width: 10px !important;
+    height: 16px !important;
+    box-shadow: 0 0 8px rgba(0, 204, 102, 0.4) !important;
+    cursor: pointer !important;
+}
+
+.window-title .btn-win {
+    background: #3a3a3a !important;
+    border: 1px solid #4a4a4a !important;
+    border-radius: 0 !important;
+    color: #e8e8e8 !important;
+    font-family: 'Tahoma', 'Arial', sans-serif !important;
+    font-size: 11px !important;
+    width: 22px !important;
+    height: 22px !important;
+    line-height: 20px !important;
+    text-align: center !important;
+    padding: 0 !important;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3) !important;
+    transition: all 0.15s !important;
+}
+
+.window-title .btn-win:hover {
+    background: #444444 !important;
+    border-color: #00cc66 !important;
+    color: #00cc66 !important;
+}
+
+.window-title .btn-win:active {
+    background: #222222 !important;
+}
+
+/* ---------- Тело окна ---------- */
+.window-body {
+    background: #2d2d2d !important;
+    border: none !important;
+    padding: 10px !important;
+}
+
+/* ---------- Сетка ---------- */
+.grid {
+    background: #2d2d2d !important;
+    border: 1px solid #4a4a4a !important;
+    border-radius: 0 !important;
+    padding: 4px !important;
+    min-height: 500px !important;
+    box-shadow: inset 0 0 16px rgba(0,0,0,0.3) !important;
+    overflow: auto !important;
+}
+
+.grid canvas.grid-overlay {
+    opacity: 0.05 !important;
+}
+
+/* ---------- Карточки ---------- */
+.card {
+    background: #3a3a3a !important;
+    border: 1px solid #4a4a4a !important;
+    border-radius: 0 !important;
+    padding: 8px 10px !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4) !important;
+    color: #e8e8e8 !important;
+    font-family: 'Tahoma', 'Arial', sans-serif !important;
+    font-size: 12px !important;
+    cursor: grab !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+    min-width: 140px !important;
+    min-height: 70px !important;
+}
+
+.card:hover {
+    border-color: #00cc66 !important;
+    box-shadow: 0 4px 12px rgba(0, 204, 102, 0.15) !important;
+}
+
+.card.dragging {
+    opacity: 0.7 !important;
+    cursor: grabbing !important;
+    z-index: 1000 !important;
+    border-color: #00cc66 !important;
+    box-shadow: 0 8px 24px rgba(0, 204, 102, 0.2) !important;
+}
+
+.card.ghost {
+    opacity: 0.3 !important;
+    z-index: 999 !important;
+    pointer-events: none !important;
+}
+
+.card.selected {
+    outline: 2px solid #00cc66 !important;
+    outline-offset: 2px !important;
+    border-color: #00cc66 !important;
+}
+
+.card.locked {
+    cursor: default !important;
+}
+.card.locked .card-title {
+    cursor: default !important;
+}
+.card.locked .resize-handle {
+    display: none !important;
+}
+
+/* ---------- Заголовок карточки (в стиле Winamp) ---------- */
+.card-title {
+    font-weight: bold !important;
+    font-size: 13px !important;
+    font-family: 'Tahoma', 'Arial', sans-serif !important;
+    border-bottom: 1px solid #4a4a4a !important;
+    padding-bottom: 4px !important;
+    margin-bottom: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    color: #00cc66 !important;
+    cursor: grab !important;
+    flex-shrink: 0 !important;
+    text-shadow: 0 0 6px rgba(0, 204, 102, 0.2) !important;
+}
+
+.card-title .icon {
+    font-size: 14px !important;
+    color: #00cc66 !important;
+}
+
+.card-title:active {
+    cursor: grabbing !important;
+}
+
+/* ---------- Содержимое карточки ---------- */
+.card-value {
+    font-size: 12px !important;
+    font-weight: normal !important;
+    padding: 2px 0 !important;
+    flex-grow: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+    overflow-y: auto !important;
+    color: #e8e8e8 !important;
+}
+
+/* ---------- Ручки изменения размера ---------- */
+.resize-handle {
+    position: absolute !important;
+    width: 12px !important;
+    height: 12px !important;
+    background: #3a3a3a !important;
+    border: 1px solid #4a4a4a !important;
+    z-index: 20 !important;
+    opacity: 0.5 !important;
+    transition: all 0.15s !important;
+}
+
+.resize-handle:hover {
+    background: #00cc66 !important;
+    border-color: #00cc66 !important;
+    opacity: 1 !important;
+}
+
+.resize-handle.nw { top: -6px; left: -6px; cursor: nw-resize; }
+.resize-handle.n { top: -6px; left: 50%; transform: translateX(-50%); cursor: n-resize; }
+.resize-handle.ne { top: -6px; right: -6px; cursor: ne-resize; }
+.resize-handle.e { top: 50%; right: -6px; transform: translateY(-50%); cursor: e-resize; }
+.resize-handle.se { bottom: -6px; right: -6px; cursor: se-resize; }
+.resize-handle.s { bottom: -6px; left: 50%; transform: translateX(-50%); cursor: s-resize; }
+.resize-handle.sw { bottom: -6px; left: -6px; cursor: sw-resize; }
+.resize-handle.w { top: 50%; left: -6px; transform: translateY(-50%); cursor: w-resize; }
+
+/* ---------- Прогресс-бар (в стиле Winamp) ---------- */
+.progress-bar {
+    width: 100% !important;
+    height: 8px !important;
+    background: #1a1a1a !important;
+    border: 1px solid #4a4a4a !important;
+    margin-top: 4px !important;
+    position: relative !important;
+    flex-shrink: 0 !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+}
+
+.progress-bar .fill {
+    height: 100% !important;
+    background: linear-gradient(90deg, #00cc66, #66ff99) !important;
+    border: none !important;
+    border-radius: 0 !important;
+    position: relative !important;
+    box-shadow: 0 0 10px rgba(0, 204, 102, 0.3) !important;
+    transition: width 0.3s ease !important;
+}
+
+/* "Бегунок" прогресс-бара (стиль Winamp) */
+.progress-bar .fill::after {
+    content: '' !important;
+    position: absolute !important;
+    right: -4px !important;
+    top: -3px !important;
+    width: 10px !important;
+    height: 14px !important;
+    background: #00cc66 !important;
+    border: 1px solid #4a4a4a !important;
+    box-shadow: 0 0 8px rgba(0, 204, 102, 0.4) !important;
+    border-radius: 0 !important;
+}
+
+.progress-bar .fill.warning {
+    background: linear-gradient(90deg, #ff8800, #ffcc44) !important;
+    box-shadow: 0 0 10px rgba(255, 136, 0, 0.3) !important;
+}
+.progress-bar .fill.warning::after {
+    background: #ff8800 !important;
+}
+
+.progress-bar .fill.danger {
+    background: linear-gradient(90deg, #ff4444, #ff6666) !important;
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.3) !important;
+}
+.progress-bar .fill.danger::after {
+    background: #ff4444 !important;
+}
+
+/* ---------- Индикаторы температуры ---------- */
+.temp-indicator {
+    transition: color 0.3s !important;
+}
+.temp-indicator.warning {
+    color: #ff8800 !important;
+}
+.temp-indicator.danger {
+    color: #ff4444 !important;
+    animation: blink 0.6s infinite alternate !important;
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    100% { opacity: 0.4; }
+}
+
+/* ---------- Диски и вентиляторы ---------- */
+.card-disk {
+    font-size: 12px !important;
+    padding: 2px 0 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    border-bottom: 1px dotted #4a4a4a !important;
+}
+.card-disk .name {
+    font-weight: bold !important;
+    color: #e8e8e8 !important;
+}
+.card-disk .temp {
+    color: #00cc66 !important;
+}
+
+.fans-list {
+    font-size: 12px !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4px 10px !important;
+}
+.fans-list span {
+    background: #2d2d2d !important;
+    padding: 2px 8px !important;
+    border: 1px solid #4a4a4a !important;
+    color: #e8e8e8 !important;
+    border-radius: 0 !important;
+    font-size: 11px !important;
+}
+.fans-list span::before {
+    content: "🌀 " !important;
+    color: #00cc66 !important;
+}
+
+/* ---------- Строки данных ---------- */
+.line-item {
+    display: flex !important;
+    justify-content: space-between !important;
+    font-size: 12px !important;
+    border-bottom: 1px dotted #4a4a4a !important;
+    padding: 2px 0 !important;
+}
+.line-item .label {
+    color: #aaaaaa !important;
+}
+.line-item .value {
+    font-weight: bold !important;
+    color: #e8e8e8 !important;
+    font-family: 'Courier New', monospace !important;
+}
+
+/* ---------- Подвал (стиль строки состояния Winamp) ---------- */
+.footer {
+    margin-top: 16px !important;
+    text-align: center !important;
+    font-size: 11px !important;
+    font-family: 'Tahoma', 'Arial', sans-serif !important;
+    color: #666666 !important;
+    border-top: 1px solid #4a4a4a !important;
+    padding-top: 8px !important;
+    background: #2d2d2d !important;
+}
+
+.footer a {
+    color: #00cc66 !important;
+    text-decoration: none !important;
+}
+.footer a:hover {
+    color: #66ff99 !important;
+    text-decoration: underline !important;
+}
+
+/* ---------- Время обновления ---------- */
+.update-time {
+    background: #1a1a1a !important;
+    color: #00cc66 !important;
+    border: 1px solid #4a4a4a !important;
+    padding: 2px 12px !important;
+    font-family: 'Courier New', monospace !important;
+    font-size: 11px !important;
+    border-radius: 0 !important;
+    box-shadow: inset 0 0 6px rgba(0, 204, 102, 0.1) !important;
+}
+
+/* ---------- Кнопки настроек и справки ---------- */
+.settings-btn,
+.help-btn {
+    background: #3a3a3a !important;
+    border: 1px solid #4a4a4a !important;
+    color: #e8e8e8 !important;
+    font-size: 14px !important;
+    width: 26px !important;
+    height: 26px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    transition: all 0.15s !important;
+}
+
+.settings-btn:hover,
+.help-btn:hover {
+    background: #444444 !important;
+    border-color: #00cc66 !important;
+    color: #00cc66 !important;
+}
+
+/* ---------- Панель настроек ---------- */
+.settings-panel {
+    background: #2d2d2d !important;
+    border: 2px solid #4a4a4a !important;
+    border-radius: 0 !important;
+    color: #e8e8e8 !important;
+    font-family: 'Tahoma', 'Arial', sans-serif !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+    padding: 20px !important;
+}
+.settings-panel .panel-title {
+    color: #00cc66 !important;
+    font-weight: bold !important;
+    font-size: 14px !important;
+    border-bottom: 1px solid #4a4a4a !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 12px !important;
+    text-shadow: 0 0 8px rgba(0, 204, 102, 0.2) !important;
+}
+.settings-panel label {
+    color: #e8e8e8 !important;
+    font-size: 12px !important;
+    display: block !important;
+    margin: 4px 0 !important;
+}
+.settings-panel input[type="checkbox"] {
+    accent-color: #00cc66 !important;
+    margin-right: 6px !important;
+}
+.settings-panel .close-btn {
+    background: #3a3a3a !important;
+    border: 1px solid #4a4a4a !important;
+    color: #e8e8e8 !important;
+    padding: 0 10px !important;
+    float: right !important;
+    cursor: pointer !important;
+    border-radius: 0 !important;
+    transition: all 0.15s !important;
+}
+.settings-panel .close-btn:hover {
+    background: #444444 !important;
+    border-color: #00cc66 !important;
+    color: #00cc66 !important;
+}
+
+/* ---------- Панель справки ---------- */
+.help-panel {
+    background: #2d2d2d !important;
+    border: 2px solid #4a4a4a !important;
+    border-radius: 0 !important;
+    color: #e8e8e8 !important;
+    font-family: 'Tahoma', 'Arial', sans-serif !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+    padding: 20px !important;
+}
+.help-panel .panel-title {
+    color: #00cc66 !important;
+    font-weight: bold !important;
+    font-size: 14px !important;
+    border-bottom: 1px solid #4a4a4a !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 12px !important;
+}
+.help-panel .close-btn {
+    background: #3a3a3a !important;
+    border: 1px solid #4a4a4a !important;
+    color: #e8e8e8 !important;
+    padding: 0 10px !important;
+    float: right !important;
+    cursor: pointer !important;
+    border-radius: 0 !important;
+    transition: all 0.15s !important;
+}
+.help-panel .close-btn:hover {
+    background: #444444 !important;
+    border-color: #00cc66 !important;
+    color: #00cc66 !important;
+}
+.help-panel li:before {
+    color: #00cc66 !important;
+}
+
+/* ---------- Панель логов ---------- */
+.logs-panel {
+    background: #2d2d2d !important;
+    border: 2px solid #4a4a4a !important;
+    border-radius: 0 !important;
+    color: #e8e8e8 !important;
+    font-family: 'Tahoma', 'Arial', sans-serif !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6) !important;
+    padding: 20px !important;
+}
+.logs-panel .panel-title {
+    color: #00cc66 !important;
+    font-weight: bold !important;
+    font-size: 14px !important;
+    border-bottom: 1px solid #4a4a4a !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 12px !important;
+}
+.logs-panel .close-btn {
+    background: #3a3a3a !important;
+    border: 1px solid #4a4a4a !important;
+    color: #e8e8e8 !important;
+    padding: 0 10px !important;
+    float: right !important;
+    cursor: pointer !important;
+    border-radius: 0 !important;
+    transition: all 0.15s !important;
+}
+.logs-panel .close-btn:hover {
+    background: #444444 !important;
+    border-color: #00cc66 !important;
+    color: #00cc66 !important;
+}
+.logs-panel .logs-content {
+    background: #1a1a1a !important;
+    border: 1px solid #4a4a4a !important;
+    border-radius: 0 !important;
+    color: #e8e8e8 !important;
+    font-family: 'Courier New', monospace !important;
+    font-size: 11px !important;
+    padding: 8px !important;
+}
+.logs-panel .log-entry {
+    border-bottom: 1px dotted #4a4a4a !important;
+    padding: 2px 0 !important;
+}
+.logs-panel .log-entry .log-time {
+    color: #666666 !important;
+}
+.logs-panel .log-entry .log-type.info {
+    color: #00cc66 !important;
+}
+.logs-panel .log-entry .log-type.warning {
+    color: #ff8800 !important;
+}
+.logs-panel .log-entry .log-type.error {
+    color: #ff4444 !important;
+}
+.logs-panel .log-entry .log-type.success {
+    color: #66ff99 !important;
+}
+.logs-panel .logs-actions button {
+    background: #3a3a3a !important;
+    border: 1px solid #4a4a4a !important;
+    color: #e8e8e8 !important;
+    padding: 4px 14px !important;
+    cursor: pointer !important;
+    border-radius: 0 !important;
+    transition: all 0.15s !important;
+}
+.logs-panel .logs-actions button:hover {
+    background: #444444 !important;
+    border-color: #00cc66 !important;
+    color: #00cc66 !important;
+}
+
+/* ---------- Палитра цветов ---------- */
+.color-picker-popup {
+    background: #2d2d2d !important;
+    border: 2px solid #4a4a4a !important;
+    border-radius: 0 !important;
+    padding: 12px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+}
+.color-picker-popup .color-swatch {
+    border: 1px solid #4a4a4a !important;
+    border-radius: 0 !important;
+    transition: all 0.15s !important;
+}
+.color-picker-popup .color-swatch:hover {
+    border-color: #00cc66 !important;
+    transform: scale(1.05) !important;
+}
+.color-picker-popup .eyedropper-btn {
+    background: #3a3a3a !important;
+    border: 1px solid #4a4a4a !important;
+    color: #e8e8e8 !important;
+    padding: 4px !important;
+    border-radius: 0 !important;
+    transition: all 0.15s !important;
+}
+.color-picker-popup .eyedropper-btn:hover {
+    background: #444444 !important;
+    border-color: #00cc66 !important;
+    color: #00cc66 !important;
+}
+
+/* ---------- Выпадающее меню стилей ---------- */
+.style-switch .dropdown-btn {
+    background: #3a3a3a !important;
+    border: 1px solid #4a4a4a !important;
+    color: #e8e8e8 !important;
+    font-family: 'Tahoma', 'Arial', sans-serif !important;
+    padding: 3px 8px !important;
+    border-radius: 0 !important;
+    cursor: pointer !important;
+    transition: all 0.15s !important;
+}
+.style-switch .dropdown-btn:hover {
+    background: #444444 !important;
+    border-color: #00cc66 !important;
+    color: #00cc66 !important;
+}
+.style-switch .dropdown-content {
+    background: #2d2d2d !important;
+    border: 1px solid #4a4a4a !important;
+    border-radius: 0 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+.style-switch .dropdown-content button {
+    background: #2d2d2d !important;
+    border: none !important;
+    border-bottom: 1px solid #4a4a4a !important;
+    color: #e8e8e8 !important;
+    padding: 6px 12px !important;
+    text-align: left !important;
+    width: 100% !important;
+    font-family: 'Tahoma', 'Arial', sans-serif !important;
+    font-size: 11px !important;
+    cursor: pointer !important;
+    transition: all 0.15s !important;
+}
+.style-switch .dropdown-content button:hover {
+    background: #3a3a3a !important;
+    color: #00cc66 !important;
+}
+.style-switch .dropdown-content button.active {
+    background: #00cc66 !important;
+    color: #1a1a1a !important;
+}
+
+/* ---------- Ручка изменения размера сетки ---------- */
+.grid-resize-handle {
+    background: linear-gradient(135deg, transparent 50%, #4a4a4a 50%, #4a4a4a 55%, transparent 55%) !important;
+    background-size: 16px 16px !important;
+    background-position: bottom right !important;
+    background-repeat: no-repeat !important;
+    border: none !important;
+    border-radius: 0 !important;
+    opacity: 0.6 !important;
+    transition: opacity 0.15s !important;
+}
+.grid-resize-handle:hover {
+    opacity: 1 !important;
+}
+
+/* ---------- Тултип координат ---------- */
+.coords-tooltip {
+    background: #1a1a1a !important;
+    border: 1px solid #4a4a4a !important;
+    color: #00cc66 !important;
+    font-family: 'Courier New', monospace !important;
+    font-size: 11px !important;
+    padding: 2px 8px !important;
+    border-radius: 0 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* ---------- Дополнительные элементы ---------- */
+input[type="file"] {
+    background: #3a3a3a !important;
+    border: 1px solid #4a4a4a !important;
+    color: #e8e8e8 !important;
+    font-family: 'Tahoma', 'Arial', sans-serif !important;
+    font-size: 11px !important;
+    padding: 2px 6px !important;
+    border-radius: 0 !important;
+}
+
+/* ---------- Полосы прокрутки (стиль Winamp) ---------- */
+::-webkit-scrollbar {
+    width: 12px !important;
+    height: 12px !important;
+    background: #2d2d2d !important;
+}
+::-webkit-scrollbar-track {
+    background: #2d2d2d !important;
+    border: 1px solid #4a4a4a !important;
+}
+::-webkit-scrollbar-thumb {
+    background: #3a3a3a !important;
+    border: 1px solid #4a4a4a !important;
+    border-radius: 0 !important;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #4a4a4a !important;
+    border-color: #00cc66 !important;
+}
+::-webkit-scrollbar-button {
+    background: #3a3a3a !important;
+    border: 1px solid #4a4a4a !important;
+    width: 12px !important;
+    height: 12px !important;
+}
+::-webkit-scrollbar-button:hover {
+    background: #4a4a4a !important;
+    border-color: #00cc66 !important;
+}
+
+/* Firefox */
+* {
+    scrollbar-color: #3a3a3a #2d2d2d !important;
+    scrollbar-width: thin !important;
+}
+
+/* ---------- Адаптивность ---------- */
+@media (max-width: 600px) {
+    .window-title {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    .window-title .controls {
+        justify-content: space-between !important;
+    }
+    .window-title .controls input[type="range"] {
+        width: 50px !important;
+    }
+    .settings-panel,
+    .help-panel,
+    .logs-panel {
+        min-width: 90% !important;
+        padding: 16px !important;
+    }
+    .card {
+        min-height: 50px !important;
+        padding: 6px !important;
+    }
+    .card-title {
+        font-size: 11px !important;
+    }
+    .card-value {
+        font-size: 11px !important;
+    }
+    .line-item {
+        font-size: 11px !important;
+    }
+    .progress-bar {
+        height: 6px !important;
+    }
+    .resize-handle {
+        width: 10px !important;
+        height: 10px !important;
+    }
+    .color-picker-popup {
+        grid-template-columns: repeat(6, 24px) !important;
+    }
+    .color-picker-popup .color-swatch {
+        width: 24px !important;
+        height: 24px !important;
+    }
+    .grid-resize-handle {
+        width: 16px !important;
+        height: 16px !important;
+        background-size: 12px 12px !important;
+    }
+}

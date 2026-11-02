@@ -1,0 +1,313 @@
+/* ===== Тема DOS для системного монитора ===== */
+/* Загрузите этот файл через кнопку "📁 Загрузить CSS" в дашборде */
+
+:root {
+    --bg-color: #000000 !important;
+    --card-bg: #000000 !important;
+    --text-color: #00ff00 !important;
+    --border-light: #00ff00 !important;
+    --border-dark: #00ff00 !important;
+    --title-color: #00ff00 !important;
+    --accent-color: #00ff00 !important;
+    --shadow: none !important;
+    --font-family: 'Courier New', 'MS Sans Serif', monospace !important;
+    --header-bg: #000000 !important;
+    --header-text: #00ff00 !important;
+    --grid-opacity: 0.3 !important;
+}
+
+body {
+    background: #000000 !important;
+    color: #00ff00 !important;
+}
+
+.window {
+    background-color: #000000 !important;
+    border: 1px solid #00ff00 !important;
+    padding: 2px !important;
+}
+
+.window-title {
+    background-color: #000000 !important;
+    color: #00ff00 !important;
+    border-bottom: 1px solid #00ff00 !important;
+    font-family: 'Courier New', monospace !important;
+}
+
+.window-title .controls select,
+.window-title .controls input[type="range"],
+.window-title .controls button {
+    background: #000000 !important;
+    border: 1px solid #00ff00 !important;
+    color: #00ff00 !important;
+    font-family: 'Courier New', monospace !important;
+}
+
+.window-title .controls input[type="range"] {
+    background: #000000 !important;
+    border: 1px solid #00ff00 !important;
+}
+
+.window-title .controls input[type="range"]::-webkit-slider-thumb {
+    background: #00ff00 !important;
+    border: 1px solid #00ff00 !important;
+}
+
+.window-title .controls input[type="range"]::-moz-range-thumb {
+    background: #00ff00 !important;
+    border: 1px solid #00ff00 !important;
+}
+
+.window-title .btn-win {
+    background: #000000 !important;
+    border: 1px solid #00ff00 !important;
+    color: #00ff00 !important;
+}
+
+.window-body {
+    background: #000000 !important;
+    border: 1px solid #00ff00 !important;
+}
+
+.grid {
+    background: #000000 !important;
+    border: 1px solid #00ff00 !important;
+}
+
+.grid canvas.grid-overlay {
+    opacity: 0.3 !important;
+}
+
+.card {
+    background: #000000 !important;
+    border: 1px solid #00ff00 !important;
+    box-shadow: none !important;
+    color: #00ff00 !important;
+}
+
+.card-title {
+    color: #00ff00 !important;
+    border-bottom: 1px solid #00ff00 !important;
+}
+
+.card-value {
+    color: #00ff00 !important;
+}
+
+.progress-bar {
+    background: #000000 !important;
+    border: 1px solid #00ff00 !important;
+}
+
+.progress-bar .fill {
+    background: #00ff00 !important;
+}
+
+.line-item .label {
+    color: #00ff00 !important;
+}
+
+.line-item {
+    border-bottom: 1px dotted #00ff00 !important;
+}
+
+.fans-list span {
+    background: #000000 !important;
+    border: 1px solid #00ff00 !important;
+    color: #00ff00 !important;
+}
+
+.card-disk .name {
+    color: #00ff00 !important;
+}
+
+.card-disk .temp {
+    color: #00ff00 !important;
+}
+
+.footer {
+    color: #00ff00 !important;
+    text-shadow: none !important;
+}
+
+.footer a {
+    color: #00ff00 !important;
+}
+
+.update-time {
+    background: #000000 !important;
+    color: #00ff00 !important;
+    border: 1px solid #00ff00 !important;
+}
+
+.settings-btn, .help-btn {
+    color: #00ff00 !important;
+}
+
+.settings-panel {
+    background: #000000 !important;
+    border: 1px solid #00ff00 !important;
+    color: #00ff00 !important;
+}
+
+.settings-panel .panel-title {
+    color: #00ff00 !important;
+}
+
+.settings-panel label {
+    color: #00ff00 !important;
+}
+
+.settings-panel input[type="checkbox"] {
+    accent-color: #00ff00 !important;
+}
+
+.settings-panel .close-btn {
+    background: #000000 !important;
+    border: 1px solid #00ff00 !important;
+    color: #00ff00 !important;
+}
+
+.help-panel {
+    background: #000000 !important;
+    border: 1px solid #00ff00 !important;
+    color: #00ff00 !important;
+}
+
+.help-panel .panel-title {
+    color: #00ff00 !important;
+}
+
+.help-panel .close-btn {
+    background: #000000 !important;
+    border: 1px solid #00ff00 !important;
+    color: #00ff00 !important;
+}
+
+.help-panel li:before {
+    color: #00ff00 !important;
+}
+
+.logs-panel {
+    background: #000000 !important;
+    border: 1px solid #00ff00 !important;
+    color: #00ff00 !important;
+}
+
+.logs-panel .panel-title {
+    color: #00ff00 !important;
+}
+
+.logs-panel .close-btn {
+    background: #000000 !important;
+    border: 1px solid #00ff00 !important;
+    color: #00ff00 !important;
+}
+
+.logs-panel .logs-content {
+    background: #000000 !important;
+    border: 1px solid #00ff00 !important;
+    color: #00ff00 !important;
+}
+
+.logs-panel .log-entry {
+    border-bottom: 1px dotted #00ff00 !important;
+    color: #00ff00 !important;
+}
+
+.logs-panel .log-entry .log-time {
+    color: #00ff00 !important;
+}
+
+.logs-panel .log-entry .log-type.info {
+    color: #00ff00 !important;
+}
+
+.logs-panel .log-entry .log-type.warning {
+    color: #ffff00 !important;
+}
+
+.logs-panel .log-entry .log-type.error {
+    color: #ff0000 !important;
+}
+
+.logs-panel .log-entry .log-type.success {
+    color: #00ff00 !important;
+}
+
+.logs-panel .logs-actions button {
+    background: #000000 !important;
+    border: 1px solid #00ff00 !important;
+    color: #00ff00 !important;
+}
+
+.color-picker-popup {
+    background: #000000 !important;
+    border: 1px solid #00ff00 !important;
+}
+
+.color-picker-popup .color-swatch {
+    border: 1px solid #00ff00 !important;
+}
+
+.color-picker-popup .eyedropper-btn {
+    background: #000000 !important;
+    border: 1px solid #00ff00 !important;
+    color: #00ff00 !important;
+}
+
+.style-switch .dropdown-btn {
+    background: #000000 !important;
+    border: 1px solid #00ff00 !important;
+    color: #00ff00 !important;
+}
+
+.style-switch .dropdown-content {
+    background: #000000 !important;
+    border: 1px solid #00ff00 !important;
+}
+
+.style-switch .dropdown-content button {
+    background: #000000 !important;
+    border-bottom: 1px solid #00ff00 !important;
+    color: #00ff00 !important;
+}
+
+.style-switch .dropdown-content button:hover {
+    background: #003300 !important;
+}
+
+.style-switch .dropdown-content button.active {
+    background: #00ff00 !important;
+    color: #000000 !important;
+}
+
+.grid-resize-handle {
+    background: linear-gradient(135deg, transparent 50%, #00ff00 50%, #00ff00 55%, transparent 55%) !important;
+    background-size: 16px 16px !important;
+    background-position: bottom right !important;
+    background-repeat: no-repeat !important;
+}
+
+.coords-tooltip {
+    background: #000000 !important;
+    border: 1px solid #00ff00 !important;
+    color: #00ff00 !important;
+}
+
+/* Дополнительные элементы */
+.window-title .controls select option {
+    background: #000000 !important;
+    color: #00ff00 !important;
+}
+
+.window-title .controls select {
+    background: #000000 !important;
+    color: #00ff00 !important;
+}
+
+input[type="file"] {
+    background: #000000 !important;
+    color: #00ff00 !important;
+    border: 1px solid #00ff00 !important;
+}

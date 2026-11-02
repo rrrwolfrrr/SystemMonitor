@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SystemMonitor — Презентация</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&display=swap">
+<style>
+:root{
+  --desktop-bg:#008080;
+  --win-bg:#c0c0c0;
+  --win-light:#ffffff;
+  --win-dark:#808080;
+  --win-darker:#404040;
+  --title-bg:#000080;
+  --title-bg2:#1084d0;
+  --title-text:#ffffff;
+  --text:#000;
+  --link:#0000cc;
+  --ok:#007000;
+  --accent:#c00000;
+}
+body.dark{
+  --desktop-bg:#16162a;
+  --win-bg:#2b2b3d;
+  --win-light:#55557a;
+  --win-dark:#1a1a2c;
+  --win-darker:#0d0d18;
+  --title-bg:#3434a8;
+  --title-bg2:#5050d0;
+  --title-text:#fff;
+  --text:#e8e8f0;
+  --link:#a0a0ff;
+  --ok:#70d070;
+  --accent:#ff7070;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:var(--desktop-bg);
+  color:var(--text);
+  font-family:Tahoma,'Segoe UI',Verdana,sans-serif;
+  font-size:16px;line-height:1.6;
+  min-height:100vh;
+  padding:20px 14px 110px;
+  transition:background .3s;
+}
+h1,h2,h3{font-family:'VT323',Consolas,monospace;font-weight:normal;letter-spacing:.5px}
+code{background:rgba(0,0,0,.08);padding:2px 6px;border-radius:3px;font-family:Consolas,monospace;font-size:13px}
+
+/* ===== BIOS-ЗАСТАВКА (центрированная) ===== */
+#bootScreen{
+  position:fixed;inset:0;background:#000;color:#0f0;
+  font-family:'VT323',Consolas,monospace;font-size:20px;
+  z-index:9999;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:opacity .4s;
+}
+#bootText{white-space:pre-wrap;width:100%;max-width:560px;text-align:left;padding:0 20px}
+.boot-bar{width:100%;max-width:560px;height:22px;border:2px solid #0f0;margin-top:24px}
+.boot-fill{height:100%;width:0;background:repeating-linear-gradient(45deg,#0f0 0 10px,transparent 10px 20px);transition:width .2s}
+.boot-skip{margin-top:14px;color:#090;font-size:15px}
+
+/* ===== ОКНА ===== */
+.win{
+  background:var(--win-bg);
+  border:2px solid;
+  border-color:var(--win-light) var(--win-darker) var(--win-darker) var(--win-light);
+  box-shadow:3px 3px 0 rgba(0,0,0,.45);
+}
+.win-title{
+  background:linear-gradient(90deg,var(--title-bg),var(--title-bg2));
+  color:var(--title-text);
+  padding:6px 12px;display:flex;align-items:center;gap:8px;
+  font-family:'VT323',monospace;font-size:21px;user-select:none;
+}
+.win-btns{margin-left:auto;display:flex;gap:3px}
+.win-btns span{
+  width:21px;height:19px;background:var(--win-bg);color:#000;
+  border:2px solid;border-color:var(--win-light) var(--win-darker) var(--win-darker) var(--win-light);
+  font-size:11px;font-family:monospace;display:flex;align-items:center;justify-content:center;
+}
+.win-body{padding:22px}
+
+/* ===== СЛАЙДЫ ===== */
+.deck{max-width:980px;margin:0 auto}
+.slide{display:none}
+.slide.active{display:block;animation:slideIn .45s ease}
+@keyframes slideIn{from{opacity:0;transform:translateX(36px)}to{opacity:1;transform:none}}
+.slide h2{font-size:34px;margin-bottom:12px;border-bottom:2px solid var(--win-dark);padding-bottom:8px}
+.slide h3{font-size:23px;color:var(--link);margin:14px 0 6px}
+.slide p{margin:8px 0}
+.slide ul{margin:8px 0 8px 24px}
+.slide li{margin:5px 0}
+
+/* Титул */
+.hero{text-align:center;padding:40px 20px}
+.hero-logo{font-size:70px;animation:pulse 2.2s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.09)}}
+.hero h1{
+  font-family:'Press Start 2P','VT323',monospace;
+  font-size:clamp(20px,4.6vw,40px);
+  color:var(--title-text);
+  text-shadow:3px 3px 0 #000;
+  margin:14px 0;
+}
+.hero .sub{font-family:'VT323',monospace;font-size:24px}
+
+/* Сетка фишек */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:14px 0}
+.cell{
+  border:2px solid;border-color:var(--win-light) var(--win-darker) var(--win-darker) var(--win-light);
+  padding:12px 14px;font-size:14.5px;background:rgba(255,255,255,.05);
+}
+.cell .ico{font-size:30px;display:block;margin-bottom:6px}
+.cell b{font-size:16px}
+
+/* Мок-карточки дашборда */
+.mock-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.mock-card{
+  border:2px solid;border-color:var(--win-light) var(--win-darker) var(--win-darker) var(--win-light);
+  padding:8px 10px;background:rgba(0,0,0,.06);
+}
+.mc-head{font-family:'VT323',monospace;font-size:17px;background:var(--title-bg);color:#fff;padding:2px 8px;margin:-8px -10px 8px;}
+.mc-big{font-family:'VT323',monospace;font-size:30px;line-height:1}
+.mc-sub{font-size:12px;opacity:.8;margin:2px 0 6px}
+.mc-bar{height:10px;background:rgba(0,0,0,.25);border:1px solid var(--win-dark)}
+.mc-bar i{display:block;height:100%;background:linear-gradient(90deg,#0a0,#ff0 70%,#f00)}
+
+/* Архитектура */
+.arch{display:flex;flex-direction:column;align-items:center;gap:0;margin:16px 0}
+.arch-box{
+  width:100%;max-width:440px;text-align:center;padding:12px 16px;
+  border:2px solid;border-color:var(--win-light) var(--win-darker) var(--win-darker) var(--win-light);
+  background:rgba(255,255,255,.06);font-size:15px;
+}
+.arch-box b{font-family:'VT323',monospace;font-size:21px;display:block}
+.arch-arrow{font-size:22px;color:var(--link);padding:2px 0;font-family:'VT323',monospace;text-align:center}
+.arch-arrow small{display:block;font-size:12px;color:var(--text);opacity:.75;font-family:Tahoma,sans-serif}
+
+/* Заметки */
+.note{padding:10px 14px;margin:12px 0;border:2px dashed var(--win-dark);font-size:14px;background:rgba(255,255,255,.07)}
+.note.ok{border-color:var(--ok)}
+.note.accent{border-color:var(--accent)}
+
+/* Большие цифры */
+.stats{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:16px 0}
+.stat{
+  text-align:center;padding:12px 20px;min-width:130px;
+  border:2px solid;border-color:var(--win-light) var(--win-darker) var(--win-darker) var(--win-light);
+}
+.stat .num{font-family:'VT323',monospace;font-size:40px;line-height:1;color:var(--link)}
+.stat .lbl{font-size:13px}
+
+/* Кнопки */
+.btn{
+  background:var(--win-bg);color:var(--text);
+  border:2px solid;border-color:var(--win-light) var(--win-darker) var(--win-darker) var(--win-light);
+  padding:8px 18px;cursor:pointer;font-family:inherit;font-size:15px;
+  box-shadow:1px 1px 0 rgba(0,0,0,.6);
+}
+.btn:active{border-color:var(--win-darker) var(--win-light) var(--win-light) var(--win-darker);box-shadow:none}
+.btn.big{font-family:'VT323',monospace;font-size:22px;padding:10px 26px}
+
+/* ===== КНОПКА КОФЕ (БОЛЬШАЯ) ===== */
+.coffee-wrap{display:flex;flex-direction:column;align-items:center;margin:28px 0 10px}
+.coffee-btn{
+  position:relative;
+  background:var(--win-bg);color:var(--text);
+  border:3px solid;border-color:var(--win-light) var(--win-darker) var(--win-darker) var(--win-light);
+  box-shadow:3px 3px 0 rgba(0,0,0,.5);
+  padding:16px 34px 12px;cursor:pointer;
+  font-family:'VT323',Consolas,monospace;font-size:26px;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  transition:transform .12s;
+  user-select:none;
+}
+.coffee-btn:hover{transform:translateY(-2px)}
+.coffee-btn:active{
+  border-color:var(--win-darker) var(--win-light) var(--win-light) var(--win-darker);
+  transform:translateY(1px);box-shadow:1px 1px 0 rgba(0,0,0,.5);
+}
+.cup{position:relative;display:inline-block;font-size:54px;line-height:1;margin-top:10px}
+.steam{
+  position:absolute;left:50%;top:-16px;transform:translateX(-50%);
+  display:flex;gap:7px;pointer-events:none;
+}
+.steam i{
+  display:block;width:6px;height:20px;border-radius:50%;
+  background:#9a9a9a;filter:blur(2.5px);opacity:0;
+  animation:steamUp 2.1s infinite ease-in-out;
+}
+.steam i:nth-child(2){animation-delay:.45s;height:26px}
+.steam i:nth-child(3){animation-delay:.9s}
+@keyframes steamUp{
+  0%   {opacity:0;   transform:translateY(6px) scaleX(.7) rotate(-4deg)}
+  30%  {opacity:.75}
+  100% {opacity:0;   transform:translateY(-24px) scaleX(1.5) rotate(6deg)}
+}
+.coffee-caption{margin-top:12px;font-size:15px;opacity:.8;text-align:center}
+
+/* ===== КНОПКА КОФЕ (МАЛЕНЬКАЯ) ===== */
+.coffee-btn-small{
+  position:relative;
+  background:var(--win-bg);color:var(--text);
+  border:2px solid;border-color:var(--win-light) var(--win-darker) var(--win-darker) var(--win-light);
+  box-shadow:2px 2px 0 rgba(0,0,0,.4);
+  padding:8px 16px 6px;cursor:pointer;
+  font-family:'VT323',Consolas,monospace;font-size:16px;
+  display:inline-flex;flex-direction:column;align-items:center;gap:0;
+  transition:transform .12s;
+  user-select:none;
+  margin:22px 0 14px;
+}
+.coffee-btn-small:hover{transform:translateY(-2px)}
+.coffee-btn-small:active{
+  border-color:var(--win-darker) var(--win-light) var(--win-light) var(--win-darker);
+  transform:translateY(1px);box-shadow:1px 1px 0 rgba(0,0,0,.4);
+}
+.coffee-btn-small .cup{font-size:28px;line-height:1;margin-top:4px}
+.coffee-btn-small .steam{top:-10px;gap:4px}
+.coffee-btn-small .steam i{width:4px;height:12px}
+.coffee-btn-small .steam i:nth-child(2){height:16px}
+.coffee-btn-small .coffee-small-caption{font-size:11px;opacity:.75;margin-top:4px}
+
+/* ===== ПАНЕЛЬ УПРАВЛЕНИЯ ===== */
+.controls{
+  position:fixed;left:50%;bottom:14px;transform:translateX(-50%);
+  z-index:900;display:flex;align-items:center;gap:10px;
+  background:var(--win-bg);padding:8px 14px;
+  border:2px solid;border-color:var(--win-light) var(--win-darker) var(--win-darker) var(--win-light);
+  box-shadow:3px 3px 0 rgba(0,0,0,.5);
+  max-width:96vw;
+}
+.controls .btn{padding:6px 14px;font-size:16px}
+#counter{font-family:'VT323',monospace;font-size:20px;min-width:64px;text-align:center}
+.dots{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.dot{
+  width:13px;height:13px;background:var(--win-dark);cursor:pointer;
+  border:1px solid var(--win-darker);
+}
+.dot.active{background:var(--title-bg);border-color:var(--title-bg2)}
+#progress{position:fixed;top:0;left:0;height:4px;background:var(--title-bg2);width:0;z-index:950;transition:width .3s}
+
+/* Шапка */
+.topbar{max-width:980px;margin:0 auto 14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.topbar .spacer{flex:1}
+
+@media(max-width:640px){
+  .win-body{padding:16px}
+  .slide h2{font-size:27px}
+  #counter{min-width:52px;font-size:17px}
+  .dots .dot{width:10px;height:10px}
+  .controls{gap:6px;padding:6px 10px}
+  #bootScreen{font-size:16px}
+  .coffee-btn{padding:12px 24px 10px;font-size:22px}
+  .cup{font-size:44px}
+  .steam i{height:16px}
+  .steam i:nth-child(2){height:20px}
+}
+@media print{
+  #bootScreen,.controls,#progress,.topbar{display:none!important}
+  body{background:#fff;padding:0}
+  .slide{display:block!important;page-break-after:always;margin-bottom:20px}
+}
+</style>
+</head>
+<body>
+
+<!-- BIOS-заставка -->
+<div id="bootScreen">
+  <div id="bootText"></div>
+  <div class="boot-bar"><div class="boot-fill" id="bootFill"></div></div>
+  <div class="boot-skip">[ нажмите, чтобы пропустить ]</div>
+</div>
+
+<div id="progress"></div>
+
+<!-- Шапка -->
+<div class="topbar">
+  <button class="btn" id="themeBtn">🌙 Тема</button>
+  <div class="spacer"></div>
+  <button class="btn" onclick="window.print()">🖨️ Печать</button>
+</div>
+
+<div class="deck">
+
+  <!-- ============ СЛАЙД 1: ТИТУЛ ============ -->
+  <section class="slide win active">
+    <div class="win-title">📊 Презентация<span class="win-btns"><span>_</span><span>□</span><span>×</span></span></div>
+    <div class="win-body hero">
+      <div class="hero-logo">📊</div>
+      <h1>SYSTEM MONITOR</h1>
+      <p class="sub">Весь ваш компьютер — на одном экране</p>
+      <p class="sub" style="font-size:19px;opacity:.85">Температуры • Вентиляторы • Загрузка • Сеть • Диски</p>
+      
+      <!-- МАЛЕНЬКАЯ КНОПКА КОФЕ (по центру, над кнопкой "Начать просмотр") -->
+      <div class="coffee-btn-small" id="coffeeBtnSmall" role="button" tabindex="0" title="Поддержать разработчика">
+        <span class="cup">☕<span class="steam"><i></i><i></i><i></i></span></span>
+        <span>Угостить кофе</span>
+        <span class="coffee-small-caption">на развитие программы</span>
+      </div>
+      
+      <p><button class="btn big" onclick="show(cur+1)">▶ Начать просмотр</button></p>
+    </div>
+  </section>
+
+  <!-- ============ СЛАЙД 2: ЗАЧЕМ ============ -->
+  <section class="slide win">
+    <div class="win-title">❓ Зачем это нужно<span class="win-btns"><span>_</span><span>□</span><span>×</span></span></div>
+    <div class="win-body">
+      <h2>Почему важно следить за ПК</h2>
+      <div class="grid">
+        <div class="cell"><span class="ico">🔥</span><b>Перегрев</b><br>Процессор или видеокарта греются — ПК тормозит и может сломаться. Нужно видеть температуру в реальном времени.</div>
+        <div class="cell"><span class="ico">🌀</span><b>Шум и пыль</b><br>Вентилятор шумит или упал до 0 RPM — пора чистить или менять кулер. Без мониторинга вы узнаете об этом слишком поздно.</div>
+        <div class="cell"><span class="ico">🐌</span><b>Тормоза</b><br>Что грузит систему: память, диск или сеть? Ответ виден сразу, без вызова «мастера».</div>
+        <div class="cell"><span class="ico">💾</span><b>Место на дисках</b><br>Диск заполнен — система начинает тормозить. Следите за свободным местом заранее.</div>
+        <div class="cell"><span class="ico">🎮</span><b>Игры и разгон</b><br>Проверить стабильность частот, температур и питания под нагрузкой — must have для геймера.</div>
+        <div class="cell"><span class="ico">📱</span><b>Удалённый контроль</b><br>Посмотреть состояние домашнего ПК с телефона, находясь в другой комнате или на работе.</div>
+      </div>
+      <div class="note accent">⚠️ Штатные средства Windows показывают мало данных, а сторонние программы — тяжёлые, платные или с рекламой. <b>SystemMonitor</b> — лёгкий, бесплатный и открывается в любом браузере.</div>
+    </div>
+  </section>
+
+  <!-- ============ СЛАЙД 3: ЧТО ПОКАЗЫВАЕТ ============ -->
+  <section class="slide win">
+    <div class="win-title">📊 Что показывает<span class="win-btns"><span>_</span><span>□</span><span>×</span></span></div>
+    <div class="win-body">
+      <h2>Все датчики вашего ПК</h2>
+      <div class="mock-grid">
+        <div class="mock-card"><div class="mc-head">💻 CPU</div><div class="mc-big">45°C</div><div class="mc-sub">12% • 3800 МГц • 45 Вт</div><div class="mc-bar"><i style="width:12%"></i></div></div>
+        <div class="mock-card"><div class="mc-head">🎮 GPU</div><div class="mc-big">52°C</div><div class="mc-sub">34% • 1850 МГц • 110 Вт</div><div class="mc-bar"><i style="width:34%"></i></div></div>
+        <div class="mock-card"><div class="mc-head">🧠 RAM</div><div class="mc-big">9.2 ГБ</div><div class="mc-sub">из 16 ГБ • 57%</div><div class="mc-bar"><i style="width:57%"></i></div></div>
+        <div class="mock-card"><div class="mc-head">🌀 Вентиляторы</div><div class="mc-big">1200</div><div class="mc-sub">CPU Fan • RPM</div><div class="mc-bar"><i style="width:40%"></i></div></div>
+        <div class="mock-card"><div class="mc-head">🌐 Сеть</div><div class="mc-big">↓ 5.2</div><div class="mc-sub">МБ/с • ↑ 0.8 МБ/с</div><div class="mc-bar"><i style="width:22%"></i></div></div>
+        <div class="mock-card"><div class="mc-head">💾 Диски</div><div class="mc-big">38°C</div><div class="mc-sub">NVMe • занято 62%</div><div class="mc-bar"><i style="width:62%"></i></div></div>
+      </div>
+      <ul>
+        <li>🌡️ <b>Температуры</b> — CPU (включая каждое ядро отдельно!), GPU, платы, дисков</li>
+        <li>⚡ <b>Напряжения и мощность</b> — Vcore, +12V, +5V, потребление в ваттах</li>
+        <li>🌀 <b>Вентиляторы</b> — обороты всех кулеров через чип SuperIO</li>
+        <li>📶 <b>Загрузка и частоты</b> — CPU/GPU/RAM в процентах и мегагерцах</li>
+      </ul>
+      <div class="note ok">✅ Данные обновляются <b>каждую секунду</b> — вы видите состояние ПК прямо сейчас.</div>
+    </div>
+  </section>
+
+  <!-- ============ СЛАЙД 4: КАК РАБОТАЕТ ============ -->
+  <section class="slide win">
+    <div class="win-title">🏗️ Как это работает<span class="win-btns"><span>_</span><span>□</span><span>×</span></span></div>
+    <div class="win-body">
+      <h2>Архитектура за 30 секунд</h2>
+      <div class="arch">
+        <div class="arch-box"><b>🔩 Железо ПК</b>датчики CPU, GPU, чип SuperIO, диски</div>
+        <div class="arch-arrow">↓<small>читает напрямую через драйвер ядра</small></div>
+        <div class="arch-box"><b>LibreHardwareMonitorLib.dll</b>та же библиотека, что в популярных утилитах мониторинга</div>
+        <div class="arch-arrow">↓<small>Python + pythonnet</small></div>
+        <div class="arch-box"><b>Сервер Flask + WebSocket</b>собирает данные раз в секунду и рассылает клиентам</div>
+        <div class="arch-arrow">↓<small>http://localhost:5000 — любой браузер</small></div>
+        <div class="arch-box"><b>🌐 Дашборд</b>ПК, смартфон, планшет — на любом устройстве вашей сети</div>
+      </div>
+      <div class="note">💡 Всё работает <b>локально</b>: данные никуда не отправляются, интернет не нужен. Нужны только права администратора для чтения датчиков.</div>
+    </div>
+  </section>
+
+  <!-- ============ СЛАЙД 5: ДАШБОРД ============ -->
+  <section class="slide win">
+    <div class="win-title">🎨 Дашборд под себя<span class="win-btns"><span>_</span><span>□</span><span>×</span></span></div>
+    <div class="win-body">
+      <h2>Полная настройка внешнего вида</h2>
+      <div class="grid">
+        <div class="cell"><span class="ico">🖱️</span><b>Перетаскивание</b><br>Расставьте карточки как удобно — мышкой, в любом порядке.</div>
+        <div class="cell"><span class="ico">📐</span><b>Изменение размера</b><br>Растяните нужную карточку на пол-экрана или сожмите до миниатюрной.</div>
+        <div class="cell"><span class="ico">🎨</span><b>Редактор тем</b><br>Свои цвета, градиенты, шрифты. Или готовые: светлая, тёмная, ретро-CRT.</div>
+        <div class="cell"><span class="ico">💾</span><b>Пресеты</b><br>Сохраните удачную раскладку и переключайтесь в один клик. Экспорт на другой ПК.</div>
+        <div class="cell"><span class="ico">➕</span><b>Свои карточки</b><br>Добавьте любой датчик из списка «Прочие» как отдельную карточку.</div>
+        <div class="cell"><span class="ico">📺</span><b>CRT-эффекты</b><br>Сканлайны и свечение как на мониторах 90-х — для атмосферы.</div>
+      </div>
+      <div class="note ok">✅ Все настройки <b>сохраняются автоматически</b> и восстанавливаются при следующем запуске.</div>
+    </div>
+  </section>
+
+  <!-- ============ СЛАЙД 6: ЛЮБОЕ УСТРОЙСТВО ============ -->
+  <section class="slide win">
+    <div class="win-title">📱 Смотрите откуда угодно<span class="win-btns"><span>_</span><span>□</span><span>×</span></span></div>
+    <div class="win-body">
+      <h2>ПК, телефон, планшет</h2>
+      <p>SystemMonitor — это веб-приложение. Откройте дашборд <b>на любом устройстве</b> в вашей Wi-Fi сети:</p>
+      <div class="grid">
+        <div class="cell"><span class="ico">🖥️</span><b>Компьютер</b><br><code>http://localhost:5000/dashboard</code><br>Полноценный дашборд с настройкой карточек</div>
+        <div class="cell"><span class="ico">📱</span><b>Смартфон</b><br><code>http://IP-ПК:5000/mobile</code><br>Лёгкая версия для маленьких экранов</div>
+        <div class="cell"><span class="ico">💻</span><b>Ноутбук / планшет</b><br><code>http://IP-ПК:5000/dashboard</code><br>С того же Wi-Fi — без установки чего-либо</div>
+      </div>
+      <h3>Зачем?</h3>
+      <ul>
+        <li>🎮 Следить за температурами во время игры со второго монитора или телефона</li>
+        <li>🖥️ Проверить домашний ПК, находясь в другой комнате</li>
+        <li>🔧 Диагностика «тормозов» без установки программ на сам ПК</li>
+      </ul>
+      <div class="note">🔒 Данные не покидают вашу локальную сеть. Программа не имеет доступа из интернета.</div>
+    </div>
+  </section>
+
+  <!-- ============ СЛАЙД 7: ИСТОРИЯ И ДИАГНОСТИКА ============ -->
+  <section class="slide win">
+    <div class="win-title">📈 История и диагностика<span class="win-btns"><span>_</span><span>□</span><span>×</span></span></div>
+    <div class="win-body">
+      <h2>Не только «сейчас», но и «раньше»</h2>
+      <div class="grid">
+        <div class="cell"><span class="ico">📈</span><b>Графики истории</b><br>Температуры и загрузка за 5 минут, час, 6 часов или сутки. Поймайте перегрев, который случился ночью.</div>
+        <div class="cell"><span class="ico">📤</span><b>Экспорт в CSV</b><br>Выгрузите данные в файл и откройте в Excel — для глубокого анализа.</div>
+        <div class="cell"><span class="ico">📋</span><b>Логи сервера</b><br>Журнал событий прямо в браузере: <code>/logs</code> — с фильтром по ошибкам.</div>
+        <div class="cell"><span class="ico">🔍</span><b>Встроенная диагностика</b><br>Программа сама определяет любое железо и пишет в лог, какие датчики найдены.</div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="num">24ч</div><div class="lbl">глубина истории</div></div>
+        <div class="stat"><div class="num">1 сек</div><div class="lbl">интервал обновления</div></div>
+        <div class="stat"><div class="num">100+</div><div class="lbl">датчиков на ПК</div></div>
+      </div>
+      <div class="note ok">✅ Работает на любом железе: поиск датчиков идёт по <b>типу оборудования</b>, а не по названию — поэтому одинаково хорошо видит и новые AMD Ryzen, и старые Intel.</div>
+    </div>
+  </section>
+
+  <!-- ============ СЛАЙД 8: БЕЗ ХЛОПОТ ============ -->
+  <section class="slide win">
+    <div class="win-title">🔧 Работает и не мешает<span class="win-btns"><span>_</span><span>□</span><span>×</span></span></div>
+    <div class="win-body">
+      <h2>Поставил — и забыл</h2>
+      <div class="grid">
+        <div class="cell"><span class="ico">📌</span><b>Системный трей</b><br>Программа живёт в трее возле часов и не мешает работе. Все команды — в меню по правому клику.</div>
+        <div class="cell"><span class="ico">🚀</span><b>Автозапуск</b><br>Одна галочка в меню трея — и мониторинг стартует вместе с Windows.</div>
+        <div class="cell"><span class="ico">🌐</span><b>Автооткрытие дашборда</b><br>При запуске сам откроет браузер. Не нужно — отключите той же галочкой.</div>
+        <div class="cell"><span class="ico">🪶</span><b>Лёгкая</b><br>Не грузит систему: сбор данных раз в секунду, интерфейс — в браузере.</div>
+      </div>
+      <div class="tray-demo win" style="margin-top:14px">
+        <div class="win-title" style="font-size:18px">Меню в трее</div>
+        <div class="win-body" style="padding:12px;font-family:Consolas,monospace;font-size:14px;white-space:pre;overflow-x:auto">📊 SystemMonitor
+├── Открыть дашборд
+├── Мобильная версия
+├── История
+├── Логи
+├── Руководство
+├──────────────────────
+├── ✓ Автозапуск при старте ПК
+├── ✓ Открывать дашборд при запуске
+├──────────────────────
+└── Выход</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ СЛАЙД 9: УСТАНОВКА ============ -->
+  <section class="slide win">
+    <div class="win-title">📦 Установка за минуту<span class="win-btns"><span>_</span><span>□</span><span>×</span></span></div>
+    <div class="win-body">
+      <h2>Один файл — и всё готово</h2>
+      <div class="stats" style="justify-content:flex-start">
+        <div class="stat"><div class="num">1</div><div class="lbl">файл установщика</div></div>
+        <div class="stat"><div class="num">~60</div><div class="lbl">мегабайт</div></div>
+        <div class="stat"><div class="num">60с</div><div class="lbl">на установку</div></div>
+      </div>
+      <h3>Как установить</h3>
+      <ul>
+        <li>1️⃣ Запустите <b>SystemMonitor_Setup.exe</b></li>
+        <li>2️⃣ Выберите папку и нужные опции (ярлык, автозапуск, брандмауэр)</li>
+        <li>3️⃣ Нажмите «Установить» — программа запустится сама</li>
+      </ul>
+      <h3>Требования</h3>
+      <ul>
+        <li>Windows 10 / 11 (64-bit)</li>
+        <li>.NET Framework 4.8+ (уже есть в Windows 10/11)</li>
+        <li>Права администратора (запрашиваются автоматически)</li>
+      </ul>
+      <div class="note ok">✅ Удаление такое же простое: программа убирает за собой <b>все файлы, правила брандмауэра и записи в реестре</b> — не оставив ни следа.</div>
+    </div>
+  </section>
+
+  <!-- ============ СЛАЙД 10: ИТОГ ============ -->
+  <section class="slide win">
+    <div class="win-title">🏁 Итоги<span class="win-btns"><span>_</span><span>□</span><span>×</span></span></div>
+    <div class="win-body hero">
+      <div class="hero-logo">🏆</div>
+      <h1 style="font-size:clamp(16px,3.6vw,30px)">SYSTEM MONITOR</h1>
+      <p class="sub">Видеть всё. Контролировать всё.</p>
+      <div class="grid" style="text-align:left;margin-top:20px">
+        <div class="cell"><span class="ico">📊</span>Все датчики ПК в реальном времени</div>
+        <div class="cell"><span class="ico">🌐</span>Работает в любом браузере, на любом устройстве</div>
+        <div class="cell"><span class="ico">🎨</span>Полная настройка внешнего вида</div>
+        <div class="cell"><span class="ico">📈</span>История, графики, экспорт</div>
+        <div class="cell"><span class="ico">🚀</span>Автозапуск и работа в фоне</div>
+        <div class="cell"><span class="ico">🆓</span>Бесплатно и без интернета</div>
+      </div>
+      <p style="margin-top:24px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <a href="/dashboard" style="text-decoration:none"><button class="btn big">📊 Открыть дашборд</button></a>
+        <a href="/guide" style="text-decoration:none"><button class="btn big">📖 Руководство</button></a>
+      </p>
+
+      <!-- БОЛЬШАЯ КНОПКА КОФЕ -->
+      <div class="coffee-wrap">
+        <div class="coffee-btn" id="coffeeBtn" role="button" tabindex="0" title="Поддержать разработчика">
+          <span class="cup">☕<span class="steam"><i></i><i></i><i></i></span></span>
+          Угостить кофе
+        </div>
+        <div class="coffee-caption">Ваш кофе — на развитие программы ❤️</div>
+      </div>
+
+      <p style="margin-top:14px;opacity:.7;font-size:14px">© 2026 SystemMonitor • Свободное использование и распространение</p>
+    </div>
+  </section>
+
+</div>
+
+<!-- ПАНЕЛЬ УПРАВЛЕНИЯ -->
+<div class="controls">
+  <button class="btn" id="prevBtn" title="Назад (←)">◀</button>
+  <div class="dots" id="dots"></div>
+  <span id="counter">1 / 10</span>
+  <button class="btn" id="nextBtn" title="Вперёд (→)">▶</button>
+</div>
+
+<script>
+/* ===== BIOS-заставка ===== */
+var bootLines=[
+  'SystemMonitor BIOS v1.3',
+  '',
+  'Загрузка презентации ..... OK',
+  'Инициализация слайдов .... OK',
+  'Готово к показу ..........'
+];
+var bootText=document.getElementById('bootText'),
+    bootFill=document.getElementById('bootFill'),
+    bootScreen=document.getElementById('bootScreen'),
+    bootDone=false;
+function finishBoot(){
+  if(bootDone)return;
+  bootDone=true;
+  bootScreen.style.opacity='0';
+  setTimeout(function(){bootScreen.style.display='none';},400);
+}
+bootScreen.addEventListener('click',finishBoot);
+(function(){
+  var i=0,t=setInterval(function(){
+    if(bootDone){clearInterval(t);return;}
+    bootText.textContent+=bootLines[i]+'\n';
+    bootFill.style.width=Math.round(((i+1)/bootLines.length)*100)+'%';
+    i++;
+    if(i>=bootLines.length){clearInterval(t);setTimeout(finishBoot,450);}
+  },260);
+})();
+
+/* ===== Слайды ===== */
+var slides=[].slice.call(document.querySelectorAll('.slide'));
+var cur=0;
+var dotsBox=document.getElementById('dots');
+var counter=document.getElementById('counter');
+var progress=document.getElementById('progress');
+
+slides.forEach(function(_,i){
+  var d=document.createElement('span');
+  d.className='dot'+(i===0?' active':'');
+  d.addEventListener('click',function(){show(i);});
+  dotsBox.appendChild(d);
+});
+var dots=[].slice.call(dotsBox.children);
+
+function show(i){
+  if(i<0||i>=slides.length||i===cur)return;
+  slides[cur].classList.remove('active');
+  dots[cur].classList.remove('active');
+  cur=i;
+  slides[cur].classList.add('active');
+  dots[cur].classList.add('active');
+  counter.textContent=(cur+1)+' / '+slides.length;
+  progress.style.width=((cur+1)/slides.length*100)+'%';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+progress.style.width=(1/slides.length*100)+'%';
+
+document.getElementById('prevBtn').addEventListener('click',function(){show(cur-1);});
+document.getElementById('nextBtn').addEventListener('click',function(){show(cur+1);});
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();show(cur+1);}
+  if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();show(cur-1);}
+  if(e.key==='Home'){show(0);}
+  if(e.key==='End'){show(slides.length-1);}
+});
+
+/* Свайп на телефоне */
+var tx=null;
+document.addEventListener('touchstart',function(e){tx=e.touches[0].clientX;},{passive:true});
+document.addEventListener('touchend',function(e){
+  if(tx===null)return;
+  var dx=e.changedTouches[0].clientX-tx;
+  if(Math.abs(dx)>60){dx<0?show(cur+1):show(cur-1);}
+  tx=null;
+},{passive:true});
+
+/* ===== Тёмная тема ===== */
+var themeBtn=document.getElementById('themeBtn');
+function applyTheme(dark){
+  document.body.classList.toggle('dark',dark);
+  themeBtn.textContent=dark?'☀️ Тема':'🌙 Тема';
+  try{localStorage.setItem('pres-theme',dark?'dark':'light');}catch(e){}
+}
+themeBtn.addEventListener('click',function(){applyTheme(!document.body.classList.contains('dark'));});
+try{if(localStorage.getItem('pres-theme')==='dark')applyTheme(true);}catch(e){}
+
+/* ===== Кнопка «Угостить кофе» ===== */
+var DONATE_URL = "https://dalink.to/monsterhairy";
+
+var coffeeBtn=document.getElementById('coffeeBtn');
+var coffeeBtnSmall=document.getElementById('coffeeBtnSmall');
+
+function coffeeClick(){
+  if(DONATE_URL){
+    window.open(DONATE_URL,'_blank');
+  } else {
+    alert('Ссылка для поддержки пока не настроена.\n\nУкажите её в переменной DONATE_URL в файле presentation.html');
+  }
+}
+
+if(coffeeBtn){
+  coffeeBtn.addEventListener('click',coffeeClick);
+  coffeeBtn.addEventListener('keydown',function(e){
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();coffeeClick();}
+  });
+}
+
+if(coffeeBtnSmall){
+  coffeeBtnSmall.addEventListener('click',coffeeClick);
+  coffeeBtnSmall.addEventListener('keydown',function(e){
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();coffeeClick();}
+  });
+}
+</script>
+</body>
+</html>

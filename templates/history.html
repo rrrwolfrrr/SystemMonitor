@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Системный монитор</title>
+<style>
+:root {
+--bg: #008080;
+--window-bg: #c0c0c0;
+--card-bg: #d4d0c8;
+--text: #000;
+--muted: #444;
+--border-light: #ffffff;
+--border-dark: #808080;
+--accent: #000080;
+--danger: #cc0000;
+--warning: #cc7700;
+--ok: #007700;
+--line: rgba(0, 0, 0, 0.12);
+}
+body.dark {
+--bg: #101418;
+--window-bg: #1d232b;
+--card-bg: #232b36;
+--text: #e8eef5;
+--muted: #9fb0c0;
+--border-light: #3a4654;
+--border-dark: #10151b;
+--accent: #4da3ff;
+--danger: #ff6b6b;
+--warning: #feca57;
+--ok: #59d17e;
+--line: rgba(255, 255, 255, 0.08);
+}
+* { box-sizing: border-box; }
+body {
+margin: 0;
+padding: 16px;
+font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+background: var(--bg);
+color: var(--text);
+}
+.desktop { max-width: 1750px; margin: 0 auto; }
+.window {
+background: var(--window-bg);
+border: 2px solid;
+border-color: var(--border-light) var(--border-dark) var(--border-dark) var(--border-light);
+box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+position: relative;
+}
+.titlebar {
+display: flex;
+flex-wrap: wrap;
+gap: 8px;
+align-items: center;
+justify-content: space-between;
+padding: 8px 10px;
+background: var(--accent);
+color: #fff;
+}
+.titlebar .title { font-weight: 700; }
+.toolbar {
+display: flex;
+flex-wrap: wrap;
+gap: 6px;
+align-items: center;
+}
+button, select, input[type="text"] {
+background: var(--window-bg);
+color: var(--text);
+border: 1px solid;
+border-color: var(--border-light) var(--border-dark) var(--border-dark) var(--border-light);
+padding: 5px 8px;
+}
+button { cursor: pointer; }
+a { color: inherit; }
+.statusbar {
+display: flex;
+flex-wrap: wrap;
+gap: 12px;
+align-items: center;
+justify-content: space-between;
+padding: 7px 10px;
+border-bottom: 1px solid var(--line);
+font-size: 13px;
+color: var(--muted);
+}
+.error-banner {
+margin: 10px;
+padding: 10px 12px;
+border: 1px solid var(--danger);
+background: rgba(255, 0, 0, 0.08);
+color: var(--danger);
+}
+.hidden { display: none !important; }
+.board {
+position: relative;
+min-height: 520px;
+margin: 12px;
+padding: 8px;
+border: 1px dashed var(--border-dark);
+background: rgba(0, 0, 0, 0.03);
+overflow: auto;
+}
+body.dark .board { background: rgba(255, 255, 255, 0.02); }
+.card {
+position: absolute;
+background: var(--card-bg);
+border: 2px solid;
+border-color: var(--border-light) var(--border-dark) var(--border-dark) var(--border-light);
+display: flex;
+flex-direction: column;
+overflow: visible;
+box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+}
+.card.dragging { opacity: 0.88; cursor: grabbing; }
+.card.locked .card-header { cursor: default; }
+.card.locked .resize-handle,
+.card.locked .card-delete { display: none; }
+.card-header {
+display: flex;
+align-items: center;
+gap: 8px;
+padding: 8px 10px;
+font-weight: 700;
+border-bottom: 1px solid var(--line);
+cursor: move;
+user-select: none;
+touch-action: none;
+}
+.card-header .title {
+flex: 1;
+overflow-wrap: anywhere;
+}
+.card-settings,
+.card-delete {
+background: transparent;
+border: 1px solid transparent;
+color: inherit;
+font-weight: 700;
+padding: 0 5px;
+cursor: pointer;
+}
+.card-settings:hover { color: var(--accent); }
+.card-delete:hover { color: var(--danger); }
+.card-body {
+padding: 8px 10px;
+overflow: auto;
+flex: 1;
+}
+.line {
+display: flex;
+justify-content: space-between;
+gap: 10px;
+padding: 4px 0;
+border-bottom: 1px dotted var(--line);
+}
+.line:last-child { border-bottom: 0; }
+.line .label { color: var(--muted); overflow-wrap: anywhere; }
+.line .value { font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+.section-title {
+margin: 8px 0 4px;
+font-size: 12px;
+font-weight: 700;
+color: var(--muted);
+text-transform: uppercase;
+}
+.progress {
+width: 100%;
+height: 10px;
+border: 1px solid var(--border-dark);
+background: rgba(0, 0, 0, 0.12);
+margin: 6px 0;
+}
+.progress .fill {
+height: 100%;
+width: 0%;
+background: var(--accent);
+transition: width 0.3s ease;
+}
+.progress .fill.warning { background: var(--warning); }
+.progress .fill.danger { background: var(--danger); }
+.value.warning { color: var(--warning); }
+.value.danger { color: var(--danger); }
+.value.ok { color: var(--ok); }
+.muted { color: var(--muted); }
+.resize-handle {
+position: absolute;
+width: 12px;
+height: 12px;
+background: var(--accent);
+border: 1px solid var(--border-light);
+opacity: 0.35;
+z-index: 30;
+touch-action: none;
+}
+.card:hover .resize-handle { opacity: 0.85; }
+.resize-handle.nw { left: -6px; top: -6px; cursor: nw-resize; }
+.resize-handle.n { left: calc(50% - 6px); top: -6px; cursor: n-resize; }
+.resize-handle.ne { right: -6px; top: -6px; cursor: ne-resize; }
+.resize-handle.w { left: -6px; top: calc(50% - 6px); cursor: w-resize; }
+.resize-handle.e { right: -6px; top: calc(50% - 6px); cursor: e-resize; }
+.resize-handle.sw { left: -6px; bottom: -6px; cursor: sw-resize; }
+.resize-handle.s { left: calc(50% - 6px); bottom: -6px; cursor: s-resize; }
+.resize-handle.se { right: -6px; bottom: -6px; cursor: se-resize; }
+.window-resize-handle {
+position: absolute;
+background: var(--accent);
+opacity: 0.2;
+z-index: 40;
+touch-action: none;
+}
+.window-resize-handle:hover { opacity: 0.6; }
+.window-resize-e {
+right: -3px;
+top: 10%;
+width: 6px;
+height: 80%;
+cursor: e-resize;
+border-radius: 3px;
+}
+.window-resize-s {
+bottom: -3px;
+left: 10%;
+width: 80%;
+height: 6px;
+cursor: s-resize;
+border-radius: 3px;
+}
+.window-resize-se {
+right: -3px;
+bottom: -3px;
+width: 16px;
+height: 16px;
+cursor: se-resize;
+border-radius: 3px;
+}
+.overlay {
+position: fixed;
+inset: 0;
+background: rgba(0, 0, 0, 0.45);
+z-index: 5000;
+}
+.modal {
+position: fixed;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+width: min(760px, calc(100vw - 24px));
+max-height: calc(100vh - 32px);
+overflow: auto;
+background: var(--window-bg);
+color: var(--text);
+border: 2px solid;
+border-color: var(--border-light) var(--border-dark) var(--border-dark) var(--border-light);
+box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
+z-index: 6000;
+padding: 14px;
+}
+.modal h2 { margin: 0 0 12px; font-size: 18px; }
+.settings-grid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+gap: 8px;
+margin-bottom: 12px;
+}
+.settings-grid label {
+display: flex;
+align-items: center;
+gap: 7px;
+cursor: pointer;
+}
+.modal-actions {
+display: flex;
+flex-wrap: wrap;
+gap: 8px;
+justify-content: flex-end;
+margin-top: 12px;
+}
+#logsContent {
+min-height: 260px;
+max-height: 55vh;
+overflow: auto;
+white-space: pre-wrap;
+word-break: break-word;
+font-family: Consolas, "Courier New", monospace;
+font-size: 12px;
+background: rgba(0, 0, 0, 0.06);
+border: 1px solid var(--line);
+padding: 8px;
+}
+.other-filter,
+.other-type-filter,
+.custom-input {
+width: 100%;
+margin-bottom: 8px;
+padding: 6px;
+border: 1px solid var(--border-dark);
+background: var(--window-bg);
+color: var(--text);
+}
+.sensor-list {
+max-height: 320px;
+overflow: auto;
+border: 1px solid var(--line);
+padding: 8px;
+background: rgba(0, 0, 0, 0.03);
+}
+body.dark .sensor-list { background: rgba(255, 255, 255, 0.02); }
+.sensor-item {
+padding: 4px 0;
+border-bottom: 1px dotted var(--line);
+font-size: 13px;
+}
+.sensor-item:last-child { border-bottom: 0; }
+.sensor-item label {
+display: flex;
+align-items: flex-start;
+gap: 8px;
+cursor: pointer;
+}
+.custom-toolbar {
+display: flex;
+flex-wrap: wrap;
+gap: 8px;
+align-items: center;
+margin: 8px 0;
+}
+.sensor-setting {
+border-bottom: 1px dotted var(--line);
+padding: 6px 0;
+}
+.sensor-setting:last-child { border-bottom: 0; }
+.sensor-setting-check {
+display: flex;
+align-items: center;
+gap: 8px;
+cursor: pointer;
+margin-bottom: 4px;
+}
+.sensor-label-input {
+width: 100%;
+margin-bottom: 0;
+}
+#gridSizeSelect { width: auto; }
+#appTitle,
+.page-title,
+.titlebar .title {
+user-select: none;
+}
+.toast-container {
+position: fixed;
+top: 16px;
+right: 16px;
+z-index: 7000;
+display: flex;
+flex-direction: column;
+gap: 8px;
+max-width: 340px;
+}
+.toast {
+background: var(--window-bg);
+color: var(--text);
+border: 1px solid var(--border-dark);
+border-left: 4px solid var(--accent);
+box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+padding: 10px 12px;
+opacity: 0;
+transform: translateX(18px);
+transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.toast.show { opacity: 1; transform: translateX(0); }
+.toast.success { border-left-color: var(--ok); }
+.toast.error { border-left-color: var(--danger); }
+.toast.warning { border-left-color: var(--warning); }
+.page-title {
+margin: 0 0 12px;
+font-size: 24px;
+font-weight: 800;
+text-align: left;
+color: #ffffff;
+text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.45);
+letter-spacing: 0.3px;
+}
+.titlebar { justify-content: flex-end; }
+.preset-save-row {
+display: flex;
+gap: 8px;
+align-items: center;
+margin-bottom: 8px;
+}
+.preset-save-row input { flex: 1; margin-bottom: 0; }
+.preset-item {
+display: flex;
+justify-content: space-between;
+align-items: center;
+gap: 10px;
+border-bottom: 1px dotted var(--line);
+padding: 6px 0;
+}
+.preset-item:last-child { border-bottom: 0; }
+.preset-info { flex: 1; min-width: 0; }
+.preset-name { font-weight: 700; overflow-wrap: anywhere; }
+.preset-meta { font-size: 11px; color: var(--muted); }
+.preset-actions {
+display: flex;
+flex-wrap: wrap;
+gap: 6px;
+justify-content: flex-end;
+}
+.theme-editor-controls {
+display: flex;
+flex-wrap: wrap;
+gap: 8px;
+align-items: center;
+margin-bottom: 8px;
+}
+.theme-editor-controls input[type="text"] { flex: 1; margin-bottom: 0; }
+.theme-editor-dark {
+display: flex;
+align-items: center;
+gap: 6px;
+white-space: nowrap;
+}
+.theme-editor-vars {
+display: grid;
+grid-template-columns: 1fr;
+gap: 6px;
+max-height: 320px;
+}
+.theme-editor-var-row {
+display: grid;
+grid-template-columns: 220px 46px 1fr auto;
+gap: 8px;
+align-items: center;
+}
+.theme-editor-var-label {
+font-size: 13px;
+color: var(--muted);
+overflow-wrap: anywhere;
+}
+.theme-editor-color {
+width: 46px;
+height: 28px;
+padding: 0;
+border: 1px solid var(--border-dark);
+background: none;
+cursor: pointer;
+}
+.theme-editor-text { margin-bottom: 0; }
+.theme-editor-css {
+width: 100%;
+min-height: 90px;
+resize: vertical;
+font-family: Consolas, "Courier New", monospace;
+font-size: 12px;
+padding: 8px;
+border: 1px solid var(--border-dark);
+background: var(--window-bg);
+color: var(--text);
+}
+.theme-palette-btn { padding: 4px 8px; cursor: pointer; }
+.theme-palette-current {
+margin-bottom: 10px;
+color: var(--muted);
+font-size: 13px;
+}
+.theme-palette-grid {
+display: grid;
+grid-template-columns: repeat(6, 1fr);
+gap: 6px;
+max-height: 320px;
+overflow: auto;
+}
+.theme-palette-swatch {
+height: 36px;
+border: 1px solid var(--border-dark);
+border-radius: 4px;
+cursor: pointer;
+}
+.theme-palette-swatch:hover { outline: 2px solid var(--accent); }
+.theme-gradient-grid {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 8px;
+max-height: 340px;
+overflow: auto;
+}
+.theme-gradient-swatch {
+position: relative;
+height: 56px;
+border: 1px solid var(--border-dark);
+border-radius: 6px;
+cursor: pointer;
+overflow: hidden;
+}
+.theme-gradient-swatch:hover { outline: 2px solid var(--accent); }
+.theme-gradient-name {
+position: absolute;
+left: 6px;
+bottom: 4px;
+font-size: 10px;
+color: #fff;
+text-shadow: 0 1px 2px rgba(0, 0, 0, 0.75);
+pointer-events: none;
+}
+.theme-editor-history-btn:disabled { opacity: 0.45; cursor: default; }
+@media (max-width: 700px) {
+body { padding: 8px; }
+.board { margin: 8px; }
+.titlebar, .toolbar { width: 100%; }
+.theme-editor-var-row { grid-template-columns: 1fr; }
+.theme-editor-color { width: 100%; }
+.theme-palette-btn { width: 100%; }
+.theme-palette-grid { grid-template-columns: repeat(4, 1fr); }
+.theme-gradient-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+<div class="desktop">
+<h1 class="page-title" id="appTitle">📊 Системный монитор</h1>
+<div class="window">
+<div class="titlebar">
+<div class="toolbar">
+<label for="intervalSelect">Обновление:</label>
+<select id="intervalSelect">
+<option value="1000">1 сек</option>
+<option value="2000" selected>2 сек</option>
+<option value="5000">5 сек</option>
+<option value="10000">10 сек</option>
+<option value="30000">30 сек</option>
+<option value="60000">1 мин</option>
+</select>
+<button id="refreshBtn" type="button">🔄 Обновить</button>
+<button id="addCustomBtn" type="button">➕ Карточка</button>
+<button id="snapBtn" type="button">🧲 Snap: вкл</button>
+<select id="gridSizeSelect" title="Размер сетки">
+<option value="10">10 px</option>
+<option value="20" selected>20 px</option>
+<option value="40">40 px</option>
+<option value="80">80 px</option>
+</select>
+<button id="alignGridBtn" type="button">⌗ К сетке</button>
+<button id="lockBtn" type="button">🔓 Блокировать</button>
+<button id="resetLayoutBtn" type="button">↺ Сброс макета</button>
+<button id="settingsBtn" type="button">⚙️ Настройки</button>
+<button id="logsBtn" type="button">📋 Логи</button>
+<button id="csvBtn" type="button">📥 CSV</button>
+<button id="historyCsvBtn" type="button">📥 История CSV</button>
+<button id="themeBtn" type="button">🌙 Тема</button>
+<button id="exportLayoutBtn" type="button">📤 Экспорт макета</button>
+<button id="importLayoutBtn" type="button">📥 Импорт макета</button>
+<input type="file" id="layoutFileInput" accept=".json,application/json" style="display:none;">
+<button id="presetsBtn" type="button">🗂 Пресеты</button>
+<button id="themesBtn" type="button">🎨 Темы</button>
+</div>
+</div>
+<div class="statusbar">
+<div>🔄 Обновлено: <strong id="lastUpdate">--</strong></div>
+<div>📡 Канал: <strong id="transport">--</strong></div>
+<div>🖥️ <strong id="hostname">localhost</strong></div>
+<div>
+<a href="/stats" target="_blank" rel="noopener">JSON</a> ·
+<a href="/history" target="_blank" rel="noopener">History</a> ·
+<a href="/history-page" target="_blank" rel="noopener">История</a> ·
+<a href="/mobile" target="_blank" rel="noopener">Мобильная</a> ·
+<a href="/logs" target="_blank" rel="noopener">📋 Логи</a>
+</div>
+</div>
+<div id="errorBanner" class="error-banner hidden"></div>
+<div id="grid" class="board"></div>
+<div class="window-resize-handle window-resize-e" data-dir="e"></div>
+<div class="window-resize-handle window-resize-s" data-dir="s"></div>
+<div class="window-resize-handle window-resize-se" data-dir="se"></div>
+</div>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+<div id="settingsOverlay" class="overlay hidden"></div>
+<div id="settingsPanel" class="modal hidden">
+<h2>⚙️ Настройки</h2>
+<div class="settings-grid">
+<label><input type="checkbox" class="card-toggle" data-card="cpu"> CPU</label>
+<label><input type="checkbox" class="card-toggle" data-card="gpu"> GPU</label>
+<label><input type="checkbox" class="card-toggle" data-card="ram"> Память</label>
+<label><input type="checkbox" class="card-toggle" data-card="network"> Сеть</label>
+<label><input type="checkbox" class="card-toggle" data-card="disks"> Диски</label>
+<label><input type="checkbox" class="card-toggle" data-card="fans"> Вентиляторы</label>
+<label><input type="checkbox" class="card-toggle" data-card="motherboard"> Материнская плата</label>
+<label><input type="checkbox" class="card-toggle" data-card="system"> Система</label>
+<label><input type="checkbox" class="card-toggle" data-card="other"> Прочие датчики</label>
+</div>
+<label><input type="checkbox" id="darkToggle"> Тёмная тема</label>
+<div class="modal-actions">
+<button id="settingsResetBtn" type="button">🔄 Сбросить</button>
+<button id="settingsSaveBtn" type="button">Сохранить</button>
+<button id="settingsCloseBtn" type="button">Закрыть</button>
+</div>
+</div>
+<div id="logsOverlay" class="overlay hidden"></div>
+<div id="logsPanel" class="modal hidden">
+<h2>📋 Логи сервера</h2>
+<div id="logsContent">Загрузка...</div>
+<div class="modal-actions">
+<button id="logsRefreshBtn" type="button">Обновить</button>
+<button id="logsClearBtn" type="button">Очистить</button>
+<button id="logsCloseBtn" type="button">Закрыть</button>
+</div>
+</div>
+<div id="customOverlay" class="overlay hidden"></div>
+<div id="customPanel" class="modal hidden">
+<h2>➕ Пользовательская карточка</h2>
+<input id="customName" class="custom-input" type="text" maxlength="80" placeholder="Название карточки">
+<input id="customSearch" class="custom-input" type="text" placeholder="Поиск датчиков...">
+<select id="customTypeFilter" class="custom-input">
+<option value="">Все типы</option>
+<option value="Temperature">🌡️ Температура</option>
+<option value="Voltage">⚡ Напряжение</option>
+<option value="Power">🔌 Мощность</option>
+<option value="Clock">🕐 Частота (Clock)</option>
+<option value="Frequency">📻 Частота (Frequency)</option>
+<option value="Load">📊 Загрузка</option>
+<option value="Fan">🌀 Вентилятор</option>
+<option value="Data">💾 Данные</option>
+<option value="SmallData">💾 Малые данные</option>
+<option value="Throughput">📡 Пропускная способность</option>
+<option value="Level">📏 Уровень</option>
+<option value="Current">🔋 Ток</option>
+<option value="Control">🎛️ Управление</option>
+<option value="Timing">⏱️ Тайминги</option>
+<option value="Noise">🔊 Шум</option>
+<option value="Energy">🔋 Энергия</option>
+<option value="Factor">🔢 Коэффициент</option>
+</select>
+<div class="custom-toolbar">
+<button id="customSelectAllBtn" type="button">Выбрать видимые</button>
+<button id="customClearBtn" type="button">Снять выбор</button>
+<span id="customSelectedCount" class="muted">0 выбрано</span>
+</div>
+<div id="customSensorList" class="sensor-list"></div>
+<div class="modal-actions">
+<button id="customCreateBtn" type="button">Создать</button>
+<button id="customCancelBtn" type="button">Отмена</button>
+</div>
+</div>
+<div id="cardSettingsOverlay" class="overlay hidden"></div>
+<div id="cardSettingsPanel" class="modal hidden">
+<h2 id="cardSettingsTitle">⚙️ Настройка карточки</h2>
+<input id="cardSettingsSearch" class="custom-input" type="text" placeholder="Поиск датчиков...">
+<div id="cardSettingsList" class="sensor-list"></div>
+<div class="modal-actions">
+<button id="cardSettingsResetBtn" type="button">Сбросить карточку</button>
+<button id="cardSettingsCloseBtn" type="button">Закрыть</button>
+</div>
+</div>
+<div id="presetsOverlay" class="overlay hidden"></div>
+<div id="presetsPanel" class="modal hidden">
+<h2>🗂 Пресеты макетов</h2>
+<div class="preset-save-row">
+<input id="presetNameInput" class="custom-input" type="text" maxlength="80" placeholder="Имя нового пресета">
+<button id="savePresetBtn" type="button">💾 Сохранить текущий</button>
+</div>
+<div class="custom-toolbar">
+<button id="exportPresetsBtn" type="button">📤 Экспорт всех</button>
+<button id="importPresetsBtn" type="button">📥 Импорт</button>
+<input type="file" id="presetsFileInput" accept=".json,application/json" style="display:none;">
+</div>
+<div id="presetsList" class="sensor-list"></div>
+<div class="modal-actions">
+<button id="presetsCloseBtn" type="button">Закрыть</button>
+</div>
+</div>
+<div id="themesOverlay" class="overlay hidden"></div>
+<div id="themesPanel" class="modal hidden">
+<h2>🎨 Темы оформления</h2>
+<div class="custom-toolbar">
+<button id="importThemeBtn" type="button">📥 Импорт темы</button>
+<button id="exportThemeBtn" type="button">📤 Экспорт текущей</button>
+<button id="openThemeEditorBtn" type="button">🛠 Редактор тем</button>
+<button id="exportThemesPresetsBtn" type="button">📦 Экспорт тем + пресетов</button>
+<button id="importThemesPresetsBtn" type="button">📦 Импорт тем + пресетов</button>
+<input type="file" id="themeFileInput" accept=".json,application/json" style="display:none;">
+<input type="file" id="themesPresetsFileInput" accept=".json,application/json" style="display:none;">
+</div>
+<div id="themesList" class="sensor-list"></div>
+<div class="modal-actions">
+<button id="themesCloseBtn" type="button">Закрыть</button>
+</div>
+</div>
+<div id="themeEditorOverlay" class="overlay hidden"></div>
+<div id="themeEditorPanel" class="modal hidden">
+<h2>🛠 Редактор тем</h2>
+<div class="theme-editor-controls">
+<input id="themeEditorName" class="custom-input" type="text" maxlength="80" placeholder="Имя новой темы">
+<label class="theme-editor-dark"><input type="checkbox" id="themeEditorDark"> Тёмная база</label>
+</div>
+<div class="custom-toolbar">
+<button id="themeEditorLoadCurrentBtn" type="button">📋 Из текущей темы</button>
+<button id="themeEditorLightBtn" type="button">☀️ Светлая база</button>
+<button id="themeEditorDarkBtn" type="button">🌙 Тёмная база</button>
+<button id="themeEditorGradientsBtn" type="button">🌈 Градиенты</button>
+<button id="themeEditorUndoBtn" type="button" class="theme-editor-history-btn">↩ Отменить</button>
+<button id="themeEditorRedoBtn" type="button" class="theme-editor-history-btn">↪ Повторить</button>
+<button id="themeEditorResetBtn" type="button">↺ Сбросить</button>
+</div>
+<div id="themeEditorVars" class="sensor-list theme-editor-vars"></div>
+<label class="muted" for="themeEditorCustomCss">Дополнительный CSS (customCss)</label>
+<textarea id="themeEditorCustomCss" class="theme-editor-css" placeholder=".card { border-radius: 10px; }"></textarea>
+<div class="modal-actions">
+<button id="themeEditorCancelBtn" type="button">Отмена</button>
+<button id="themeEditorSaveBtn" type="button">💾 Сохранить как тему</button>
+</div>
+</div>
+<div id="themePaletteOverlay" class="overlay hidden"></div>
+<div id="themePalettePanel" class="modal hidden">
+<h2>🎨 Палитра готовых цветов</h2>
+<div class="theme-palette-current">Переменная: <strong id="themePaletteVarName">--</strong></div>
+<div id="themePaletteGrid" class="theme-palette-grid"></div>
+<div class="modal-actions"><button id="themePaletteCloseBtn" type="button">Закрыть</button></div>
+</div>
+<div id="themeGradientsOverlay" class="overlay hidden"></div>
+<div id="themeGradientsPanel" class="modal hidden">
+<h2>🌈 Градиенты для фона</h2>
+<div class="theme-palette-current">Переменная:
+<select id="themeGradientTarget" class="custom-input" style="width:auto;">
+<option value="--bg" selected>--bg · фон страницы</option>
+<option value="--window-bg">--window-bg · фон окна</option>
+<option value="--card-bg">--card-bg · фон карточек</option>
+</select>
+</div>
+<div id="themeGradientsGrid" class="theme-gradient-grid"></div>
+<div class="modal-actions"><button id="themeGradientsCloseBtn" type="button">Закрыть</button></div>
+</div>
+<script>
+(function () {
+"use strict";
+var STORAGE_KEY = "systemMonitorDashboard.v2";
+var LAYOUT_KEY = "systemMonitorDashboardLayout.v2";
+var WINDOW_SIZE_KEY = "systemMonitorWindowSize.v1";
+var CARD_META = {
+cpu: { title: "CPU", icon: "💻" },
+gpu: { title: "GPU", icon: "🎮" },
+ram: { title: "Память", icon: "🧠" },
+network: { title: "Сеть", icon: "🌐" },
+disks: { title: "Диски", icon: "💾" },
+fans: { title: "Вентиляторы", icon: "🌀" },
+motherboard: { title: "Материнская плата", icon: "🔌" },
+system: { title: "Система", icon: "⚙️" },
+other: { title: "Прочие датчики", icon: "🧩" }
+};
+var CARD_TYPES = Object.keys(CARD_META);
+var RESIZE_DIRS = ["nw", "n", "ne", "w", "e", "sw", "s", "se"];
+var GRID_SIZES = [10, 20, 40, 80];
+var urlParams = new URLSearchParams(window.location.search);
+var WS_PORT = Number(urlParams.get("ws_port") || 8765);
+var state = loadState();
+var layout = loadLayout();
+var latestData = null;
+var locked = false;
+var zCounter = 10;
+var otherIndex = new Map();
+var customSelection = new Set();
+var currentCardSettingsId = null;
+var ws = null;
+var reconnectTimer = null;
+var pollingTimer = null;
+var pollingActive = false;
+var lastWsMessageAt = 0;
+var board = document.getElementById("grid");
+var errorBanner = document.getElementById("errorBanner");
+var lastUpdate = document.getElementById("lastUpdate");
+var hostnameEl = document.getElementById("hostname");
+var transport = document.getElementById("transport");
+var intervalSelect = document.getElementById("intervalSelect");
+var lockBtn = document.getElementById("lockBtn");
+var snapBtn = document.getElementById("snapBtn");
+var gridSizeSelect = document.getElementById("gridSizeSelect");
+var alignGridBtn = document.getElementById("alignGridBtn");
+function defaultState() {
+var cards = {};
+CARD_TYPES.forEach(function (type) { cards[type] = type !== "other"; });
+return { interval: 2000, dark: false, cards: cards, customCards: [], cardConfig: {}, snap: { enabled: true, size: 20 } };
+}
+function loadState() {
+var result = defaultState();
+try {
+var raw = localStorage.getItem(STORAGE_KEY);
+if (!raw) return result;
+var parsed = JSON.parse(raw);
+if (!parsed || typeof parsed !== "object") return result;
+if (Number.isFinite(Number(parsed.interval))) result.interval = Number(parsed.interval);
+if (typeof parsed.dark === "boolean") result.dark = parsed.dark;
+if (parsed.cards && typeof parsed.cards === "object") {
+CARD_TYPES.forEach(function (type) { if (typeof parsed.cards[type] === "boolean") result.cards[type] = parsed.cards[type]; });
+}
+if (Array.isArray(parsed.customCards)) {
+result.customCards = parsed.customCards.filter(function (c) { return c && typeof c.id === "string" && typeof c.name === "string" && Array.isArray(c.sensors); }).map(function (c) { return { id: c.id, name: String(c.name).slice(0, 80), sensors: c.sensors.filter(function (k) { return typeof k === "string"; }) }; });
+}
+if (parsed.cardConfig && typeof parsed.cardConfig === "object") result.cardConfig = parsed.cardConfig;
+if (parsed.snap && typeof parsed.snap === "object") {
+if (typeof parsed.snap.enabled === "boolean") result.snap.enabled = parsed.snap.enabled;
+var sz = Number(parsed.snap.size);
+if (GRID_SIZES.includes(sz)) result.snap.size = sz;
+}
+} catch (e) { console.error("Не удалось загрузить настройки:", e); }
+if (result.interval < 1000) result.interval = 1000;
+return result;
+}
+function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {} }
+function loadLayout() { try { var r = localStorage.getItem(LAYOUT_KEY); if (!r) return {}; var p = JSON.parse(r); return (p && typeof p === "object") ? p : {}; } catch (e) { return {}; } }
+function saveLayout() {
+var nl = Object.assign({}, layout);
+board.querySelectorAll(".card").forEach(function (card) { nl[card.dataset.type] = { left: Math.round(card.offsetLeft), top: Math.round(card.offsetTop), width: Math.round(card.offsetWidth), height: Math.round(card.offsetHeight), z: parseInt(card.style.zIndex || "1", 10) }; });
+layout = nl;
+try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout)); } catch (e) {}
+}
+function resetLayout() { layout = {}; zCounter = 10; try { localStorage.removeItem(LAYOUT_KEY); } catch (e) {} createCards(); if (latestData) updateAll(latestData); showToast("Макет сброшен", "success"); }
+function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined && text !== null) n.textContent = text; return n; }
+function clearNode(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+function isNumber(v) { return typeof v === "number" && Number.isFinite(v); }
+function fmt(v, d, u) { if (v === null || v === undefined || v === "") return "—"; var n = Number(v); if (!Number.isFinite(n)) return "—"; var t = n.toFixed(d === undefined ? 1 : d); if (u) t += " " + u; return t; }
+function fmtInt(v, u) { return fmt(v, 0, u); }
+function formatMB(v) { if (v === null || v === undefined || v === "") return "—"; var n = Number(v); if (!Number.isFinite(n)) return "—"; if (n >= 1024) return (n / 1024).toFixed(1) + " ГБ"; return Math.round(n) + " МБ"; }
+function formatUptime(s) { if (!isNumber(s) || s <= 0) return "—"; var d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60); var t = ""; if (d > 0) t += d + "д "; t += h + "ч " + m + "м"; return t; }
+function tempClass(v) { if (!isNumber(v)) return ""; if (v >= 85) return "danger"; if (v >= 70) return "warning"; return ""; }
+function percentClass(v) { if (!isNumber(v)) return ""; if (v >= 90) return "danger"; if (v >= 70) return "warning"; return ""; }
+function line(l, v, c) { var r = el("div", "line"); r.appendChild(el("span", "label", l)); var val = el("span", "value", v); if (c) val.classList.add(c); r.appendChild(val); return r; }
+function progressBar(p) { var w = el("div", "progress"), f = el("div", "fill"); if (isNumber(p)) { var s = Math.max(0, Math.min(100, p)); f.style.width = s + "%"; if (p >= 90) f.classList.add("danger"); else if (p >= 70) f.classList.add("warning"); } else { f.style.width = "0%"; } w.appendChild(f); return w; }
+function showToast(msg, type) { var c = document.getElementById("toastContainer"); if (!c) return; var t = el("div", "toast" + (type ? " " + type : ""), msg); c.appendChild(t); setTimeout(function () { t.classList.add("show"); }, 10); setTimeout(function () { t.classList.remove("show"); setTimeout(function () { t.remove(); }, 300); }, 3000); }
+function sensorKey(s) { return (s.hardware || "") + "||" + (s.name || "") + "||" + (s.type || ""); }
+function parseSensorKey(k) { var p = String(k || "").split("||"); return { hardware: p[0] || "", name: p[1] || "", type: p[2] || "" }; }
+function defaultLabelForSensorKey(k) { var p = parseSensorKey(k); if (p.hardware && p.name) return p.hardware + " · " + p.name; if (p.name) return p.name; if (p.hardware) return p.hardware; return "Датчик"; }
+function buildOtherIndex(data) { otherIndex = new Map(); if (!data || !Array.isArray(data.other)) return; data.other.forEach(function (s) { if (!s || typeof s !== "object") return; var k = sensorKey(s); if (!otherIndex.has(k)) otherIndex.set(k, s); }); }
+function normalizeCardConfig(id) { if (!state.cardConfig || typeof state.cardConfig !== "object") state.cardConfig = {}; if (!state.cardConfig[id] || typeof state.cardConfig[id] !== "object") state.cardConfig[id] = { hidden: [], labels: {} }; if (!Array.isArray(state.cardConfig[id].hidden)) state.cardConfig[id].hidden = []; if (!state.cardConfig[id].labels || typeof state.cardConfig[id].labels !== "object") state.cardConfig[id].labels = {}; return state.cardConfig[id]; }
+function isSensorHidden(id, k) { return normalizeCardConfig(id).hidden.includes(k); }
+function getSensorLabel(id, k, def) { var c = normalizeCardConfig(id).labels[k]; if (typeof c === "string" && c.trim()) return c.trim(); return def; }
+function setSensorHidden(id, k, h) { var c = normalizeCardConfig(id), i = c.hidden.indexOf(k); if (h && i === -1) c.hidden.push(k); if (!h && i !== -1) c.hidden.splice(i, 1); saveState(); }
+function setSensorLabel(id, k, l) { var c = normalizeCardConfig(id); if (l && l.trim()) c.labels[k] = l.trim(); else delete c.labels[k]; saveState(); }
+function resetCardConfig(id) { if (state.cardConfig && state.cardConfig[id]) { delete state.cardConfig[id]; saveState(); } }
+function getCardSensorList(id) {
+if (!id) return [];
+if (id.startsWith("custom-")) { var d = state.customCards.find(function (i) { return i.id === id; }); if (!d) return []; return d.sensors.map(function (k) { return { key: k, defaultLabel: defaultLabelForSensorKey(k) }; }); }
+if (id === "cpu") return [{ key: "temperature", defaultLabel: "Температура" }, { key: "core_temp", defaultLabel: "Температура ядра" }, { key: "load", defaultLabel: "Загрузка" }, { key: "frequency", defaultLabel: "Частота (факт.)" }, { key: "frequency_effective", defaultLabel: "Частота (эффект.)" }, { key: "voltage", defaultLabel: "Напряжение" }, { key: "power", defaultLabel: "Мощность" }];
+if (id === "gpu") return [{ key: "temperature", defaultLabel: "Температура" }, { key: "load", defaultLabel: "Загрузка" }, { key: "frequency", defaultLabel: "Частота" }, { key: "voltage", defaultLabel: "Напряжение" }, { key: "power", defaultLabel: "Мощность" }, { key: "memory", defaultLabel: "Память" }];
+if (id === "ram") return [{ key: "used", defaultLabel: "Использовано" }, { key: "total", defaultLabel: "Всего" }, { key: "percent", defaultLabel: "Занято" }];
+if (id === "network") return [{ key: "recv", defaultLabel: "⬇️ Приём" }, { key: "sent", defaultLabel: "⬆️ Отдача" }];
+if (id === "system") return [{ key: "uptime", defaultLabel: "Время работы" }, { key: "boot", defaultLabel: "Загрузка системы" }, { key: "host", defaultLabel: "Хост" }];
+if (id === "disks") { var items = []; if (latestData && Array.isArray(latestData.disks)) latestData.disks.forEach(function (d, i) { if (!d || typeof d !== "object") return; items.push({ key: "disk:" + i + ":" + (d.mount || "диск"), defaultLabel: d.mount || ("Диск " + i) }); }); if (latestData && Array.isArray(latestData.storage)) latestData.storage.forEach(function (s, i) { if (!s || typeof s !== "object") return; items.push({ key: "disktemp:" + i + ":" + (s.name || "накопитель"), defaultLabel: "Температура: " + (s.name || "накопитель") }); }); return items; }
+if (id === "fans") { var fi = []; if (latestData && Array.isArray(latestData.fans)) latestData.fans.forEach(function (f, i) { if (!f || typeof f !== "object") return; fi.push({ key: "fan:" + i + ":" + (f.name || "вентилятор"), defaultLabel: f.name || ("Вентилятор " + i) }); }); return fi; }
+if (id === "motherboard") { var mi = []; var mb = latestData ? latestData.motherboard : null; if (mb && Array.isArray(mb.temperature)) mb.temperature.forEach(function (t, i) { if (!t || typeof t !== "object") return; mi.push({ key: "mbt:" + i + ":" + (t.name || "датчик"), defaultLabel: t.name || ("Температура " + i) }); }); if (mb && Array.isArray(mb.voltage)) mb.voltage.forEach(function (v, i) { if (!v || typeof v !== "object") return; mi.push({ key: "mbv:" + i + ":" + (v.name || "датчик"), defaultLabel: v.name || ("Напряжение " + i) }); }); return mi; }
+if (id === "other") { var oi = []; if (latestData && Array.isArray(latestData.other)) { var mx = 200; for (var i = 0; i < latestData.other.length && oi.length < mx; i++) { var s = latestData.other[i]; if (!s || typeof s !== "object") continue; oi.push({ key: sensorKey(s), defaultLabel: defaultLabelForSensorKey(sensorKey(s)) }); } } return oi; }
+return [];
+}
+function snapValue(v) { if (!state.snap.enabled) return Math.round(v); var s = Math.max(1, Number(state.snap.size) || 20); return Math.round(v / s) * s; }
+function alignValueToGrid(v) { var s = Math.max(1, Number(state.snap.size) || 20); return Math.round(v / s) * s; }
+function updateSnapUI() { if (snapBtn) snapBtn.textContent = state.snap.enabled ? "🧲 Snap: вкл" : "🧲 Snap: выкл"; if (gridSizeSelect) gridSizeSelect.value = String(state.snap.size); applyBoardGrid(); }
+function applyBoardGrid() { if (!board) return; if (state.snap.enabled) { board.style.backgroundImage = "linear-gradient(to right, var(--line) 1px, transparent 1px), linear-gradient(to bottom, var(--line) 1px, transparent 1px)"; board.style.backgroundSize = state.snap.size + "px " + state.snap.size + "px"; } else { board.style.backgroundImage = "none"; board.style.backgroundSize = "auto"; } }
+function alignAllToGrid() { board.querySelectorAll(".card").forEach(function (c) { c.style.left = alignValueToGrid(c.offsetLeft) + "px"; c.style.top = alignValueToGrid(c.offsetTop) + "px"; c.style.width = alignValueToGrid(c.offsetWidth) + "px"; c.style.height = alignValueToGrid(c.offsetHeight) + "px"; }); adjustBoardHeight(); saveLayout(); showToast("Карточки выровнены по сетке", "success"); }
+function getDefaultPosition(i) { var c = i % 4, r = Math.floor(i / 4); return { left: 12 + c * 370, top: 12 + r * 285, width: 350, height: 250, z: i + 1 }; }
+function createCardSettingsButton(id) { var b = el("button", "card-settings", "⚙️"); b.type = "button"; b.title = "Настройка датчиков"; b.addEventListener("click", function (e) { e.stopPropagation(); openCardSettings(id); }); return b; }
+function createStandardCard(type, idx) {
+var meta = CARD_META[type];
+var card = el("section", "card");
+card.id = "card-" + type; card.dataset.type = type;
+var pos = layout && layout[type] ? layout[type] : getDefaultPosition(idx);
+card.style.left = Math.max(0, Number(pos.left || 0)) + "px";
+card.style.top = Math.max(0, Number(pos.top || 0)) + "px";
+card.style.width = Math.max(220, Number(pos.width || 350)) + "px";
+card.style.height = Math.max(140, Number(pos.height || 250)) + "px";
+card.style.zIndex = Math.min(4000, Number(pos.z || 1));
+zCounter = Math.min(4000, Math.max(zCounter, Number(pos.z || 1)));
+var header = el("div", "card-header");
+header.appendChild(el("span", "icon", meta.icon));
+header.appendChild(el("span", "title", meta.title));
+header.appendChild(createCardSettingsButton(type));
+var body = el("div", "card-body"); body.id = "card-body-" + type;
+if (type === "other") {
+var typeSelect = document.createElement("select");
+typeSelect.id = "otherTypeFilter";
+typeSelect.className = "other-type-filter";
+typeSelect.addEventListener("change", renderOther);
+var types = [
+{ value: "", label: "Все типы" },
+{ value: "Temperature", label: "🌡️ Температура" },
+{ value: "Voltage", label: "⚡ Напряжение" },
+{ value: "Power", label: "🔌 Мощность" },
+{ value: "Clock", label: "🕐 Частота (Clock)" },
+{ value: "Frequency", label: "📻 Частота (Frequency)" },
+{ value: "Load", label: "📊 Загрузка" },
+{ value: "Fan", label: "🌀 Вентилятор" },
+{ value: "Data", label: "💾 Данные" },
+{ value: "SmallData", label: "💾 Малые данные" },
+{ value: "Throughput", label: "📡 Пропускная способность" },
+{ value: "Level", label: "📏 Уровень" },
+{ value: "Current", label: "🔋 Ток" },
+{ value: "Control", label: "🎛️ Управление" },
+{ value: "Timing", label: "⏱️ Тайминги" },
+{ value: "Noise", label: "🔊 Шум" },
+{ value: "Energy", label: "🔋 Энергия" },
+{ value: "Factor", label: "🔢 Коэффициент" }
+];
+types.forEach(function (t) {
+var opt = document.createElement("option");
+opt.value = t.value;
+opt.textContent = t.label;
+typeSelect.appendChild(opt);
+});
+body.appendChild(typeSelect);
+var inp = document.createElement("input");
+inp.id = "otherFilter";
+inp.className = "other-filter";
+inp.type = "text";
+inp.placeholder = "Поиск по датчикам...";
+inp.addEventListener("input", renderOther);
+body.appendChild(inp);
+var lst = el("div", "other-list");
+lst.id = "otherList";
+body.appendChild(lst);
+}
+card.appendChild(header); card.appendChild(body);
+RESIZE_DIRS.forEach(function (d) { var h = el("div", "resize-handle " + d); h.dataset.dir = d; card.appendChild(h); });
+if (locked) card.classList.add("locked");
+makeDraggable(card, header); makeResizable(card);
+return card;
+}
+function createCustomCard(def, idx) {
+var card = el("section", "card custom-card");
+card.id = def.id; card.dataset.type = def.id; card.dataset.custom = "true";
+var pos = layout && layout[def.id] ? layout[def.id] : getDefaultPosition(idx);
+card.style.left = Math.max(0, Number(pos.left || 0)) + "px";
+card.style.top = Math.max(0, Number(pos.top || 0)) + "px";
+card.style.width = Math.max(220, Number(pos.width || 350)) + "px";
+card.style.height = Math.max(140, Number(pos.height || 250)) + "px";
+card.style.zIndex = Math.min(4000, Number(pos.z || 1));
+zCounter = Math.min(4000, Math.max(zCounter, Number(pos.z || 1)));
+var header = el("div", "card-header");
+header.appendChild(el("span", "icon", "🧩"));
+header.appendChild(el("span", "title", def.name));
+header.appendChild(createCardSettingsButton(def.id));
+var del = el("button", "card-delete", "✕"); del.type = "button"; del.title = "Удалить карточку";
+del.addEventListener("click", function (e) { e.stopPropagation(); removeCustomCard(def.id); });
+header.appendChild(del);
+var body = el("div", "card-body"); body.id = "card-body-" + def.id;
+card.appendChild(header); card.appendChild(body);
+RESIZE_DIRS.forEach(function (d) { var h = el("div", "resize-handle " + d); h.dataset.dir = d; card.appendChild(h); });
+if (locked) card.classList.add("locked");
+makeDraggable(card, header); makeResizable(card);
+return card;
+}
+function createCards() {
+clearNode(board); var idx = 0;
+CARD_TYPES.forEach(function (t) { if (state.cards[t]) { board.appendChild(createStandardCard(t, idx)); idx++; } });
+state.customCards.forEach(function (d) { board.appendChild(createCustomCard(d, idx)); idx++; });
+adjustBoardHeight(); applyBoardGrid();
+}
+function bringToFront(c) { zCounter = Math.min(4000, zCounter + 1); c.style.zIndex = zCounter; }
+function adjustBoardHeight() { var mb = 0; board.querySelectorAll(".card").forEach(function (c) { var b = c.offsetTop + c.offsetHeight; if (b > mb) mb = b; }); board.style.minHeight = Math.max(520, mb + 45) + "px"; }
+function makeDraggable(card, handle) {
+handle.addEventListener("pointerdown", function (ev) {
+if (locked) return; if (ev.button === 2) return; if (ev.target.closest("button, input, select, textarea, a")) return;
+ev.preventDefault(); try { card.setPointerCapture(ev.pointerId); } catch (e) {}
+bringToFront(card);
+var sx = ev.clientX, sy = ev.clientY, sl = card.offsetLeft, st = card.offsetTop;
+card.classList.add("dragging");
+function onMove(e) { var nl = snapValue(sl + (e.clientX - sx)), nt = snapValue(st + (e.clientY - sy)); card.style.left = Math.max(0, nl) + "px"; card.style.top = Math.max(0, nt) + "px"; }
+function onUp(e) { card.classList.remove("dragging"); try { card.releasePointerCapture(e.pointerId); } catch (e) {} card.removeEventListener("pointermove", onMove); card.removeEventListener("pointerup", onUp); card.removeEventListener("pointercancel", onUp); adjustBoardHeight(); saveLayout(); }
+card.addEventListener("pointermove", onMove); card.addEventListener("pointerup", onUp); card.addEventListener("pointercancel", onUp);
+});
+}
+function makeResizable(card) {
+card.querySelectorAll(".resize-handle").forEach(function (handle) {
+handle.addEventListener("pointerdown", function (ev) {
+if (locked) return; ev.preventDefault(); ev.stopPropagation();
+try { handle.setPointerCapture(ev.pointerId); } catch (e) {}
+bringToFront(card);
+var dir = handle.dataset.dir || "", sx = ev.clientX, sy = ev.clientY, sl = card.offsetLeft, st = card.offsetTop, sw = card.offsetWidth, sh = card.offsetHeight, minW = 220, minH = 140;
+function onMove(e) {
+var dx = e.clientX - sx, dy = e.clientY - sy, nl = sl, nt = st, nw = sw, nh = sh;
+if (dir.includes("e")) { nw = snapValue(sw + dx); }
+if (dir.includes("s")) { nh = snapValue(sh + dy); }
+if (dir.includes("w")) { nw = snapValue(sw - dx); nl = sl + sw - nw; }
+if (dir.includes("n")) { nh = snapValue(sh - dy); nt = st + sh - nh; }
+if (nw < minW) { if (dir.includes("w")) nl = sl + sw - minW; nw = minW; }
+if (nh < minH) { if (dir.includes("n")) nt = st + sh - minH; nh = minH; }
+card.style.left = Math.max(0, nl) + "px"; card.style.top = Math.max(0, nt) + "px"; card.style.width = nw + "px"; card.style.height = nh + "px";
+}
+function onUp(e) { try { handle.releasePointerCapture(e.pointerId); } catch (e) {} handle.removeEventListener("pointermove", onMove); handle.removeEventListener("pointerup", onUp); handle.removeEventListener("pointercancel", onUp); adjustBoardHeight(); saveLayout(); }
+handle.addEventListener("pointermove", onMove); handle.addEventListener("pointerup", onUp); handle.addEventListener("pointercancel", onUp);
+});
+});
+}
+function makeWindowResizable() {
+var win = document.querySelector(".window");
+if (!win) return;
+try {
+var saved = localStorage.getItem(WINDOW_SIZE_KEY);
+if (saved) {
+var sz = JSON.parse(saved);
+if (sz.w && sz.w > 400) { win.style.width = sz.w + "px"; win.style.maxWidth = "none"; }
+if (sz.h && sz.h > 300) { win.style.height = sz.h + "px"; }
+}
+} catch (e) {}
+var handles = win.querySelectorAll(".window-resize-handle");
+handles.forEach(function (handle) {
+handle.addEventListener("pointerdown", function (ev) {
+ev.preventDefault(); ev.stopPropagation();
+try { handle.setPointerCapture(ev.pointerId); } catch (e) {}
+var dir = handle.dataset.dir || "";
+var sx = ev.clientX, sy = ev.clientY;
+var sw = win.offsetWidth, sh = win.offsetHeight;
+var minW = 600, minH = 400;
+function onMove(e) {
+var dx = e.clientX - sx, dy = e.clientY - sy;
+var nw = sw, nh = sh;
+if (dir.indexOf("e") !== -1) { nw = Math.max(minW, sw + dx); }
+if (dir.indexOf("s") !== -1) { nh = Math.max(minH, sh + dy); }
+win.style.width = nw + "px";
+win.style.height = nh + "px";
+win.style.maxWidth = "none";
+}
+function onUp(e) {
+try { handle.releasePointerCapture(e.pointerId); } catch (e) {}
+handle.removeEventListener("pointermove", onMove);
+handle.removeEventListener("pointerup", onUp);
+handle.removeEventListener("pointercancel", onUp);
+try {
+localStorage.setItem(WINDOW_SIZE_KEY, JSON.stringify({ w: win.offsetWidth, h: win.offsetHeight }));
+} catch (e) {}
+}
+handle.addEventListener("pointermove", onMove);
+handle.addEventListener("pointerup", onUp);
+handle.addEventListener("pointercancel", onUp);
+});
+});
+}
+function getBody(t) { return document.getElementById("card-body-" + t); }
+function onData(d) { if (!d || typeof d !== "object") return; latestData = d; updateAll(d); hideError(); lastUpdate.textContent = new Date().toLocaleTimeString(); }
+function updateAll(d) { if (!d || typeof d !== "object") return; buildOtherIndex(d); updateCpu(d); updateGpu(d); updateRam(d); updateNetwork(d); updateDisks(d); updateFans(d); updateMotherboard(d); updateSystem(d); renderOther(); updateCustomCards(); }
+function updateCpu(d) {
+var b = getBody("cpu");
+if (!b) return;
+clearNode(b);
+var c = d.cpu || {}, ld = c.load !== null && c.load !== undefined ? c.load : d.cpu_percent;
+if (!isSensorHidden("cpu", "temperature")) b.appendChild(line(getSensorLabel("cpu", "temperature", "Температура"), fmt(c.temperature, 1, "°C"), tempClass(c.temperature)));
+if (!isSensorHidden("cpu", "core_temp")) {
+var coreTemps = c.core_temps || [];
+if (coreTemps.length > 0) {
+var cfg = normalizeCardConfig("cpu");
+var selectedCore = cfg.labels["__selected_core"] || "max";
+var row = el("div", "line");
+row.appendChild(el("span", "label", getSensorLabel("cpu", "core_temp", "Температура ядра")));
+var valueSpan = el("span", "value");
+valueSpan.style.display = "flex";
+valueSpan.style.alignItems = "center";
+valueSpan.style.gap = "6px";
+var sel = document.createElement("select");
+sel.style.cssText = "background:var(--window-bg);color:var(--text);border:1px solid var(--border-dark);padding:2px 4px;font-size:12px;max-width:130px;";
+var optMax = document.createElement("option");
+optMax.value = "max"; optMax.textContent = "Максимум";
+if (selectedCore === "max") optMax.selected = true;
+sel.appendChild(optMax);
+var optAvg = document.createElement("option");
+optAvg.value = "avg"; optAvg.textContent = "Средняя";
+if (selectedCore === "avg") optAvg.selected = true;
+sel.appendChild(optAvg);
+coreTemps.forEach(function (ct) {
+var opt = document.createElement("option");
+opt.value = ct.name; opt.textContent = ct.name;
+if (selectedCore === ct.name) opt.selected = true;
+sel.appendChild(opt);
+});
+sel.addEventListener("change", function () {
+var cfg2 = normalizeCardConfig("cpu");
+cfg2.labels["__selected_core"] = sel.value;
+saveState();
+if (latestData) updateCpu(latestData);
+});
+var coreValue = null;
+if (selectedCore === "max") {
+coreTemps.forEach(function (ct) { if (coreValue === null || ct.value > coreValue) coreValue = ct.value; });
+} else if (selectedCore === "avg") {
+var sum = 0; coreTemps.forEach(function (ct) { sum += ct.value; });
+coreValue = coreTemps.length > 0 ? sum / coreTemps.length : null;
+} else {
+var found = coreTemps.find(function (ct) { return ct.name === selectedCore; });
+coreValue = found ? found.value : null;
+}
+var valText = el("span", "", fmt(coreValue, 1, "°C"));
+var cls = tempClass(coreValue);
+if (cls) valText.classList.add(cls);
+valueSpan.appendChild(sel);
+valueSpan.appendChild(valText);
+row.appendChild(valueSpan);
+b.appendChild(row);
+}
+}
+if (!isSensorHidden("cpu", "load")) { b.appendChild(line(getSensorLabel("cpu", "load", "Загрузка"), fmt(ld, 1, "%"), percentClass(ld))); b.appendChild(progressBar(ld)); }
+if (!isSensorHidden("cpu", "frequency")) b.appendChild(line(getSensorLabel("cpu", "frequency", "Частота (факт.)"), fmt(c.frequency !== null && c.frequency !== undefined ? c.frequency : d.cpu_freq_mhz, 0, "МГц")));
+if (!isSensorHidden("cpu", "frequency_effective")) b.appendChild(line(getSensorLabel("cpu", "frequency_effective", "Частота (эффект.)"), fmt(c.frequency_effective, 0, "МГц")));
+if (!isSensorHidden("cpu", "voltage")) b.appendChild(line(getSensorLabel("cpu", "voltage", "Напряжение"), fmt(c.voltage, 3, "В")));
+if (!isSensorHidden("cpu", "power")) b.appendChild(line(getSensorLabel("cpu", "power", "Мощность"), fmt(c.power, 1, "Вт")));
+}
+function updateGpu(d) { var b = getBody("gpu"); if (!b) return; clearNode(b); var g = d.gpu || {};
+if (!isSensorHidden("gpu", "temperature")) b.appendChild(line(getSensorLabel("gpu", "temperature", "Температура"), fmt(g.temperature, 1, "°C"), tempClass(g.temperature)));
+if (!isSensorHidden("gpu", "load")) { b.appendChild(line(getSensorLabel("gpu", "load", "Загрузка"), fmt(g.load, 1, "%"), percentClass(g.load))); b.appendChild(progressBar(g.load)); }
+if (!isSensorHidden("gpu", "frequency")) b.appendChild(line(getSensorLabel("gpu", "frequency", "Частота"), fmt(g.frequency, 0, "МГц")));
+if (!isSensorHidden("gpu", "voltage")) b.appendChild(line(getSensorLabel("gpu", "voltage", "Напряжение"), fmt(g.voltage, 3, "В")));
+if (!isSensorHidden("gpu", "power")) b.appendChild(line(getSensorLabel("gpu", "power", "Мощность"), fmt(g.power, 1, "Вт")));
+if (!isSensorHidden("gpu", "memory")) b.appendChild(line(getSensorLabel("gpu", "memory", "Память"), formatMB(g.memory_used) + " / " + formatMB(g.memory_total)));
+}
+function updateRam(d) { var b = getBody("ram"); if (!b) return; clearNode(b); var u = d.ram_used_mb, t = d.ram_total_mb, p = d.ram_percent;
+if (!isSensorHidden("ram", "used")) b.appendChild(line(getSensorLabel("ram", "used", "Использовано"), formatMB(u)));
+if (!isSensorHidden("ram", "total")) b.appendChild(line(getSensorLabel("ram", "total", "Всего"), formatMB(t)));
+if (!isSensorHidden("ram", "percent")) { b.appendChild(line(getSensorLabel("ram", "percent", "Занято"), fmt(p, 1, "%"), percentClass(p))); b.appendChild(progressBar(p)); }
+}
+function updateNetwork(d) { var b = getBody("network"); if (!b) return; clearNode(b);
+if (!isSensorHidden("network", "recv")) b.appendChild(line(getSensorLabel("network", "recv", "⬇️ Приём"), fmt(d.net_recv_speed_kbps, 1, "КБ/с")));
+if (!isSensorHidden("network", "sent")) b.appendChild(line(getSensorLabel("network", "sent", "⬆️ Отдача"), fmt(d.net_sent_speed_kbps, 1, "КБ/с")));
+}
+function updateDisks(d) { var b = getBody("disks"); if (!b) return; clearNode(b); var disks = Array.isArray(d.disks) ? d.disks : [], st = Array.isArray(d.storage) ? d.storage : [], vc = 0;
+disks.forEach(function (dk, i) { if (!dk || typeof dk !== "object") return; var k = "disk:" + i + ":" + (dk.mount || "диск"); if (isSensorHidden("disks", k)) return; var u = isNumber(dk.used_gb) ? dk.used_gb.toFixed(1) : "—", t = isNumber(dk.total_gb) ? dk.total_gb.toFixed(1) : "—", p = isNumber(dk.percent) ? dk.percent.toFixed(1) : "—"; b.appendChild(line(getSensorLabel("disks", k, dk.mount || ("Диск " + i)), u + " / " + t + " ГБ (" + p + "%)", percentClass(dk.percent))); b.appendChild(progressBar(dk.percent)); vc++; });
+var tt = false; st.forEach(function (s, i) { if (!s || typeof s !== "object") return; var k = "disktemp:" + i + ":" + (s.name || "накопитель"); if (isSensorHidden("disks", k)) return; if (!tt) { b.appendChild(el("div", "section-title", "Температура накопителей")); tt = true; } b.appendChild(line(getSensorLabel("disks", k, s.name || ("Накопитель " + i)), fmt(s.temp, 1, "°C"), tempClass(s.temp))); vc++; });
+if (vc === 0) b.appendChild(line("Диски", "Нет данных"));
+}
+function updateFans(d) { var b = getBody("fans"); if (!b) return; clearNode(b); var fans = Array.isArray(d.fans) ? d.fans : [], vc = 0;
+fans.forEach(function (f, i) { if (!f || typeof f !== "object") return; var k = "fan:" + i + ":" + (f.name || "вентилятор"); if (isSensorHidden("fans", k)) return; b.appendChild(line(getSensorLabel("fans", k, f.name || ("Вентилятор " + i)), fmtInt(f.rpm, "RPM"))); vc++; });
+if (vc === 0) b.appendChild(line("Вентиляторы", "Нет данных"));
+}
+function updateMotherboard(d) { var b = getBody("motherboard"); if (!b) return; clearNode(b); var mb = d.motherboard || {}, ts = Array.isArray(mb.temperature) ? mb.temperature : [], vs = Array.isArray(mb.voltage) ? mb.voltage : [], vc = 0, tt = false, vt = false;
+ts.forEach(function (t, i) { if (!t || typeof t !== "object") return; var k = "mbt:" + i + ":" + (t.name || "датчик"); if (isSensorHidden("motherboard", k)) return; if (!tt) { b.appendChild(el("div", "section-title", "Температуры")); tt = true; } b.appendChild(line(getSensorLabel("motherboard", k, t.name || ("Датчик " + i)), fmt(t.value, 1, "°C"), tempClass(t.value))); vc++; });
+vs.forEach(function (v, i) { if (!v || typeof v !== "object") return; var k = "mbv:" + i + ":" + (v.name || "датчик"); if (isSensorHidden("motherboard", k)) return; if (!vt) { b.appendChild(el("div", "section-title", "Напряжения")); vt = true; } b.appendChild(line(getSensorLabel("motherboard", k, v.name || ("Датчик " + i)), fmt(v.value, 3, "В"))); vc++; });
+if (vc === 0) b.appendChild(line("Материнская плата", "Нет данных"));
+}
+function updateSystem(d) { var b = getBody("system"); if (!b) return; clearNode(b);
+if (!isSensorHidden("system", "uptime")) b.appendChild(line(getSensorLabel("system", "uptime", "Время работы"), formatUptime(d.uptime_seconds)));
+if (!isSensorHidden("system", "boot")) b.appendChild(line(getSensorLabel("system", "boot", "Загрузка системы"), d.boot_time || "—"));
+if (!isSensorHidden("system", "host")) b.appendChild(line(getSensorLabel("system", "host", "Хост"), window.location.hostname || "localhost"));
+}
+function renderOther() {
+var lst = document.getElementById("otherList");
+if (!lst) return;
+clearNode(lst);
+var fi = document.getElementById("otherFilter"),
+term = fi ? fi.value.trim().toLowerCase() : "",
+tf = document.getElementById("otherTypeFilter"),
+selectedType = tf ? tf.value : "",
+items = latestData && Array.isArray(latestData.other) ? latestData.other : [],
+shown = 0, mx = 200;
+if (items.length === 0) { lst.appendChild(line("Прочие датчики", "Нет данных")); return; }
+for (var i = 0; i < items.length; i++) {
+if (shown >= mx) break;
+var s = items[i];
+if (!s || typeof s !== "object") continue;
+if (selectedType && s.type !== selectedType) continue;
+var k = sensorKey(s);
+if (isSensorHidden("other", k)) continue;
+var txt = ((s.hardware || "") + " " + (s.name || "") + " " + (s.type || "")).toLowerCase();
+if (term && txt.indexOf(term) === -1) continue;
+lst.appendChild(line(getSensorLabel("other", k, defaultLabelForSensorKey(k)), fmt(s.value, 1, s.unit)));
+shown++;
+}
+if (shown === 0) lst.appendChild(line("Поиск", "Ничего не найдено"));
+if (items.length > mx) lst.appendChild(line("Примечание", "Показаны первые " + mx + " датчиков"));
+}
+function updateCustomCards() { state.customCards.forEach(function (def) { var b = getBody(def.id); if (!b) return; clearNode(b); if (!Array.isArray(def.sensors) || def.sensors.length === 0) { b.appendChild(line("Датчики", "Не выбраны")); return; } var vc = 0; def.sensors.forEach(function (k) { if (isSensorHidden(def.id, k)) return; var s = otherIndex.get(k), dl = s ? (s.hardware ? s.hardware + " · " + s.name : s.name) : defaultLabelForSensorKey(k), lb = getSensorLabel(def.id, k, dl); if (s) b.appendChild(line(lb, fmt(s.value, 1, s.unit))); else b.appendChild(line(lb, "—")); vc++; }); if (vc === 0) b.appendChild(line("Датчики", "Все датчики скрыты")); }); }
+function showError(m) { errorBanner.textContent = "Ошибка: " + m; errorBanner.classList.remove("hidden"); }
+function hideError() { errorBanner.textContent = ""; errorBanner.classList.add("hidden"); }
+async function refresh() { try { var r = await fetch("/stats", { cache: "no-store" }); if (!r.ok) { if (r.status === 503) throw new Error("Данные ещё не собраны. Подождите несколько секунд."); throw new Error("HTTP " + r.status); } onData(await r.json()); } catch (e) { console.error("Ошибка получения данных:", e); showError(e.message || String(e)); } finally { lastUpdate.textContent = new Date().toLocaleTimeString(); } }
+function setTransport(t) { transport.textContent = t; }
+function startPolling() { if (pollingActive) return; pollingActive = true; refresh(); pollingTimer = setInterval(refresh, state.interval); }
+function stopPolling() { pollingActive = false; if (pollingTimer) clearInterval(pollingTimer); pollingTimer = null; }
+function restartPollingIfActive() { if (!pollingActive) return; stopPolling(); startPolling(); }
+function scheduleReconnect() { if (reconnectTimer) clearTimeout(reconnectTimer); reconnectTimer = setTimeout(connectWebSocket, 5000); }
+function connectWebSocket() {
+if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
+var proto = window.location.protocol === "https:" ? "wss" : "ws", url = proto + "://" + window.location.hostname + ":" + WS_PORT;
+setTransport("WebSocket: подключение...");
+try { ws = new WebSocket(url); } catch (e) { setTransport("HTTP polling"); startPolling(); scheduleReconnect(); return; }
+ws.onopen = function () { setTransport("WebSocket"); lastWsMessageAt = Date.now(); stopPolling(); };
+ws.onmessage = function (ev) { lastWsMessageAt = Date.now(); try { onData(JSON.parse(ev.data)); } catch (e) {} };
+ws.onclose = function () { setTransport("HTTP polling"); startPolling(); scheduleReconnect(); };
+ws.onerror = function () { try { ws.close(); } catch (e) {} };
+}
+function websocketWatchdog() { if (!ws || ws.readyState !== WebSocket.OPEN) return; var t = Math.max(15000, state.interval * 3 + 5000); if (Date.now() - lastWsMessageAt > t) { try { ws.close(); } catch (e) {} } }
+function applyTheme() { document.body.classList.toggle("dark", !!state.dark); }
+function syncSettings() { document.querySelectorAll(".card-toggle").forEach(function (cb) { cb.checked = !!state.cards[cb.dataset.card]; }); var dt = document.getElementById("darkToggle"); if (dt) dt.checked = !!state.dark; intervalSelect.value = String(state.interval); }
+function updateLockButton() { if (!lockBtn) return; lockBtn.textContent = locked ? "🔒 Разблокировать" : "🔓 Блокировать"; }
+function toggleLock() { locked = !locked; board.querySelectorAll(".card").forEach(function (c) { c.classList.toggle("locked", locked); }); updateLockButton(); }
+function openModal(p, o) { document.getElementById(p).classList.remove("hidden"); document.getElementById(o).classList.remove("hidden"); }
+function closeModal(p, o) { document.getElementById(p).classList.add("hidden"); document.getElementById(o).classList.add("hidden"); }
+async function loadLogs() { var lc = document.getElementById("logsContent"); try { lc.textContent = "Загрузка..."; var r = await fetch("/api/logs?lines=200", { cache: "no-store" }); var d = await r.json(); if (!r.ok) { lc.textContent = d.logs || "Ошибка загрузки логов."; return; } lc.textContent = d.logs || "Лог пуст."; } catch (e) { lc.textContent = "Ошибка загрузки логов."; } }
+function updateSelectedCount() { var c = document.getElementById("customSelectedCount"); if (c) c.textContent = customSelection.size + " выбрано"; }
+function renderCustomSensorList() {
+var lst = document.getElementById("customSensorList");
+if (!lst) return;
+clearNode(lst);
+var si = document.getElementById("customSearch"),
+term = si ? si.value.trim().toLowerCase() : "",
+tf = document.getElementById("customTypeFilter"),
+selectedType = tf ? tf.value : "",
+items = latestData && Array.isArray(latestData.other) ? latestData.other : [];
+if (items.length === 0) { lst.appendChild(el("div", "muted", "Нет данных other.")); updateSelectedCount(); return; }
+var frag = document.createDocumentFragment(), shown = 0, mx = 1000;
+for (var i = 0; i < items.length; i++) {
+if (shown >= mx) break;
+var s = items[i];
+if (!s || typeof s !== "object") continue;
+if (selectedType && s.type !== selectedType) continue;
+var k = sensorKey(s), txt = ((s.hardware || "") + " " + (s.name || "") + " " + (s.type || "")).toLowerCase();
+if (term && txt.indexOf(term) === -1) continue;
+var item = el("div", "sensor-item"), lbl = document.createElement("label"), cb = document.createElement("input");
+cb.type = "checkbox"; cb.dataset.key = k; cb.checked = customSelection.has(k);
+cb.addEventListener("change", (function (key, checkbox) { return function () { if (checkbox.checked) customSelection.add(key); else customSelection.delete(key); updateSelectedCount(); }; })(k, cb));
+var sp = document.createElement("span"); sp.textContent = (s.hardware || "—") + " · " + (s.name || "—") + " [" + (s.type || "—") + "] = " + fmt(s.value, 1, s.unit);
+lbl.appendChild(cb); lbl.appendChild(sp); item.appendChild(lbl); frag.appendChild(item); shown++;
+}
+if (shown === 0) lst.appendChild(el("div", "muted", "Ничего не найдено.")); else lst.appendChild(frag);
+if (items.length > mx) lst.appendChild(el("div", "muted", "Показаны первые " + mx + " датчиков."));
+updateSelectedCount();
+}
+function openCustomPanel() { customSelection = new Set(); var cn = document.getElementById("customName"), cs = document.getElementById("customSearch"), tf = document.getElementById("customTypeFilter"); if (cn) cn.value = ""; if (cs) cs.value = ""; if (tf) tf.value = ""; renderCustomSensorList(); openModal("customPanel", "customOverlay"); }
+function closeCustomPanel() { closeModal("customPanel", "customOverlay"); }
+function createCustomCardFromSelection() { if (customSelection.size === 0) { showToast("Выберите хотя бы один датчик", "warning"); return; } var cn = document.getElementById("customName"), name = cn && cn.value.trim() ? cn.value.trim() : "Карточка " + (state.customCards.length + 1), id = "custom-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8); state.customCards.push({ id: id, name: name, sensors: Array.from(customSelection) }); saveState(); createCards(); if (latestData) updateAll(latestData); closeCustomPanel(); showToast("Пользовательская карточка создана", "success"); }
+function removeCustomCard(id) { state.customCards = state.customCards.filter(function (c) { return c.id !== id; }); saveState(); createCards(); if (latestData) updateAll(latestData); showToast("Карточка удалена", "success"); }
+function openCardSettings(id) { currentCardSettingsId = id; var title = "карточка"; if (id.startsWith("custom-")) { var d = state.customCards.find(function (i) { return i.id === id; }); title = d ? d.name : "Пользовательская карточка"; } else if (CARD_META[id]) title = CARD_META[id].title; var te = document.getElementById("cardSettingsTitle"); if (te) te.textContent = "⚙️ " + title; var se = document.getElementById("cardSettingsSearch"); if (se) se.value = ""; renderCardSettingsList(); openModal("cardSettingsPanel", "cardSettingsOverlay"); }
+function closeCardSettings() { currentCardSettingsId = null; closeModal("cardSettingsPanel", "cardSettingsOverlay"); }
+function renderCardSettingsList() { var lst = document.getElementById("cardSettingsList"); if (!lst || !currentCardSettingsId) return; clearNode(lst); var se = document.getElementById("cardSettingsSearch"), term = se ? se.value.trim().toLowerCase() : "", items = getCardSensorList(currentCardSettingsId); if (!items || items.length === 0) { lst.appendChild(el("div", "muted", "Нет датчиков для настройки.")); return; }
+items.forEach(function (item) { if (!item || typeof item !== "object") return; var txt = (item.defaultLabel + " " + item.key).toLowerCase(); if (term && txt.indexOf(term) === -1) return; var cfg = normalizeCardConfig(currentCardSettingsId), row = el("div", "sensor-setting"), lbl = document.createElement("label"); lbl.className = "sensor-setting-check"; var cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = !cfg.hidden.includes(item.key);
+cb.addEventListener("change", (function (key, checkbox) { return function () { setSensorHidden(currentCardSettingsId, key, !checkbox.checked); if (latestData) updateAll(latestData); }; })(item.key, cb));
+var sp = el("span", "", item.defaultLabel); lbl.appendChild(cb); lbl.appendChild(sp);
+var inp = document.createElement("input"); inp.type = "text"; inp.className = "custom-input sensor-label-input"; inp.placeholder = item.defaultLabel; inp.value = cfg.labels[item.key] || "";
+inp.addEventListener("change", (function (key, input) { return function () { setSensorLabel(currentCardSettingsId, key, input.value); if (latestData) updateAll(latestData); }; })(item.key, inp));
+row.appendChild(lbl); row.appendChild(inp); lst.appendChild(row); });
+}
+function resetCurrentCardSettings() { if (!currentCardSettingsId) return; resetCardConfig(currentCardSettingsId); if (latestData) updateAll(latestData); renderCardSettingsList(); showToast("Настройки карточки сброшены", "success"); }
+var PRESETS_STORAGE_KEY = "systemMonitorDashboardPresets.v1";
+var THEMES_STORAGE_KEY = "systemMonitorThemes.v1";
+var ACTIVE_THEME_KEY = "systemMonitorActiveTheme.v1";
+var THEME_VAR_NAMES = ["--bg", "--window-bg", "--card-bg", "--text", "--muted", "--border-light", "--border-dark", "--accent", "--danger", "--warning", "--ok", "--line"];
+var BUILTIN_THEMES = [
+{ id: "builtin-classic", name: "Классическая (светлая)", builtin: true, dark: false, variables: {}, customCss: "" },
+{ id: "builtin-dark", name: "Тёмная", builtin: true, dark: true, variables: { "--bg": "#101418", "--window-bg": "#1d232b", "--card-bg": "#232b36", "--text": "#e8eef5", "--muted": "#9fb0c0", "--border-light": "#3a4654", "--border-dark": "#10151b", "--accent": "#4da3ff", "--danger": "#ff6b6b", "--warning": "#feca57", "--ok": "#59d17e", "--line": "rgba(255,255,255,0.08)" }, customCss: "" },
+{ id: "builtin-win95", name: "Win95", builtin: true, dark: false, variables: { "--bg": "#008080", "--window-bg": "#c0c0c0", "--card-bg": "#c0c0c0", "--text": "#000000", "--muted": "#333333", "--border-light": "#ffffff", "--border-dark": "#808080", "--accent": "#000080", "--danger": "#cc0000", "--warning": "#cc7700", "--ok": "#007700", "--line": "rgba(0,0,0,0.15)" }, customCss: "" },
+{ id: "builtin-neon", name: "Неон", builtin: true, dark: true, variables: { "--bg": "#05070f", "--window-bg": "#0b1020", "--card-bg": "#101a33", "--text": "#d9f6ff", "--muted": "#7f9bbf", "--border-light": "#1d3050", "--border-dark": "#04060c", "--accent": "#00e5ff", "--danger": "#ff4d6d", "--warning": "#ffd166", "--ok": "#06d6a0", "--line": "rgba(0,229,255,0.12)" }, customCss: ".card { border-radius: 10px; } .window { border-radius: 10px; }" }
+];
+function sanitizeCssValue(v) { return String(v).replace(/[;{}<>]/g, "").slice(0, 200); }
+function sanitizeCustomCss(c) { return String(c).replace(/<\/style/gi, "").slice(0, 20000); }
+function loadStoredThemes() { try { var r = localStorage.getItem(THEMES_STORAGE_KEY); if (!r) return {}; var p = JSON.parse(r); return (p && typeof p === "object") ? p : {}; } catch (e) { return {}; } }
+function saveStoredThemes(t) { try { localStorage.setItem(THEMES_STORAGE_KEY, JSON.stringify(t)); } catch (e) {} }
+function getAllThemes() { return BUILTIN_THEMES.concat(Object.values(loadStoredThemes())); }
+function normalizeThemeObject(raw) { if (!raw || typeof raw !== "object") return null; var hv = raw.variables && typeof raw.variables === "object" && Object.keys(raw.variables).length > 0, hc = typeof raw.customCss === "string" && raw.customCss.trim(); if (!hv && !hc) return null; var vars = {}; if (hv) Object.keys(raw.variables).forEach(function (k) { var v = raw.variables[k]; if (typeof v !== "string" && typeof v !== "number") return; var ck = String(k).trim(); if (ck.indexOf("--") !== 0) ck = "--" + ck; vars[ck] = sanitizeCssValue(v); }); return { id: typeof raw.id === "string" && /^[A-Za-z0-9_-]+$/.test(raw.id) ? raw.id : "theme-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8), name: String(raw.name || "Тема").slice(0, 80), author: typeof raw.author === "string" ? raw.author.slice(0, 80) : "", description: typeof raw.description === "string" ? raw.description.slice(0, 200) : "", dark: typeof raw.dark === "boolean" ? raw.dark : false, variables: vars, customCss: typeof raw.customCss === "string" ? sanitizeCustomCss(raw.customCss) : "" }; }
+function applyThemeObject(theme) { var se = document.getElementById("appliedThemeStyle"); if (!se) { se = document.createElement("style"); se.id = "appliedThemeStyle"; document.head.appendChild(se); } if (!theme || theme.id === "builtin-classic") { se.textContent = ""; } else { var css = ":root, body, body.dark {\n"; Object.keys(theme.variables || {}).forEach(function (k) { css += "  " + k + ": " + theme.variables[k] + ";\n"; }); css += "}\n"; if (theme.customCss) css += theme.customCss + "\n"; se.textContent = css; } state.dark = !!(theme && theme.dark); saveState(); applyTheme(); syncSettings(); }
+function applyThemeById(id) { var t = getAllThemes().find(function (i) { return i.id === id; }); if (!t) { showToast("Тема не найдена", "error"); return; } applyThemeObject(t); try { localStorage.setItem(ACTIVE_THEME_KEY, id); } catch (e) {} renderThemesList(); showToast("Тема применена: " + t.name, "success"); }
+function applyThemeByIdSilent(id) { var t = getAllThemes().find(function (i) { return i.id === id; }); if (!t) return; applyThemeObject(t); try { localStorage.setItem(ACTIVE_THEME_KEY, id); } catch (e) {} }
+function restoreActiveTheme() { var id = null; try { id = localStorage.getItem(ACTIVE_THEME_KEY); } catch (e) { return; } if (!id || id === "builtin-classic") return; var t = getAllThemes().find(function (i) { return i.id === id; }); if (t) applyThemeObject(t); }
+function deleteTheme(id) { var themes = loadStoredThemes(); if (!themes[id]) { showToast("Встроенные темы удалить нельзя", "warning"); return; } if (!confirm("Удалить тему \"" + themes[id].name + "\"?")) return; delete themes[id]; saveStoredThemes(themes); var aid = null; try { aid = localStorage.getItem(ACTIVE_THEME_KEY); } catch (e) {} if (aid === id) applyThemeById("builtin-classic"); renderThemesList(); showToast("Тема удалена", "success"); }
+function presetsDownloadJson(data, fn) { var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }), url = URL.createObjectURL(blob), a = document.createElement("a"); a.href = url; a.download = fn; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 1000); }
+function exportThemeObject(theme, fn) { presetsDownloadJson({ schemaVersion: 1, type: "systemmonitor-theme", name: theme.name, author: theme.author || "", description: theme.description || "", dark: !!theme.dark, variables: theme.variables || {}, customCss: theme.customCss || "" }, fn); }
+function exportCurrentTheme() { var cs = getComputedStyle(document.body), vars = {}; THEME_VAR_NAMES.forEach(function (n) { var v = cs.getPropertyValue(n).trim(); if (v) vars[n] = v; }); var name = prompt("Имя темы для экспорта:", "Моя тема") || "Моя тема"; exportThemeObject({ name: name.slice(0, 80), dark: !!state.dark, variables: vars, customCss: "" }, "theme-" + String(name).replace(/[\\/:*?"<>|]+/g, "_").slice(0, 60) + ".json"); showToast("Тема экспортирована", "success"); }
+function importThemesFromFile(file) { if (!file) return; var reader = new FileReader(); reader.onload = function (ev) { try { var parsed = JSON.parse(ev.target.result), items = []; if (Array.isArray(parsed)) items = parsed; else if (parsed && typeof parsed === "object") { if (Array.isArray(parsed.themes)) items = parsed.themes; else items = [parsed]; } if (items.length === 0) throw new Error("В файле нет тем"); var themes = loadStoredThemes(), count = 0; items.forEach(function (rt) { var nt = normalizeThemeObject(rt); if (!nt) return; if (themes[nt.id]) nt.id = "theme-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8); themes[nt.id] = nt; count++; }); saveStoredThemes(themes); renderThemesList(); showToast("Импортировано тем: " + count, "success"); } catch (e) { showToast("Ошибка импорта темы", "error"); } }; reader.onerror = function () { showToast("Не удалось прочитать файл темы", "error"); }; reader.readAsText(file); }
+function renderThemesList() { var lst = document.getElementById("themesList"); if (!lst) return; clearNode(lst); var aid = null; try { aid = localStorage.getItem(ACTIVE_THEME_KEY); } catch (e) {} getAllThemes().forEach(function (t) { var item = el("div", "preset-item"), info = el("div", "preset-info"), title = t.name; if (t.id === aid) title += " ✓"; var nm = el("div", "preset-name", title), meta = t.builtin ? "Встроенная тема" : "Пользовательская тема"; if (t.author) meta += " · " + t.author; if (t.description) meta += " · " + t.description; var metaEl = el("div", "preset-meta", meta); info.appendChild(nm); info.appendChild(metaEl); var actions = el("div", "preset-actions"); var ab = el("button", "", "Применить"); ab.type = "button"; ab.addEventListener("click", function () { applyThemeById(t.id); }); var eb = el("button", "", "📤"); eb.type = "button"; eb.title = "Экспортировать тему"; eb.addEventListener("click", function () { exportThemeObject(t, "theme-" + String(t.name).replace(/[\\/:*?"<>|]+/g, "_").slice(0, 60) + ".json"); }); actions.appendChild(ab); actions.appendChild(eb); if (!t.builtin) { var db = el("button", "", "🗑"); db.type = "button"; db.title = "Удалить тему"; db.addEventListener("click", function () { deleteTheme(t.id); }); actions.appendChild(db); } item.appendChild(info); item.appendChild(actions); lst.appendChild(item); }); }
+function openThemesPanel() { renderThemesList(); openModal("themesPanel", "themesOverlay"); }
+function closeThemesPanel() { closeModal("themesPanel", "themesOverlay"); }
+var BASE_LIGHT_VARS = { "--bg": "#008080", "--window-bg": "#c0c0c0", "--card-bg": "#d4d0c8", "--text": "#000000", "--muted": "#444444", "--border-light": "#ffffff", "--border-dark": "#808080", "--accent": "#000080", "--danger": "#cc0000", "--warning": "#cc7700", "--ok": "#007700", "--line": "rgba(0,0,0,0.12)" };
+var BASE_DARK_VARS = { "--bg": "#101418", "--window-bg": "#1d232b", "--card-bg": "#232b36", "--text": "#e8eef5", "--muted": "#9fb0c0", "--border-light": "#3a4654", "--border-dark": "#10151b", "--accent": "#4da3ff", "--danger": "#ff6b6b", "--warning": "#feca57", "--ok": "#59d17e", "--line": "rgba(255,255,255,0.08)" };
+var THEME_VAR_LABELS = { "--bg": "Фон страницы (--bg)", "--window-bg": "Фон окна и панелей (--window-bg)", "--card-bg": "Фон карточек (--card-bg)", "--text": "Основной текст (--text)", "--muted": "Вторичный текст (--muted)", "--border-light": "Светлая граница (--border-light)", "--border-dark": "Тёмная граница (--border-dark)", "--accent": "Акцент (--accent)", "--danger": "Опасность (--danger)", "--warning": "Предупреждение (--warning)", "--ok": "Норма (--ok)", "--line": "Линии и сетка (--line)" };
+var themeEditorDraft = null, themeEditorPreviousThemeId = null, themeEditorHistory = [], themeEditorHistoryIndex = -1, themeEditorHistoryTimer = null, THEME_EDITOR_HISTORY_LIMIT = 50;
+function getActiveThemeId() { try { return localStorage.getItem(ACTIVE_THEME_KEY) || "builtin-classic"; } catch (e) { return "builtin-classic"; } }
+function getCurrentThemeVariables() { var cs = getComputedStyle(document.body), vars = {}; THEME_VAR_NAMES.forEach(function (n) { var v = cs.getPropertyValue(n).trim(); if (v) vars[n] = v; }); return vars; }
+function normalizeColorForPicker(v) { v = String(v || "").trim(); if (!v) return "#000000"; if (/^#[0-9a-f]{6}$/i.test(v)) return v; if (/^#[0-9a-f]{3}$/i.test(v)) return "#" + v[1] + v[1] + v[2] + v[2] + v[3] + v[3]; var m = v.match(/rgba?\(([^)]+)\)/i); if (m) { var p = m[1].split(","); if (p.length >= 3) { var r = Math.max(0, Math.min(255, parseInt(p[0], 10) || 0)), g = Math.max(0, Math.min(255, parseInt(p[1], 10) || 0)), b = Math.max(0, Math.min(255, parseInt(p[2], 10) || 0)); return "#" + [r, g, b].map(function (x) { return x.toString(16).padStart(2, "0"); }).join(""); } } return "#000000"; }
+function buildThemeEditorVars() { var c = document.getElementById("themeEditorVars"); if (!c) return; clearNode(c); THEME_VAR_NAMES.forEach(function (vn) { var row = el("div", "theme-editor-var-row"), lbl = el("div", "theme-editor-var-label", THEME_VAR_LABELS[vn] || vn), color = document.createElement("input"); color.type = "color"; color.className = "theme-editor-color"; color.dataset.var = vn; var text = document.createElement("input"); text.type = "text"; text.className = "custom-input theme-editor-text"; text.dataset.var = vn; text.placeholder = vn; var pb = el("button", "theme-palette-btn", "🎨"); pb.type = "button"; pb.title = "Палитра готовых цветов"; pb.addEventListener("click", function () { openThemePalette(vn); }); color.addEventListener("input", function () { text.value = color.value; updateThemeEditorDraftFromInputs(); }); text.addEventListener("input", function () { color.value = normalizeColorForPicker(text.value); updateThemeEditorDraftFromInputs(); }); row.appendChild(lbl); row.appendChild(color); row.appendChild(text); row.appendChild(pb); c.appendChild(row); }); }
+function setThemeEditorInputs(draft) { if (!draft) return; THEME_VAR_NAMES.forEach(function (vn) { var text = document.querySelector('.theme-editor-text[data-var="' + vn + '"]'), color = document.querySelector('.theme-editor-color[data-var="' + vn + '"]'), v = draft.variables && draft.variables[vn] ? draft.variables[vn] : ""; if (text) text.value = v; if (color) color.value = normalizeColorForPicker(v); }); var dc = document.getElementById("themeEditorDark"); if (dc) dc.checked = !!draft.dark; var ci = document.getElementById("themeEditorCustomCss"); if (ci) ci.value = draft.customCss || ""; }
+function updateThemeEditorDraftFromInputs() { if (!themeEditorDraft) return; var vars = {}; document.querySelectorAll(".theme-editor-text").forEach(function (inp) { var v = inp.value.trim(); if (v) vars[inp.dataset.var] = v; }); themeEditorDraft.variables = vars; var dc = document.getElementById("themeEditorDark"); if (dc) themeEditorDraft.dark = dc.checked; var ci = document.getElementById("themeEditorCustomCss"); if (ci) themeEditorDraft.customCss = ci.value; previewThemeEditorDraft(); scheduleThemeEditorHistoryCommit(); }
+function previewThemeEditorDraft() { if (themeEditorDraft) applyThemeObject(themeEditorDraft); }
+function createThemeEditorDraftFromActive() { var aid = getActiveThemeId(), at = getAllThemes().find(function (i) { return i.id === aid; }); if (at && at.id !== "builtin-classic") return { id: "theme-editor-preview", name: "", dark: !!at.dark, variables: JSON.parse(JSON.stringify(at.variables || {})), customCss: at.customCss || "" }; return { id: "theme-editor-preview", name: "", dark: !!state.dark, variables: getCurrentThemeVariables(), customCss: "" }; }
+function openThemeEditor() { themeEditorPreviousThemeId = getActiveThemeId(); themeEditorDraft = createThemeEditorDraftFromActive(); var ni = document.getElementById("themeEditorName"); if (ni) ni.value = ""; buildThemeEditorVars(); setThemeEditorInputs(themeEditorDraft); previewThemeEditorDraft(); resetThemeEditorHistory(); openModal("themeEditorPanel", "themeEditorOverlay"); }
+function closeThemeEditor(keep) { closeModal("themeEditorPanel", "themeEditorOverlay"); if (!keep && themeEditorPreviousThemeId) applyThemeByIdSilent(themeEditorPreviousThemeId); themeEditorDraft = null; themeEditorPreviousThemeId = null; }
+var THEME_PALETTE_COLORS = ["#000000", "#111111", "#1d232b", "#232b36", "#2c3e50", "#34495e", "#4a6072", "#808080", "#c0c0c0", "#ffffff", "#008080", "#00a8a8", "#4da3ff", "#000080", "#1e3a8a", "#3b82f6", "#6366f1", "#8b5cf6", "#a855f7", "#ff00ff", "#cc0000", "#ff4d6d", "#ff6b6b", "#ff8c42", "#feca57", "#ffd166", "#007700", "#4caf7d", "#59d17e", "#06d6a0"];
+function openThemePalette(vn) { var tv = document.getElementById("themePaletteVarName"); if (tv) tv.textContent = vn; var grid = document.getElementById("themePaletteGrid"); if (!grid) return; clearNode(grid); THEME_PALETTE_COLORS.forEach(function (c) { var sw = el("div", "theme-palette-swatch"); sw.style.background = c; sw.title = c; sw.addEventListener("click", function () { applyPaletteColor(vn, c); closeThemePalette(); }); grid.appendChild(sw); }); openModal("themePalettePanel", "themePaletteOverlay"); }
+function applyPaletteColor(vn, c) { var t = document.querySelector('.theme-editor-text[data-var="' + vn + '"]'), ci = document.querySelector('.theme-editor-color[data-var="' + vn + '"]'); if (t) t.value = c; if (ci) ci.value = normalizeColorForPicker(c); updateThemeEditorDraftFromInputs(); }
+function closeThemePalette() { closeModal("themePalettePanel", "themePaletteOverlay"); }
+var THEME_GRADIENTS = [{ name: "Океан", value: "linear-gradient(135deg, #0f2027, #203a43, #2c5364)" }, { name: "Северное сияние", value: "linear-gradient(135deg, #000428, #004e92)" }, { name: "Лес", value: "linear-gradient(135deg, #134E5E, #71B280)" }, { name: "Мята", value: "linear-gradient(135deg, #11998e, #38ef7d)" }, { name: "Изумруд", value: "linear-gradient(135deg, #02aab0, #00cdac)" }, { name: "Космос", value: "linear-gradient(135deg, #000000, #434343)" }, { name: "Сталь", value: "linear-gradient(135deg, #232526, #414345)" }, { name: "Фиолетовый закат", value: "linear-gradient(135deg, #41295a, #2F0743)" }, { name: "Лаванда", value: "linear-gradient(135deg, #c471f5, #fa71cd)" }, { name: "Киберпанк", value: "linear-gradient(135deg, #fc00ff, #00dbde)" }, { name: "Вишня", value: "linear-gradient(135deg, #EB3349, #F45C43)" }, { name: "Огонь", value: "linear-gradient(135deg, #870000, #190A05)" }, { name: "Персик", value: "linear-gradient(135deg, #FF512F, #DD2476)" }, { name: "Золото", value: "linear-gradient(135deg, #F09819, #EDDE5D)" }, { name: "Лёд", value: "linear-gradient(135deg, #83a4d4, #b6fbff)" }, { name: "Неон", value: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)" }];
+function openThemeGradients() { var grid = document.getElementById("themeGradientsGrid"); if (!grid) return; clearNode(grid); THEME_GRADIENTS.forEach(function (g) { var sw = el("div", "theme-gradient-swatch"); sw.style.background = g.value; sw.title = g.name; var nm = el("div", "theme-gradient-name", g.name); sw.appendChild(nm); sw.addEventListener("click", function () { applyThemeGradient(g.value); }); grid.appendChild(sw); }); openModal("themeGradientsPanel", "themeGradientsOverlay"); }
+function applyThemeGradient(v) { var ts = document.getElementById("themeGradientTarget"); if (!ts) return; var tv = ts.value, t = document.querySelector('.theme-editor-text[data-var="' + tv + '"]'), ci = document.querySelector('.theme-editor-color[data-var="' + tv + '"]'); if (!t) { showToast("Сначала откройте редактор тем", "warning"); return; } t.value = v; if (ci) ci.value = normalizeColorForPicker(v); updateThemeEditorDraftFromInputs(); closeThemeGradients(); showToast("Градиент применён к " + tv, "success"); }
+function closeThemeGradients() { closeModal("themeGradientsPanel", "themeGradientsOverlay"); }
+function serializeThemeEditorDraft() { if (!themeEditorDraft) return "{}"; return JSON.stringify({ variables: themeEditorDraft.variables || {}, dark: !!themeEditorDraft.dark, customCss: themeEditorDraft.customCss || "" }); }
+function updateThemeEditorHistoryButtons() { var ub = document.getElementById("themeEditorUndoBtn"), rb = document.getElementById("themeEditorRedoBtn"); if (ub) ub.disabled = themeEditorHistoryIndex <= 0; if (rb) rb.disabled = themeEditorHistoryIndex >= themeEditorHistory.length - 1; }
+function resetThemeEditorHistory() { themeEditorHistory = []; themeEditorHistoryIndex = -1; if (themeEditorDraft) { themeEditorHistory.push(serializeThemeEditorDraft()); themeEditorHistoryIndex = 0; } if (themeEditorHistoryTimer) { clearTimeout(themeEditorHistoryTimer); themeEditorHistoryTimer = null; } updateThemeEditorHistoryButtons(); }
+function commitThemeEditorChange() { if (!themeEditorDraft) return; var s = serializeThemeEditorDraft(); if (themeEditorHistory.length === 0) { themeEditorHistory = [s]; themeEditorHistoryIndex = 0; updateThemeEditorHistoryButtons(); return; } if (themeEditorHistory[themeEditorHistoryIndex] === s) { updateThemeEditorHistoryButtons(); return; } if (themeEditorHistoryIndex < themeEditorHistory.length - 1) themeEditorHistory = themeEditorHistory.slice(0, themeEditorHistoryIndex + 1); themeEditorHistory.push(s); if (themeEditorHistory.length > THEME_EDITOR_HISTORY_LIMIT) themeEditorHistory.shift(); themeEditorHistoryIndex = themeEditorHistory.length - 1; updateThemeEditorHistoryButtons(); }
+function commitThemeEditorChangeNow() { if (themeEditorHistoryTimer) { clearTimeout(themeEditorHistoryTimer); themeEditorHistoryTimer = null; } commitThemeEditorChange(); }
+function scheduleThemeEditorHistoryCommit() { if (themeEditorHistoryTimer) clearTimeout(themeEditorHistoryTimer); themeEditorHistoryTimer = setTimeout(function () { commitThemeEditorChange(); }, 350); }
+function applySerializedThemeEditorDraft(s) { if (!themeEditorDraft) return; try { var o = JSON.parse(s); themeEditorDraft.variables = o.variables && typeof o.variables === "object" ? o.variables : {}; themeEditorDraft.dark = !!o.dark; themeEditorDraft.customCss = typeof o.customCss === "string" ? o.customCss : ""; setThemeEditorInputs(themeEditorDraft); previewThemeEditorDraft(); } catch (e) {} }
+function themeEditorUndo() { if (themeEditorHistoryIndex <= 0) return; themeEditorHistoryIndex -= 1; applySerializedThemeEditorDraft(themeEditorHistory[themeEditorHistoryIndex]); updateThemeEditorHistoryButtons(); }
+function themeEditorRedo() { if (themeEditorHistoryIndex >= themeEditorHistory.length - 1) return; themeEditorHistoryIndex += 1; applySerializedThemeEditorDraft(themeEditorHistory[themeEditorHistoryIndex]); updateThemeEditorHistoryButtons(); }
+function themeEditorUseBase(bv, dark) { if (!themeEditorDraft) return; themeEditorDraft.variables = JSON.parse(JSON.stringify(bv)); themeEditorDraft.dark = dark; setThemeEditorInputs(themeEditorDraft); previewThemeEditorDraft(); commitThemeEditorChangeNow(); }
+function themeEditorLoadCurrent() { if (!themeEditorDraft) return; themeEditorDraft.variables = getCurrentThemeVariables(); themeEditorDraft.dark = !!state.dark; setThemeEditorInputs(themeEditorDraft); previewThemeEditorDraft(); commitThemeEditorChangeNow(); showToast("Загружены текущие цвета", "info"); }
+function themeEditorReset() { themeEditorDraft = createThemeEditorDraftFromActive(); var ni = document.getElementById("themeEditorName"); if (ni) ni.value = ""; setThemeEditorInputs(themeEditorDraft); previewThemeEditorDraft(); commitThemeEditorChangeNow(); showToast("Редактор сброшен к активной теме", "info"); }
+function saveThemeFromEditor() { if (!themeEditorDraft) return; updateThemeEditorDraftFromInputs(); var ni = document.getElementById("themeEditorName"), name = ni && ni.value.trim() ? ni.value.trim() : "Моя тема"; var raw = { name: name.slice(0, 80), dark: !!themeEditorDraft.dark, variables: themeEditorDraft.variables || {}, customCss: themeEditorDraft.customCss || "" }; var nt = normalizeThemeObject(raw); if (!nt) { showToast("Тема пустая: добавьте цвета или CSS", "warning"); return; } nt.id = "theme-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8); nt.createdAt = new Date().toISOString(); nt.updatedAt = new Date().toISOString(); var themes = loadStoredThemes(); themes[nt.id] = nt; saveStoredThemes(themes); applyThemeById(nt.id); renderThemesList(); closeThemeEditor(true); showToast("Тема сохранена: " + nt.name, "success"); }
+function generatePresetId() { return "preset-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8); }
+function sanitizePresetFilename(n) { return String(n || "preset").replace(/[\\/:*?"<>|]+/g, "_").slice(0, 60); }
+function loadPresets() { try { var r = localStorage.getItem(PRESETS_STORAGE_KEY); if (!r) return {}; var p = JSON.parse(r); return (p && typeof p === "object") ? p : {}; } catch (e) { return {}; } }
+function savePresets(p) { try { localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(p)); } catch (e) {} }
+function normalizePresetState(raw) { var r = defaultState(); if (!raw || typeof raw !== "object") return r; var ai = [1000, 2000, 5000, 10000, 30000, 60000], iv = Number(raw.interval); if (ai.includes(iv)) r.interval = iv; if (typeof raw.dark === "boolean") r.dark = raw.dark; if (raw.cards && typeof raw.cards === "object") CARD_TYPES.forEach(function (t) { if (typeof raw.cards[t] === "boolean") r.cards[t] = raw.cards[t]; }); if (Array.isArray(raw.customCards)) r.customCards = raw.customCards.filter(function (c) { return c && typeof c.id === "string" && /^[A-Za-z0-9_-]+$/.test(c.id) && typeof c.name === "string" && Array.isArray(c.sensors); }).map(function (c) { return { id: c.id, name: String(c.name).slice(0, 80), sensors: c.sensors.filter(function (k) { return typeof k === "string"; }) }; }); if (raw.cardConfig && typeof raw.cardConfig === "object") { var cfg = {}; Object.keys(raw.cardConfig).forEach(function (cid) { var item = raw.cardConfig[cid]; if (!item || typeof item !== "object") return; var h = Array.isArray(item.hidden) ? item.hidden.filter(function (k) { return typeof k === "string"; }) : [], l = {}; if (item.labels && typeof item.labels === "object") Object.keys(item.labels).forEach(function (k) { var v = item.labels[k]; if (typeof k === "string" && typeof v === "string" && v.trim()) l[k] = v.trim().slice(0, 120); }); cfg[cid] = { hidden: h, labels: l }; }); r.cardConfig = cfg; } if (raw.snap && typeof raw.snap === "object") { if (typeof raw.snap.enabled === "boolean") r.snap.enabled = raw.snap.enabled; var sz = Number(raw.snap.size); if (GRID_SIZES.includes(sz)) r.snap.size = sz; } return r; }
+function normalizePresetLayout(raw) { var r = {}; if (!raw || typeof raw !== "object") return r; Object.keys(raw).forEach(function (k) { var p = raw[k]; if (!p || typeof p !== "object") return; var l = Number(p.left), t = Number(p.top), w = Number(p.width), h = Number(p.height), z = Number(p.z); if (Number.isFinite(l) && Number.isFinite(t) && Number.isFinite(w) && Number.isFinite(h)) r[k] = { left: Math.max(0, Math.round(l)), top: Math.max(0, Math.round(t)), width: Math.max(100, Math.round(w)), height: Math.max(80, Math.round(h)), z: Number.isFinite(z) ? Math.max(1, Math.round(z)) : 1 }; }); return r; }
+function normalizePresetObject(raw) { if (!raw || typeof raw !== "object") return null; var hs = raw.state && typeof raw.state === "object", hl = raw.layout && typeof raw.layout === "object"; if (!hs && !hl) return null; return { id: typeof raw.id === "string" && /^[A-Za-z0-9_-]+$/.test(raw.id) ? raw.id : generatePresetId(), name: String(raw.name || "Пресет").slice(0, 80), createdAt: typeof raw.createdAt === "string" ? raw.createdAt : new Date().toISOString(), updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : new Date().toISOString(), state: normalizePresetState(hs ? raw.state : {}), layout: normalizePresetLayout(hl ? raw.layout : {}) }; }
+function saveCurrentAsPreset() { var inp = document.getElementById("presetNameInput"); if (!inp) return; var presets = loadPresets(), name = inp.value.trim() || ("Пресет " + (Object.keys(presets).length + 1)); saveState(); saveLayout(); var preset = { id: generatePresetId(), name: name.slice(0, 80), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), state: JSON.parse(JSON.stringify(state)), layout: JSON.parse(JSON.stringify(layout)) }; presets[preset.id] = preset; savePresets(presets); inp.value = ""; renderPresetsList(); showToast("Пресет сохранён", "success"); }
+function applyPreset(id) { var presets = loadPresets(), preset = presets[id]; if (!preset) { showToast("Пресет не найден", "error"); return; } if (!confirm("Применить пресет \"" + preset.name + "\"?\nТекущий дашборд будет заменён этим пресетом.")) return; state = normalizePresetState(preset.state); layout = normalizePresetLayout(preset.layout); saveState(); try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout)); } catch (e) {} applyTheme(); syncSettings(); updateSnapUI(); createCards(); if (latestData) updateAll(latestData); renderPresetsList(); showToast("Пресет применён", "success"); }
+function renamePreset(id) { var presets = loadPresets(), preset = presets[id]; if (!preset) { showToast("Пресет не найден", "error"); return; } var nn = prompt("Новое имя пресета:", preset.name); if (nn === null) return; var t = nn.trim(); if (!t) { showToast("Имя пресета не может быть пустым", "warning"); return; } preset.name = t.slice(0, 80); preset.updatedAt = new Date().toISOString(); savePresets(presets); renderPresetsList(); showToast("Пресет переименован", "success"); }
+function deletePreset(id) { var presets = loadPresets(), preset = presets[id]; if (!preset) { showToast("Пресет не найден", "error"); return; } if (!confirm("Удалить пресет \"" + preset.name + "\"?")) return; delete presets[id]; savePresets(presets); renderPresetsList(); showToast("Пресет удалён", "success"); }
+function exportPreset(id) { var presets = loadPresets(), preset = presets[id]; if (!preset) { showToast("Пресет не найден", "error"); return; } presetsDownloadJson(preset, "preset-" + sanitizePresetFilename(preset.name) + ".json"); showToast("Пресет экспортирован", "success"); }
+function exportAllPresets() { var presets = Object.values(loadPresets()); if (presets.length === 0) { showToast("Нет пресетов для экспорта", "warning"); return; } presetsDownloadJson({ schemaVersion: 1, type: "systemmonitor-dashboard-presets", exportedAt: new Date().toISOString(), presets: presets }, "systemmonitor-presets.json"); showToast("Все пресеты экспортированы", "success"); }
+function importPresetsFromFile(file) { if (!file) return; var reader = new FileReader(); reader.onload = function (ev) { try { var parsed = JSON.parse(ev.target.result), items = []; if (Array.isArray(parsed)) items = parsed; else if (parsed && typeof parsed === "object") { if (Array.isArray(parsed.presets)) items = parsed.presets; else if (parsed.state || parsed.layout) items = [parsed]; } if (items.length === 0) throw new Error("В файле нет пресетов"); var presets = loadPresets(), count = 0; items.forEach(function (rp) { var np = normalizePresetObject(rp); if (!np) return; if (!np.id || presets[np.id]) np.id = generatePresetId(); presets[np.id] = np; count++; }); savePresets(presets); renderPresetsList(); showToast("Импортировано пресетов: " + count, "success"); } catch (e) { showToast("Ошибка импорта пресетов", "error"); } }; reader.onerror = function () { showToast("Не удалось прочитать файл пресетов", "error"); }; reader.readAsText(file); }
+function renderPresetsList() { var lst = document.getElementById("presetsList"); if (!lst) return; clearNode(lst); var presets = Object.values(loadPresets()).sort(function (a, b) { return String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")); }); if (presets.length === 0) { lst.appendChild(el("div", "muted", "Нет сохранённых пресетов.")); return; } presets.forEach(function (p) { var item = el("div", "preset-item"), info = el("div", "preset-info"), nm = el("div", "preset-name", p.name), dt = ""; if (p.updatedAt) { var d = new Date(p.updatedAt); if (!isNaN(d.getTime())) dt = d.toLocaleString(); } var meta = el("div", "preset-meta", dt || "Нет даты"); info.appendChild(nm); info.appendChild(meta); var actions = el("div", "preset-actions"); var ab = el("button", "", "Применить"); ab.type = "button"; ab.addEventListener("click", function () { applyPreset(p.id); }); var rb = el("button", "", "✏️"); rb.type = "button"; rb.title = "Переименовать"; rb.addEventListener("click", function () { renamePreset(p.id); }); var eb = el("button", "", "📤"); eb.type = "button"; eb.title = "Экспортировать пресет"; eb.addEventListener("click", function () { exportPreset(p.id); }); var db = el("button", "", "🗑"); db.type = "button"; db.title = "Удалить пресет"; db.addEventListener("click", function () { deletePreset(p.id); }); actions.appendChild(ab); actions.appendChild(rb); actions.appendChild(eb); actions.appendChild(db); item.appendChild(info); item.appendChild(actions); lst.appendChild(item); }); }
+function openPresetsPanel() { renderPresetsList(); openModal("presetsPanel", "presetsOverlay"); }
+function closePresetsPanel() { closeModal("presetsPanel", "presetsOverlay"); }
+function normalizeImportedLayout(raw) { return normalizePresetLayout(raw); }
+function downloadJson(d, fn) { presetsDownloadJson(d, fn); }
+function exportDashboardProfile() { saveState(); saveLayout(); downloadJson({ schemaVersion: 2, type: "systemmonitor-dashboard-profile", exportedAt: new Date().toISOString(), state: { interval: state.interval, dark: state.dark, cards: state.cards, customCards: state.customCards, cardConfig: state.cardConfig, snap: state.snap }, layout: layout }, "systemmonitor-dashboard-profile.json"); showToast("Макет экспортирован", "success"); }
+function importDashboardProfile(file) { if (!file) return; var reader = new FileReader(); reader.onload = function (ev) { try { var parsed = JSON.parse(ev.target.result); if (!parsed || typeof parsed !== "object") throw new Error("Некорректный JSON"); if (!confirm("Импортировать макет?\nТекущий макет, пользовательские карточки и настройки карточек будут заменены.")) return; if (parsed.state || parsed.layout) { state = normalizePresetState(parsed.state); layout = normalizePresetLayout(parsed.layout); } else { layout = normalizeImportedLayout(parsed); } saveState(); try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout)); } catch (e) {} applyTheme(); syncSettings(); updateSnapUI(); createCards(); if (latestData) updateAll(latestData); showToast("Макет импортирован", "success"); } catch (e) { showToast("Ошибка импорта макета", "error"); } }; reader.onerror = function () { showToast("Не удалось прочитать файл", "error"); }; reader.readAsText(file); }
+function themesPresetsDownloadJson(d, fn) { presetsDownloadJson(d, fn); }
+function generateBackupThemeId() { return "theme-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8); }
+function generateBackupPresetId() { return "preset-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8); }
+function exportThemesAndPresets() { themesPresetsDownloadJson({ schemaVersion: 1, type: "systemmonitor-themes-presets-backup", exportedAt: new Date().toISOString(), activeThemeId: getActiveThemeId(), themes: getAllThemes(), presets: Object.values(loadPresets()) }, "systemmonitor-themes-and-presets.json"); showToast("Экспортированы темы и пресеты", "success"); }
+function importThemesAndPresetsFromFile(file) { if (!file) return; var reader = new FileReader(); reader.onload = function (ev) { try { var parsed = JSON.parse(ev.target.result); if (!parsed || typeof parsed !== "object") throw new Error("Некорректный JSON"); var ht = Array.isArray(parsed.themes), hp = Array.isArray(parsed.presets); if (!ht && !hp) throw new Error("В файле нет тем или пресетов"); var parts = []; if (ht) parts.push("темы"); if (hp) parts.push("пресеты"); if (!confirm("Импортировать " + parts.join(" и ") + "?\nСуществующие " + parts.join(" и ") + " будут заменены.")) return; var themeIdMap = {}; if (ht) { var nt = {}; parsed.themes.forEach(function (rt) { if (!rt || typeof rt !== "object") return; if (rt.builtin) return; var nt2 = normalizeThemeObject(rt); if (!nt2) return; var oid = nt2.id; if (nt[nt2.id]) nt2.id = generateBackupThemeId(); nt[nt2.id] = nt2; themeIdMap[oid] = nt2.id; }); saveStoredThemes(nt); } if (hp) { var np = {}; parsed.presets.forEach(function (rp) { var np2 = normalizePresetObject(rp); if (!np2) return; if (np[np2.id]) np2.id = generateBackupPresetId(); np[np2.id] = np2; }); savePresets(np); } renderThemesList(); renderPresetsList(); var aid = parsed.activeThemeId || null; if (aid && themeIdMap[aid]) aid = themeIdMap[aid]; var allThemes = getAllThemes(), at = allThemes.find(function (t) { return t.id === aid; }); if (at) applyThemeByIdSilent(at.id); else applyThemeByIdSilent("builtin-classic"); showToast("Импорт завершён", "success"); } catch (e) { showToast("Ошибка импорта тем и пресетов", "error"); } }; reader.onerror = function () { showToast("Не удалось прочитать файл", "error"); }; reader.readAsText(file); }
+function bindEvents() {
+document.getElementById("refreshBtn").addEventListener("click", refresh);
+intervalSelect.addEventListener("change", function () { state.interval = Math.max(1000, Number(this.value) || 2000); saveState(); restartPollingIfActive(); });
+document.getElementById("addCustomBtn").addEventListener("click", openCustomPanel);
+lockBtn.addEventListener("click", toggleLock);
+document.getElementById("resetLayoutBtn").addEventListener("click", function () { resetLayout(); });
+snapBtn.addEventListener("click", function () { state.snap.enabled = !state.snap.enabled; saveState(); updateSnapUI(); showToast(state.snap.enabled ? "Snap включён" : "Snap выключен", "info"); });
+gridSizeSelect.addEventListener("change", function () { var sz = Number(this.value); if (GRID_SIZES.includes(sz)) { state.snap.size = sz; saveState(); updateSnapUI(); } });
+alignGridBtn.addEventListener("click", alignAllToGrid);
+document.getElementById("themeBtn").addEventListener("click", function () { state.dark = !state.dark; saveState(); applyTheme(); syncSettings(); });
+document.getElementById("csvBtn").addEventListener("click", function () { window.location.href = "/export/csv"; });
+document.getElementById("historyCsvBtn").addEventListener("click", function () { window.location.href = "/export/history-csv"; });
+document.getElementById("settingsBtn").addEventListener("click", function () { syncSettings(); openModal("settingsPanel", "settingsOverlay"); });
+document.getElementById("settingsCloseBtn").addEventListener("click", function () { closeModal("settingsPanel", "settingsOverlay"); });
+document.getElementById("settingsOverlay").addEventListener("click", function () { closeModal("settingsPanel", "settingsOverlay"); });
+document.getElementById("settingsSaveBtn").addEventListener("click", function () { document.querySelectorAll(".card-toggle").forEach(function (cb) { state.cards[cb.dataset.card] = cb.checked; }); state.dark = document.getElementById("darkToggle").checked; saveState(); applyTheme(); createCards(); if (latestData) updateAll(latestData); closeModal("settingsPanel", "settingsOverlay"); showToast("Настройки сохранены", "success"); });
+document.getElementById("settingsResetBtn").addEventListener("click", function () { state = defaultState(); saveState(); applyTheme(); syncSettings(); updateSnapUI(); createCards(); if (latestData) updateAll(latestData); showToast("Настройки сброшены", "success"); });
+document.getElementById("logsBtn").addEventListener("click", function () { openModal("logsPanel", "logsOverlay"); loadLogs(); });
+document.getElementById("logsRefreshBtn").addEventListener("click", loadLogs);
+document.getElementById("logsClearBtn").addEventListener("click", function () { document.getElementById("logsContent").textContent = ""; });
+document.getElementById("logsCloseBtn").addEventListener("click", function () { closeModal("logsPanel", "logsOverlay"); });
+document.getElementById("logsOverlay").addEventListener("click", function () { closeModal("logsPanel", "logsOverlay"); });
+document.getElementById("customCreateBtn").addEventListener("click", createCustomCardFromSelection);
+document.getElementById("customCancelBtn").addEventListener("click", closeCustomPanel);
+document.getElementById("customOverlay").addEventListener("click", closeCustomPanel);
+document.getElementById("customSearch").addEventListener("input", renderCustomSensorList);
+document.getElementById("customTypeFilter").addEventListener("change", renderCustomSensorList);
+document.getElementById("customSelectAllBtn").addEventListener("click", function () { document.querySelectorAll("#customSensorList input[type='checkbox']").forEach(function (cb) { if (!customSelection.has(cb.dataset.key)) { customSelection.add(cb.dataset.key); cb.checked = true; } }); updateSelectedCount(); });
+document.getElementById("customClearBtn").addEventListener("click", function () { customSelection.clear(); document.querySelectorAll("#customSensorList input[type='checkbox']").forEach(function (cb) { cb.checked = false; }); updateSelectedCount(); });
+document.getElementById("cardSettingsSearch").addEventListener("input", renderCardSettingsList);
+document.getElementById("cardSettingsCloseBtn").addEventListener("click", closeCardSettings);
+document.getElementById("cardSettingsOverlay").addEventListener("click", closeCardSettings);
+document.getElementById("cardSettingsResetBtn").addEventListener("click", resetCurrentCardSettings);
+document.getElementById("exportLayoutBtn").addEventListener("click", exportDashboardProfile);
+document.getElementById("importLayoutBtn").addEventListener("click", function () { document.getElementById("layoutFileInput").click(); });
+document.getElementById("layoutFileInput").addEventListener("change", function () { var f = this.files && this.files[0]; if (f) importDashboardProfile(f); this.value = ""; });
+var pb2 = document.getElementById("presetsBtn"), spb = document.getElementById("savePresetBtn"), epb = document.getElementById("exportPresetsBtn"), ipb = document.getElementById("importPresetsBtn"), pfi = document.getElementById("presetsFileInput"), pcb = document.getElementById("presetsCloseBtn"), po = document.getElementById("presetsOverlay"), pni = document.getElementById("presetNameInput");
+if (pb2) pb2.addEventListener("click", openPresetsPanel);
+if (spb) spb.addEventListener("click", saveCurrentAsPreset);
+if (pni) pni.addEventListener("keydown", function (e) { if (e.key === "Enter") saveCurrentAsPreset(); });
+if (epb) epb.addEventListener("click", exportAllPresets);
+if (ipb) ipb.addEventListener("click", function () { if (pfi) pfi.click(); });
+if (pfi) pfi.addEventListener("change", function () { var f = this.files && this.files[0]; if (f) importPresetsFromFile(f); this.value = ""; });
+if (pcb) pcb.addEventListener("click", closePresetsPanel);
+if (po) po.addEventListener("click", closePresetsPanel);
+document.getElementById("themesBtn").addEventListener("click", openThemesPanel);
+document.getElementById("importThemeBtn").addEventListener("click", function () { document.getElementById("themeFileInput").click(); });
+document.getElementById("themeFileInput").addEventListener("change", function () { var f = this.files && this.files[0]; if (f) importThemesFromFile(f); this.value = ""; });
+document.getElementById("exportThemeBtn").addEventListener("click", exportCurrentTheme);
+document.getElementById("themesCloseBtn").addEventListener("click", closeThemesPanel);
+document.getElementById("themesOverlay").addEventListener("click", closeThemesPanel);
+document.getElementById("openThemeEditorBtn").addEventListener("click", openThemeEditor);
+document.getElementById("themeEditorLoadCurrentBtn").addEventListener("click", themeEditorLoadCurrent);
+document.getElementById("themeEditorLightBtn").addEventListener("click", function () { themeEditorUseBase(BASE_LIGHT_VARS, false); });
+document.getElementById("themeEditorDarkBtn").addEventListener("click", function () { themeEditorUseBase(BASE_DARK_VARS, true); });
+document.getElementById("themeEditorGradientsBtn").addEventListener("click", openThemeGradients);
+document.getElementById("themeEditorResetBtn").addEventListener("click", themeEditorReset);
+document.getElementById("themeEditorCancelBtn").addEventListener("click", function () { closeThemeEditor(false); });
+document.getElementById("themeEditorSaveBtn").addEventListener("click", saveThemeFromEditor);
+document.getElementById("themeEditorOverlay").addEventListener("click", function () { closeThemeEditor(false); });
+document.getElementById("themeEditorDark").addEventListener("change", updateThemeEditorDraftFromInputs);
+document.getElementById("themeEditorCustomCss").addEventListener("input", updateThemeEditorDraftFromInputs);
+var tpcb = document.getElementById("themePaletteCloseBtn"), tpo = document.getElementById("themePaletteOverlay");
+if (tpcb) tpcb.addEventListener("click", closeThemePalette);
+if (tpo) tpo.addEventListener("click", closeThemePalette);
+var tgcb = document.getElementById("themeGradientsCloseBtn"), tgo = document.getElementById("themeGradientsOverlay");
+if (tgcb) tgcb.addEventListener("click", closeThemeGradients);
+if (tgo) tgo.addEventListener("click", closeThemeGradients);
+var teu = document.getElementById("themeEditorUndoBtn"), ter = document.getElementById("themeEditorRedoBtn");
+if (teu) teu.addEventListener("click", themeEditorUndo);
+if (ter) ter.addEventListener("click", themeEditorRedo);
+document.addEventListener("keydown", function (e) { var panel = document.getElementById("themeEditorPanel"); if (!panel || panel.classList.contains("hidden")) return; if (e.target.closest("input, textarea, select")) return; var k = e.key.toLowerCase(); if ((e.ctrlKey || e.metaKey) && !e.shiftKey && k === "z") { e.preventDefault(); themeEditorUndo(); } else if ((e.ctrlKey || e.metaKey) && (k === "y" || (e.shiftKey && k === "z"))) { e.preventDefault(); themeEditorRedo(); } });
+var etpb = document.getElementById("exportThemesPresetsBtn"), itpb = document.getElementById("importThemesPresetsBtn"), tpfi = document.getElementById("themesPresetsFileInput");
+if (etpb) etpb.addEventListener("click", exportThemesAndPresets);
+if (itpb) itpb.addEventListener("click", function () { if (tpfi) tpfi.click(); });
+if (tpfi) tpfi.addEventListener("change", function () { var f = this.files && this.files[0]; if (f) importThemesAndPresetsFromFile(f); this.value = ""; });
+window.addEventListener("resize", adjustBoardHeight);
+}
+function init() {
+hostnameEl.textContent = window.location.hostname || "localhost";
+applyTheme();
+restoreActiveTheme();
+syncSettings();
+updateLockButton();
+updateSnapUI();
+createCards();
+makeWindowResizable();
+bindEvents();
+refresh();
+connectWebSocket();
+setInterval(websocketWatchdog, 5000);
+}
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
+})();
+</script>
+</body>
+</html>

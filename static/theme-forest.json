@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "type": "systemmonitor-theme",
+  "name": "Лесная",
+  "author": "SystemMonitor",
+  "description": "Спокойные зелёные тона",
+  "dark": true,
+  "variables": {
+    "--bg": "#0d1a12",
+    "--window-bg": "#15241a",
+    "--card-bg": "#1c2f22",
+    "--text": "#e6f4e6",
+    "--muted": "#9dbba4",
+    "--border-light": "#2e4a37",
+    "--border-dark": "#0a120c",
+    "--accent": "#4caf7d",
+    "--danger": "#ff6b6b",
+    "--warning": "#ffd166",
+    "--ok": "#7ae582",
+    "--line": "rgba(255,255,255,0.08)"
+  },
+  "customCss": ".card { border-radius: 8px; }"
+}

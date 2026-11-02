@@ -1,0 +1,11 @@
+flask
+flask-cors
+psutil
+wmi
+pywin32
+websockets
+pywebview
+python-dotenv
+pystray
+Pillow
+qrcode

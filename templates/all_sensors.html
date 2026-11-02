@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ru">
+<head><meta charset="utf-8"><title>Все сенсоры</title>
+<style>body{font:14px sans-serif;background:#111;color:#eee;margin:2rem}
+table{border-collapse:collapse;width:100%}td,th{padding:.4rem;border:1px solid #444;text-align:left}
+.bad{color:#ff9b9b}.suspect{background:#493500}</style></head>
+<body><h1>Все сенсоры</h1>
+<p><a href="/dashboard">← Дашборд</a> · <button id="refresh">Обновить</button></p>
+<table><thead><tr><th>Hardware</th><th>Subhardware</th><th>Type</th><th>Name</th>
+<th>Value</th><th>Unit</th><th>Identifier</th><th>Status</th></tr></thead>
+<tbody id="sensors"><tr><td colspan="8">Загрузка…</td></tr></tbody></table>
+<script>
+async function loadSensors(){const body=document.getElementById('sensors');
+try{const data=await fetch('/api/sensors').then(r=>r.json()); body.innerHTML='';
+(data.sensors||[]).forEach(s=>{const row=document.createElement('tr');
+if(s.suspicious)row.className='suspect'; row.innerHTML=[s.hardware,s.subhardware||'',
+s.type,s.name,s.value===null?'—':s.value,s.unit||'unknown',s.identifier||'',
+s.valid?'valid':(s.reason||'unknown')].map(v=>'<td>'+String(v).replace(/[&<>]/g,
+c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))+'</td>').join('');body.appendChild(row)});
+}catch(e){body.innerHTML='<tr><td colspan="8" class="bad">Ошибка загрузки</td></tr>'}}
+document.getElementById('refresh').onclick=loadSensors; loadSensors(); setInterval(loadSensors,5000);
+</script></body></html>

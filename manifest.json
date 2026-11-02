@@ -1,0 +1,15 @@
+{
+  "name": "SystemMonitor",
+  "short_name": "Monitor",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#008080",
+  "theme_color": "#000080",
+  "icons": [
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

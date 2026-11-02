@@ -1,0 +1,97 @@
+# Python environments and generated files
+__pycache__/
+*.py[cod]
+*.pyd
+.venv/
+venv/
+env/
+.ruff_cache/
+.pytest_cache/
+
+# Local editor and assistant configuration
+.vscode/
+.continue/
+/AI_MEMORY.md
+/homm3/
+/Документация проекта/FULL_CHANGE_REPORT.txt
+/setup.spec.py
+/theme_win95.css
+/config — копия.py
+/libre_monitor_dll_load_bak.py
+/check_css.py
+/check_dup.py
+/check_style.py
+/check_ws.py
+/check_ws2.py
+/check_ws3.py
+/find_*.py
+
+# Build and installer output
+/build/
+/dist/
+/installer_output/
+
+# Local runtime data and logs
+*.log
+/history.db*
+/history.json*
+/data/
+/logs/
+/cache/
+
+# Environment files containing local overrides.
+# env.env is intentionally kept: build.spec packages this safe default configuration.
+.env
+.env.*
+!.env.example
+
+# Draft/internal reports and generated diagnostics
+/DEVELOPMENT_REPORT_2026-09-30.md
+/RELEASE_NOTES_DRAFT.md
+/Документация проекта/FULL_CHANGE_REPORT.txt
+/ruff.json
+/capabilities.txt
+/_filelist.txt
+
+/static/css/themes/test_style.css
+
+# Old dashboard copies and backups
+/templates/*.bak
+/templates/*bak*
+/templates/*backup*
+/templates/*копия*
+
+# Ignore unreviewed binaries by default. Allow the pinned LHM 0.9.6 DLL
+# dependencies and MIT-licensed PresentMon used by the build.
+/*.dll
+!/LibreHardwareMonitorLib.dll
+!/Aga.Controls.dll
+!/BlackSharp.Core.dll
+!/DiskInfoToolkit.dll
+!/HidSharp.dll
+!/Microsoft.Bcl.AsyncInterfaces.dll
+!/Microsoft.Bcl.HashCode.dll
+!/Microsoft.Win32.TaskScheduler.dll
+!/OxyPlot.dll
+!/OxyPlot.WindowsForms.dll
+!/RAMSPDToolkit-NDD.dll
+!/System.Buffers.dll
+!/System.CodeDom.dll
+!/System.Collections.Immutable.dll
+!/System.Formats.Nrbf.dll
+!/System.IO.Pipelines.dll
+!/System.Memory.dll
+!/System.Numerics.Vectors.dll
+!/System.Reflection.Metadata.dll
+!/System.Resources.Extensions.dll
+!/System.Runtime.CompilerServices.Unsafe.dll
+!/System.Security.AccessControl.dll
+!/System.Security.Principal.Windows.dll
+!/System.Text.Encodings.Web.dll
+!/System.Text.Json.dll
+!/System.Threading.AccessControl.dll
+!/System.Threading.Tasks.Extensions.dll
+/LhmVisitorAdapter.dll
+/*.exe
+!/PresentMon-2.6.0-x64.exe
+/PawnIO_setup.exe

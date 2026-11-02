@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "type": "systemmonitor-theme",
+  "name": "Закат",
+  "author": "SystemMonitor",
+  "description": "Тёплые оранжево-фиолетовые тона",
+  "dark": true,
+  "variables": {
+    "--bg": "#1a1026",
+    "--window-bg": "#241634",
+    "--card-bg": "#2e1c40",
+    "--text": "#ffe8d6",
+    "--muted": "#c0a3c9",
+    "--border-light": "#46285e",
+    "--border-dark": "#120a1a",
+    "--accent": "#ff8c42",
+    "--danger": "#ff4d6d",
+    "--warning": "#ffd166",
+    "--ok": "#80ed99",
+    "--line": "rgba(255,140,66,0.15)"
+  },
+  "customCss": ".card { border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.45); }"
+}

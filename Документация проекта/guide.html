@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SystemMonitor — Руководство пользователя</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&display=swap">
+<style>
+/* ============ ПЕРЕМЕННЫЕ ТЕМ ============ */
+:root{
+  --desktop-bg:#008080;
+  --win-bg:#c0c0c0;
+  --win-light:#ffffff;
+  --win-dark:#808080;
+  --win-darker:#404040;
+  --title-bg:#000080;
+  --title-bg2:#1084d0;
+  --title-text:#ffffff;
+  --text:#000000;
+  --link:#0000cc;
+  --info-bg:#ffffcc;
+  --warn-bg:#ffe4e4;
+  --ok-bg:#e4ffe4;
+  --danger-bg:#ffdddd;
+  --menu-bg:#ffffff;
+  --menu-text:#000000;
+}
+body.dark{
+  --desktop-bg:#16162a;
+  --win-bg:#2b2b3d;
+  --win-light:#55557a;
+  --win-dark:#1a1a2c;
+  --win-darker:#0d0d18;
+  --title-bg:#3434a8;
+  --title-bg2:#5050d0;
+  --title-text:#ffffff;
+  --text:#e8e8f0;
+  --link:#a0a0ff;
+  --info-bg:#3a3a1e;
+  --warn-bg:#3a1e1e;
+  --ok-bg:#1e3a1e;
+  --danger-bg:#3a1e1e;
+  --menu-bg:#1e1e30;
+  --menu-text:#e8e8f0;
+}
+
+/* ============ БАЗА ============ */
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--desktop-bg);
+  color:var(--text);
+  font-family:Tahoma,'Segoe UI',Verdana,sans-serif;
+  font-size:15px;line-height:1.65;
+  padding-bottom:60px;
+  transition:background .3s;
+}
+h1,h2,h3{font-family:'VT323',Consolas,monospace;font-weight:normal;letter-spacing:.5px}
+a{color:var(--link)}
+code{background:rgba(0,0,0,.08);padding:2px 6px;border-radius:3px;font-family:Consolas,monospace;font-size:13px}
+.win[id]{scroll-margin-top:14px}
+
+/* ============ ЗАГРУЗОЧНЫЙ ЭКРАН ============ */
+#bootScreen{
+  position:fixed;inset:0;background:#000;color:#00ff00;
+  font-family:'VT323',Consolas,monospace;font-size:20px;
+  z-index:9999;cursor:pointer;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  transition:opacity .4s;
+}
+#bootText{white-space:pre-wrap;width:100%;max-width:560px;text-align:left;padding:0 20px}
+.boot-bar{width:100%;max-width:560px;height:22px;border:2px solid #00ff00;margin-top:24px}
+.boot-fill{height:100%;width:0;background:repeating-linear-gradient(45deg,#00ff00 0 10px,transparent 10px 20px);transition:width .2s}
+.boot-skip{margin-top:14px;color:#009900;font-size:15px}
+
+/* ============ ОКНА WIN95 ============ */
+.win{
+  background:var(--win-bg);
+  border:2px solid;
+  border-color:var(--win-light) var(--win-darker) var(--win-darker) var(--win-light);
+  box-shadow:2px 2px 0 rgba(0,0,0,.45);
+}
+.win-title{
+  background:linear-gradient(90deg,var(--title-bg),var(--title-bg2));
+  color:var(--title-text);
+  padding:6px 10px;display:flex;align-items:center;gap:8px;
+  font-family:'VT323',monospace;font-size:21px;
+  user-select:none;
+}
+.win-btns{margin-left:auto;display:flex;gap:3px}
+.win-btns span{
+  width:21px;height:19px;background:var(--win-bg);color:#000;
+  border:2px solid;border-color:var(--win-light) var(--win-darker) var(--win-darker) var(--win-light);
+  font-size:11px;font-family:monospace;
+  display:flex;align-items:center;justify-content:center;
+}
+.win-body{padding:18px}
+.win-body h2{font-size:27px;margin:0 0 10px;border-bottom:2px solid var(--win-dark);padding-bottom:6px}
+.win-body h3{font-size:21px;margin:16px 0 6px;color:var(--link)}
+.win-body p{margin:8px 0}
+.win-body ul,.win-body ol{margin:8px 0 8px 24px}
+.win-body li{margin:4px 0}
+
+/* ============ КНОПКИ ============ */
+.btn{
+  background:var(--win-bg);color:var(--text);
+  border:2px solid;border-color:var(--win-light) var(--win-darker) var(--win-darker) var(--win-light);
+  padding:6px 14px;cursor:pointer;font-family:inherit;font-size:14px;
+  box-shadow:1px 1px 0 rgba(0,0,0,.6);
+}
+.btn:active{border-color:var(--win-darker) var(--win-light) var(--win-light) var(--win-darker);box-shadow:none}
+
+/* ============ ТАБЛИЦЫ ============ */
+.tbl-wrap{overflow-x:auto;margin:10px 0}
+.tbl{width:100%;border-collapse:collapse;min-width:420px}
+.tbl th,.tbl td{border:1px solid var(--win-dark);padding:8px 10px;text-align:left;vertical-align:top}
+.tbl th{background:var(--title-bg);color:var(--title-text);font-family:'VT323',monospace;font-size:17px;letter-spacing:.5px}
+.tbl tr:nth-child(even) td{background:rgba(128,128,128,.12)}
+
+/* ============ ЗАМЕТКИ ============ */
+.note{padding:10px 14px;margin:12px 0;border:2px dashed var(--win-dark);font-size:14px}
+.note.info{background:var(--info-bg)}
+.note.warn{background:var(--warn-bg)}
+.note.ok{background:var(--ok-bg)}
+.note.danger{background:var(--danger-bg);border-color:#cc0000}
+
+/* ============ КОД И МЕНЮ ТРЕЯ ============ */
+.code{
+  background:#000;color:#00ff00;
+  font-family:Consolas,'VT323',monospace;font-size:14px;
+  padding:10px 14px;margin:10px 0;white-space:pre;overflow-x:auto;
+  border:2px solid;border-color:var(--win-darker) var(--win-light) var(--win-light) var(--win-darker);
+}
+.tray{
+  background:var(--menu-bg);color:var(--menu-text);
+  font-family:Consolas,monospace;font-size:14px;
+  padding:12px 16px;margin:10px 0;white-space:pre;overflow-x:auto;
+  border:2px solid;border-color:var(--win-darker) var(--win-light) var(--win-light) var(--win-darker);
+}
+
+/* ============ FAQ (details) ============ */
+details{margin:8px 0;border:2px solid;border-color:var(--win-dark) var(--win-light) var(--win-light) var(--win-dark)}
+summary{
+  cursor:pointer;padding:10px 12px;font-weight:bold;
+  display:flex;align-items:center;gap:8px;list-style:none;
+}
+summary::-webkit-details-marker{display:none}
+summary::before{content:'▶';font-size:11px;transition:transform .2s}
+details[open] summary::before{transform:rotate(90deg)}
+details[open] summary{background:var(--title-bg);color:var(--title-text)}
+.faq-body{padding:12px 14px;border-top:1px solid var(--win-dark)}
+
+/* ============ СЕТКА ФИЧ ============ */
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:12px 0}
+.feature{
+  border:2px solid;border-color:var(--win-light) var(--win-darker) var(--win-darker) var(--win-light);
+  padding:10px 12px;font-size:14px;background:rgba(255,255,255,.06);
+}
+.feature .ico{font-size:26px;display:block;margin-bottom:4px}
+
+/* ============ РАСКЛАДКА ============ */
+.layout{max-width:1280px;margin:0 auto;padding:16px;display:flex;gap:16px;align-items:flex-start}
+.sidebar{width:272px;flex-shrink:0;position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto;z-index:950}
+.content{flex:1;min-width:0;display:flex;flex-direction:column;gap:16px}
+.nav-list{list-style:none;padding:8px}
+.nav-list a{display:block;padding:8px 10px;color:var(--text);text-decoration:none;font-size:14px}
+.nav-list a:hover,.nav-list a.active{background:var(--title-bg);color:var(--title-text)}
+
+/* ============ ПЛАВАЮЩИЕ КНОПКИ ============ */
+#menuToggle,#toTop{
+  position:fixed;bottom:16px;z-index:960;display:none;
+  width:52px;height:52px;font-size:22px;
+  align-items:center;justify-content:center;
+}
+#menuToggle{left:16px}
+#toTop{right:16px}
+
+/* ============ ШАПКА ============ */
+.big-title{
+  font-family:'Press Start 2P','VT323',monospace;
+  font-size:clamp(18px,4vw,34px);
+  color:var(--title-text);
+  text-shadow:3px 3px 0 #000;
+  margin:6px 0;
+}
+.status-bar{
+  margin-top:14px;padding:5px 10px;font-size:13px;
+  border:2px solid;border-color:var(--win-dark) var(--win-light) var(--win-light) var(--win-dark);
+  display:flex;gap:16px;flex-wrap:wrap;
+}
+
+/* ============ ШАГИ ============ */
+.steps{counter-reset:step;list-style:none;padding:0}
+.steps li{
+  counter-increment:step;
+  padding:10px 10px 10px 50px;
+  margin:8px 0;
+  position:relative;
+  border:2px solid;border-color:var(--win-light) var(--win-darker) var(--win-darker) var(--win-light);
+  background:rgba(255,255,255,.04);
+}
+.steps li::before{
+  content:counter(step);
+  position:absolute;left:8px;top:8px;
+  width:32px;height:32px;
+  background:var(--title-bg);color:var(--title-text);
+  font-family:'VT323',monospace;font-size:22px;
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid;border-color:var(--win-light) var(--win-darker) var(--win-darker) var(--win-light);
+}
+
+/* ============ МОБИЛЬНАЯ АДАПТАЦИЯ ============ */
+@media(max-width:920px){
+  .layout{flex-direction:column;padding:10px}
+  .sidebar{
+    position:fixed;left:10px;right:10px;bottom:78px;top:auto;
+    width:auto;max-height:55vh;display:none;
+    box-shadow:4px 4px 0 rgba(0,0,0,.5);
+  }
+  .sidebar.open{display:block}
+  #menuToggle,#toTop{display:flex}
+  .win-body{padding:14px}
+  #bootScreen{font-size:16px;padding:24px 18px}
+  .steps li{padding-left:46px}
+  .steps li::before{width:28px;height:28px;font-size:19px}
+}
+
+/* ============ ПЕЧАТЬ ============ */
+@media print{
+  #bootScreen,.sidebar,#menuToggle,#toTop,.win-btns,.btn{display:none!important}
+  body{background:#fff;color:#000;padding:0}
+  .win{box-shadow:none;border-color:#000}
+  .layout{display:block;padding:0}
+  .content .win{margin-bottom:14px;page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== ЗАГРУЗОЧНЫЙ ЭКРАН ==================== -->
+<div id="bootScreen">
+  <div id="bootText"></div>
+  <div class="boot-bar"><div class="boot-fill" id="bootFill"></div></div>
+  <div class="boot-skip">[ нажмите в любом месте, чтобы пропустить ]</div>
+</div>
+
+<!-- ==================== РАСКЛАДКА ==================== -->
+<div class="layout">
+
+  <!-- ========== БОКОВАЯ ПАНЕЛЬ ========== -->
+  <nav class="sidebar win" id="sidebar">
+    <div class="win-title">📑 Содержание</div>
+    <ul class="nav-list">
+      <li><a href="#intro">📖 Введение</a></li>
+      <li><a href="#install">🚀 Установка</a></li>
+      <li><a href="#first">🖥️ Первый запуск</a></li>
+      <li><a href="#admin">🔐 Права администратора</a></li>
+      <li><a href="#tray">🔧 Системный трей</a></li>
+      <li><a href="#dashboard">📊 Дашборд</a></li>
+      <li><a href="#cards">🎛️ Работа с карточками</a></li>
+      <li><a href="#themes">🎨 Темы и пресеты</a></li>
+      <li><a href="#mobile">📱 Мобильная версия</a></li>
+      <li><a href="#history">📈 История и логи</a></li>
+      <li><a href="#network">🌐 Доступ по сети</a></li>
+      <li><a href="#diagnostic">🔍 Диагностика</a></li>
+      <li><a href="#faq">❓ Частые вопросы</a></li>
+      <li><a href="#uninstall">🗑️ Удаление</a></li>
+    </ul>
+  </nav>
+
+  <!-- ========== КОНТЕНТ ========== -->
+  <main class="content">
+
+    <!-- ШАПКА -->
+    <header class="win">
+      <div class="win-title">
+        📖 SystemMonitor — Руководство
+        <span class="win-btns"><span>_</span><span>□</span><span>×</span></span>
+      </div>
+      <div class="win-body" style="text-align:center">
+        <div class="big-title">SYSTEM MONITOR</div>
+        <p>Руководство пользователя • Версия 1.3</p>
+        <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+          <button class="btn" id="themeBtn">🌙 Тёмная тема</button>
+          <button class="btn" onclick="window.print()">🖨️ Печать</button>
+        </div>
+        <div class="status-bar">
+          <span>📄 Разделов: 14</span>
+          <span>🌐 Язык: Русский</span>
+          <span>⏱️ Чтение: ~7 минут</span>
+          <span>© 2026</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ========== ВВЕДЕНИЕ ========== -->
+    <section class="win" id="intro">
+      <div class="win-title">📖 Введение</div>
+      <div class="win-body">
+        <h2>Добро пожаловать!</h2>
+        <p><strong>SystemMonitor</strong> — программа для мониторинга вашего компьютера в реальном времени. Она показывает температуры, загрузку, частоты и состояние всех компонентов ПК на удобном веб-дашборде в стиле ретро Windows 95.</p>
+        <div class="features">
+          <div class="feature"><span class="ico">📊</span><strong>Живой дашборд</strong><br>Данные обновляются каждую секунду</div>
+          <div class="feature"><span class="ico">🎨</span><strong>Темы и пресеты</strong><br>Настройте внешний вид под себя</div>
+          <div class="feature"><span class="ico">📱</span><strong>Мобильная версия</strong><br>Следите за ПК со смартфона</div>
+          <div class="feature"><span class="ico">📈</span><strong>История</strong><br>Графики за час, сутки и больше</div>
+          <div class="feature"><span class="ico">🚀</span><strong>Автозапуск</strong><br>Старт вместе с Windows</div>
+          <div class="feature"><span class="ico">🔍</span><strong>Диагностика</strong><br>Поиск проблем с датчиками</div>
+        </div>
+        <div class="note info">ℹ️ <strong>Требования:</strong> Windows 10/11 (64-bit), .NET Framework 4.8+. Программа должна работать от имени администратора — это нужно для чтения датчиков материнской платы.</div>
+      </div>
+    </section>
+
+    <!-- ========== УСТАНОВКА ========== -->
+    <section class="win" id="install">
+      <div class="win-title">🚀 Установка</div>
+      <div class="win-body">
+        <h2>Установка программы</h2>
+        <ol class="steps">
+          <li>Запустите файл установщика <strong>SystemMonitor_Setup.exe</strong>.</li>
+          <li>Если появится окно защиты Windows — нажмите <strong>«Подробнее»</strong> → <strong>«Выполнить в любом случае»</strong>.</li>
+          <li>Следуйте подсказкам мастера установки.</li>
+          <li>При желании отметьте дополнительные опции:
+            <ul>
+              <li>🖥️ Создать ярлык на рабочем столе</li>
+              <li>⚡ Автозапуск при старте Windows</li>
+              <li>🔥 Открыть порты в брандмауэре (для доступа с других устройств)</li>
+            </ul>
+          </li>
+          <li>Нажмите <strong>«Установить»</strong> и дождитесь завершения.</li>
+          <li>В финальном окне оставьте галочки <strong>«Запустить SystemMonitor»</strong> и <strong>«Открыть дашборд в браузере»</strong> — нажмите <strong>«Готово»</strong>.</li>
+        </ol>
+        <div class="note warn">⚠️ Установка требует прав администратора — без них программа не сможет читать датчики температуры и вентиляторов.</div>
+        <div class="note ok">✅ По умолчанию программа устанавливается в <strong>C:\Program Files\SystemMonitor</strong>.</div>
+      </div>
+    </section>
+
+    <!-- ========== ПЕРВЫЙ ЗАПУСК ========== -->
+    <section class="win" id="first">
+      <div class="win-title">🖥️ Первый запуск</div>
+      <div class="win-body">
+        <h2>Что происходит при запуске</h2>
+        <p>После запуска программы:</p>
+        <ul>
+          <li>🔸 В <strong>системном трее</strong> (возле часов) появляется иконка программы.</li>
+          <li>🔸 В браузере автоматически открывается <strong>дашборд</strong> с данными.</li>
+        </ul>
+        <p>Если браузер не открылся — откройте дашборд вручную, введя адрес:</p>
+        <div class="code">http://localhost:5000/dashboard</div>
+        <h3>📋 Все страницы программы</h3>
+        <div class="tbl-wrap"><table class="tbl">
+          <tr><th>Страница</th><th>Адрес</th></tr>
+          <tr><td>📊 Дашборд (для ПК)</td><td><code>/dashboard</code></td></tr>
+          <tr><td>📱 Мобильная версия</td><td><code>/mobile</code></td></tr>
+          <tr><td>📈 История с графиками</td><td><code>/history-page</code></td></tr>
+          <tr><td>📋 Логи сервера</td><td><code>/logs</code></td></tr>
+          <tr><td>📖 Руководство</td><td><code>/guide</code></td></tr>
+        </table></div>
+        <div class="note info">ℹ️ Если иконки в трее не видно — нажмите на стрелку <strong>⌄</strong> возле часов и разверните скрытые значки.</div>
+      </div>
+    </section>
+
+    <!-- ========== ПРАВА АДМИНИСТРАТОРА ========== -->
+    <section class="win" id="admin">
+      <div class="win-title">🔐 Права администратора</div>
+      <div class="win-body">
+        <h2>Почему это важно</h2>
+        <p>Для чтения датчиков <strong>материнской платы</strong>, <strong>вентиляторов</strong> и <strong>точных температур процессора</strong> программе необходим прямой доступ к аппаратным регистрам. Это доступно только с правами администратора.</p>
+        <h3>Что работает БЕЗ прав администратора</h3>
+        <ul>
+          <li>✅ Загрузка CPU (через системные API)</li>
+          <li>✅ Использование оперативной памяти</li>
+          <li>✅ Сетевой трафик</li>
+          <li>✅ Свободное место на дисках</li>
+        </ul>
+        <h3>Что НЕ работает без прав администратора</h3>
+        <ul>
+          <li>❌ Температуры материнской платы</li>
+          <li>❌ Обороты вентиляторов (RPM)</li>
+          <li>❌ Напряжения платы (+12V, +5V, Vcore)</li>
+          <li>❌ Точные температуры процессора по ядрам</li>
+        </ul>
+        <div class="note danger">🔴 <strong>Обязательно:</strong> запускайте программу от имени администратора. Иначе карточки вентиляторов и материнской платы будут пустыми!</div>
+        <h3>Как включить постоянный запуск от администратора</h3>
+        <ol>
+          <li>Найдите ярлык <strong>SystemMonitor</strong> на рабочем столе</li>
+          <li>Правый клик → <strong>Свойства</strong> → вкладка <strong>Совместимость</strong></li>
+          <li>Поставьте галочку <strong>«Выполнять эту программу от имени администратора»</strong></li>
+          <li>Нажмите <strong>Применить</strong></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ========== ТРЕЙ ========== -->
+    <section class="win" id="tray">
+      <div class="win-title">🔧 Системный трей</div>
+      <div class="win-body">
+        <h2>Меню в трее</h2>
+        <p>Нажмите <strong>правой кнопкой мыши</strong> на иконку программы в трее — откроется меню:</p>
+        <div class="tray">📊 SystemMonitor
+├── Открыть дашборд          ← открыть страницу в браузере
+├── Мобильная версия         ← лёгкая версия для телефона
+├── История                  ← графики метрик
+├── Логи                     ← журнал событий сервера
+├── Руководство              ← эта справка
+├── ─────────────────────
+├── ✓ Автозапуск             ← вкл/выкл автозагрузку с Windows
+├── ✓ Открывать дашборд      ← вкл/выкл автооткрытие
+├── ─────────────────────
+└── Выход                    ← полностью закрыть программу</div>
+        <h3>⚡ Автозапуск при старте ПК</h3>
+        <p>Кликните по пункту — появится галочка <strong>✓</strong>. Теперь программа будет запускаться вместе с Windows. Повторный клик отключает автозапуск.</p>
+        <h3>🌐 Открывать дашборд при запуске</h3>
+        <p>Если галочка стоит — при запуске программы браузер сам откроет дашборд. Если снять галочку — программа будет работать «тихо», только в трее. Удобно для фонового мониторинга.</p>
+        <div class="note ok">✅ Обе настройки сохраняются и действуют после перезагрузки компьютера.</div>
+      </div>
+    </section>
+
+    <!-- ========== ДАШБОРД ========== -->
+    <section class="win" id="dashboard">
+      <div class="win-title">📊 Дашборд</div>
+      <div class="win-body">
+        <h2>Обзор дашборда</h2>
+        <p>Дашборд состоит из <strong>карточек</strong> — каждая отвечает за свой компонент компьютера:</p>
+        <div class="tbl-wrap"><table class="tbl">
+          <tr><th>Карточка</th><th>Что показывает</th></tr>
+          <tr><td>💻 CPU</td><td>Температура, загрузка, частота (факт. и эффект.), напряжение, мощность. Можно выбрать отдельное ядро!</td></tr>
+          <tr><td>🎮 GPU</td><td>Температура, загрузка, частота, видеопамять, мощность</td></tr>
+          <tr><td>🧠 Память</td><td>Занято / всего, процент использования RAM</td></tr>
+          <tr><td>🌐 Сеть</td><td>Скорость приёма и передачи данных</td></tr>
+          <tr><td>💾 Диски</td><td>Занятое место и температуры накопителей</td></tr>
+          <tr><td>🌀 Вентиляторы</td><td>Обороты всех кулеров (RPM)</td></tr>
+          <tr><td>🔌 Материнская плата</td><td>Напряжения и температуры платы</td></tr>
+          <tr><td>🧩 Прочие датчики</td><td>Все остальные датчики системы</td></tr>
+        </table></div>
+        <h3>🌡️ Температура по ядрам CPU</h3>
+        <p>В карточке CPU есть <strong>выпадающий список</strong> — выберите <em>«Все ядра»</em> или конкретное ядро (<em>Core #1, Core #2…</em>), чтобы видеть его температуру отдельно.</p>
+        <h3>📊 Эффективная частота CPU</h3>
+        <p>На <strong>новых процессорах</strong> (AMD Ryzen 3000+, Intel 12th Gen+) показывается реальная эффективная частота с учётом C-states (спящих режимов ядер).</p>
+        <p>На <strong>старых процессорах</strong> (Intel Haswell и раньше) это поле может быть пустым — такие CPU не предоставляют эту метрику. Это нормально, не является ошибкой.</p>
+        <div class="note info">ℹ️ Данные обновляются автоматически раз в секунду. Ничего нажимать не нужно.</div>
+      </div>
+    </section>
+
+    <!-- ========== КАРТОЧКИ ========== -->
+    <section class="win" id="cards">
+      <div class="win-title">🎛️ Работа с карточками</div>
+      <div class="win-body">
+        <h2>Настройка под себя</h2>
+        <ul>
+          <li>🖱️ <strong>Перемещение:</strong> зажмите заголовок карточки и перетащите её в нужное место.</li>
+          <li>📐 <strong>Размер:</strong> потяните за уголок карточки, чтобы изменить её размер.</li>
+          <li>👁️ <strong>Скрыть датчик:</strong> в настройках карточки можно скрыть ненужные датчики или переименовать их.</li>
+          <li>➕ <strong>Своя карточка:</strong> добавьте пользовательскую карточку с любым датчиком из раздела «Прочие».</li>
+          <li>🔒 <strong>Блокировка:</strong> кнопка в панели зафиксирует расположение карточек.</li>
+          <li>💾 <strong>Сохранение:</strong> расположение карточек запоминается автоматически и восстановится при следующем запуске.</li>
+        </ul>
+        <div class="note ok">✅ Случайно «сломали» интерфейс? В настройках есть кнопка <strong>сброса к виду по умолчанию</strong>.</div>
+      </div>
+    </section>
+
+    <!-- ========== ТЕМЫ ========== -->
+    <section class="win" id="themes">
+      <div class="win-title">🎨 Темы и пресеты</div>
+      <div class="win-body">
+        <h2>Внешний вид</h2>
+        <ul>
+          <li>🎨 <strong>Темы:</strong> откройте редактор тем и выберите готовую палитру (светлая, тёмная, ретро-CRT и др.) или создайте свою — цвета, градиенты, шрифты.</li>
+          <li>💾 <strong>Пресеты:</strong> сохраните текущую расстановку карточек и тему одним кликом. Переключайтесь между пресетами мгновенно.</li>
+          <li>📤 <strong>Экспорт / импорт:</strong> пресет можно выгрузить в файл и перенести на другой компьютер или поделиться с другом.</li>
+        </ul>
+        <div class="note info">ℹ️ Любителям ретро: включите CRT-эффект — сканлайны и мерцание как на старых мониторах!</div>
+      </div>
+    </section>
+
+    <!-- ========== МОБИЛЬНАЯ ========== -->
+    <section class="win" id="mobile">
+      <div class="win-title">📱 Мобильная версия</div>
+      <div class="win-body">
+        <h2>Следите за ПК со смартфона</h2>
+        <p>Мобильная версия — лёгкая и быстрая, специально для маленьких экранов.</p>
+        <ol class="steps">
+          <li>Убедитесь, что телефон и компьютер в <strong>одной Wi-Fi сети</strong>.</li>
+          <li>Узнайте IP компьютера: на ПК нажмите <code>Win+R</code> → введите <code>cmd</code> → команда <code>ipconfig</code>.</li>
+          <li>Откройте в браузере телефона адрес (пример):</li>
+        </ol>
+        <div class="code">http://192.168.1.100:5000/mobile</div>
+        <div class="note warn">⚠️ Если страница не открывается — разрешите программу в брандмауэре (пункт был при установке) или добавьте правило вручную для портов 5000 и 8765.</div>
+        <div class="note danger">🔴 <strong>Важно:</strong> всегда используйте <code>http://</code>, а не <code>https://</code>. Программа работает только по незашифрованному протоколу.</div>
+      </div>
+    </section>
+
+    <!-- ========== ИСТОРИЯ ========== -->
+    <section class="win" id="history">
+      <div class="win-title">📈 История и логи</div>
+      <div class="win-body">
+        <h2>История метрик</h2>
+        <p>Страница <strong>«История»</strong> показывает графики температур и загрузки за выбранный период: 5 минут, 1 час, 6 часов, 24 часа. Удобно отслеживать перегрев после чистки ПК или разгона.</p>
+        <p>Данные можно экспортировать в <strong>CSV</strong> для анализа в Excel или других программах.</p>
+        <h2>Логи</h2>
+        <p>Страница <strong>«Логи»</strong> — журнал событий сервера. Поможет разобраться, если что-то пошло не так: здесь видны ошибки и предупреждения. Есть фильтр по уровню и кнопка очистки.</p>
+        <div class="note info">ℹ️ Логи также пишутся в файл <code>server.log</code> в папке установки — можно открыть его в любом текстовом редакторе.</div>
+      </div>
+    </section>
+
+    <!-- ========== СЕТЬ ========== -->
+    <section class="win" id="network">
+      <div class="win-title">🌐 Доступ по сети</div>
+      <div class="win-body">
+        <h2>Доступ с других устройств</h2>
+        <p>SystemMonitor доступен не только на самом компьютере, но и с любого устройства в вашей локальной сети — телефона, планшета, второго ПК.</p>
+        <div class="code">http://ВАШ_IP:5000/dashboard</div>
+        <div class="note warn">⚠️ <strong>Безопасность:</strong> не открывайте доступ к программе из интернета. Программа предназначена только для домашней локальной сети и не имеет пароля.</div>
+      </div>
+    </section>
+
+    <!-- ========== ДИАГНОСТИКА ========== -->
+    <section class="win" id="diagnostic">
+      <div class="win-title">🔍 Диагностика</div>
+      <div class="win-body">
+        <h2>Если датчики не отображаются</h2>
+        <p>В программу встроена мощная система диагностики, которая покажет, какие датчики видит библиотека на вашем компьютере.</p>
+        <h3>Шаг 1: Закройте другие программы мониторинга</h3>
+        <p>Следующие программы могут блокировать доступ к датчикам:</p>
+        <ul>
+          <li>ASUS AI Suite / Fan Xpert</li>
+          <li>HWiNFO64</li>
+          <li>AIDA64</li>
+          <li>SpeedFan</li>
+          <li>Open Hardware Monitor</li>
+          <li>Corsair iCUE, NZXT CAM, MSI Afterburner</li>
+        </ul>
+        <p>Закройте их через трей или Диспетчер задач перед запуском SystemMonitor.</p>
+        <h3>Шаг 2: Посмотрите базовую диагностику</h3>
+        <p>Просто запустите программу и откройте страницу <strong>«Логи»</strong>. Найдите блок:</p>
+        <div class="code">ДИАГНОСТИКА ОБОРУДОВАНИЯ (однократно при старте)
+======================================================================
+Оборудование: тип=Motherboard, имя=ASUS ..., сенсоров=0
+  Оборудование: тип=SuperIO, имя=Nuvoton NCT6791D, сенсоров=6
+Оборудование: тип=Cpu, имя=Intel Core i7-4770K, сенсоров=35
+Оборудование: тип=GpuNvidia, имя=NVIDIA GeForce GTX 1050 Ti, сенсоров=27
+======================================================================</div>
+        <p>Если видите <code>SubHardware: тип=SuperIO</code> — вентиляторы и датчики платы работают корректно.</p>
+        <h3>Шаг 3: Расширенная диагностика (для продвинутых)</h3>
+        <p>Если нужно увидеть <strong>каждый датчик</strong> отдельно с именем и значением:</p>
+        <ol class="steps">
+          <li>Создайте файл <code>diagnostic.bat</code> рядом с <code>SystemMonitor.exe</code>:
+<div class="code">@echo off
+set DIAGNOSTIC=1
+start SystemMonitor.exe</div>
+          </li>
+          <li>Запустите <code>diagnostic.bat</code> <strong>от имени администратора</strong>.</li>
+          <li>Откройте <code>http://localhost:5000/logs</code> — в логах будет список всех датчиков с их значениями.</li>
+        </ol>
+        <div class="note ok">✅ По логам диагностики можно точно понять, какие датчики видит библиотека и почему некоторые из них не отображаются на дашборде.</div>
+      </div>
+    </section>
+
+    <!-- ========== FAQ ========== -->
+    <section class="win" id="faq">
+      <div class="win-title">❓ Частые вопросы</div>
+      <div class="win-body">
+        <h2>Вопросы и ответы</h2>
+
+        <details>
+          <summary>Карточки пустые / нет данных с датчиков</summary>
+          <div class="faq-body">Программа должна быть запущена <strong>от имени администратора</strong>. Закройте её через трей («Выход») и запустите ярлык правой кнопкой → «Запуск от имени администратора». Также проверьте, что антивирус не блокирует программу и нет запущенных ASUS AI Suite, HWiNFO64, AIDA64.</div>
+        </details>
+
+        <details>
+          <summary>Не вижу иконку в трее</summary>
+          <div class="faq-body">Windows прячет новые значки. Нажмите стрелку <strong>⌄</strong> возле часов — иконка там. Её можно перетащить на видимую панель.</div>
+        </details>
+
+        <details>
+          <summary>Дашборд не открылся при запуске</summary>
+          <div class="faq-body">Откройте браузер и введите <code>http://localhost:5000/dashboard</code>. Если страница не грузится — проверьте, запущена ли программа (иконка в трее). Возможно, в трее выключена опция «Открывать дашборд при запуске» — тогда открывайте вручную или через меню трея.</div>
+        </details>
+
+        <details>
+          <summary>Браузер выдаёт ошибку при открытии с телефона</summary>
+          <div class="faq-body">Убедитесь, что вы используете <strong>http://</strong>, а не <strong>https://</strong>. Современные браузеры часто автоматически подставляют https для локальных IP. Введите адрес вручную или откройте в режиме Инкогнито. В логах сервера эта ошибка выглядит как <code>code 400, message Bad request version</code> — это не баг программы.</div>
+        </details>
+
+        <details>
+          <summary>Антивирус ругается на программу</summary>
+          <div class="faq-body">Это ложное срабатывание на неподписанный .exe — частое явление для домашних программ. Добавьте папку установки в исключения антивируса.</div>
+        </details>
+
+        <details>
+          <summary>Порт 5000 занят другой программой</summary>
+          <div class="faq-body">Откройте файл <code>env.env</code> в папке программы и измените значение <code>SERVER_PORT</code> на другое (например, 5001). Перезапустите программу.</div>
+        </details>
+
+        <details>
+          <summary>Как добавить программу в автозагрузку?</summary>
+          <div class="faq-body">Правый клик по иконке в трее → <strong>«Автозапуск при старте ПК»</strong>. Появится галочка ✓ — готово. Повторный клик отключит автозапуск.</div>
+        </details>
+
+        <details>
+          <summary>Температуры не показываются, но загрузка видна</summary>
+          <div class="faq-body">Значит, программа запущена без прав администратора или работает конкурирующая программа мониторинга (ASUS AI Suite, HWiNFO64). Закройте их и перезапустите SystemMonitor от имени администратора.</div>
+        </details>
+
+        <details>
+          <summary>Вентиляторы не отображаются</summary>
+          <div class="faq-body">Вентиляторы читаются через чип SuperIO на материнской плате. Это требует: 1) прав администратора; 2) отсутствия конкурирующих программ мониторинга; 3) иногда — отключения ASUS AI Suite в BIOS. Проверьте раздел «Диагностика» выше.</div>
+        </details>
+
+        <details>
+          <summary>Поле «Частота (эффект.)» пустое на CPU</summary>
+          <div class="faq-body">Это нормально для <strong>старых процессоров</strong> (Intel Haswell и ранее). Они не предоставляют эту метрику через системные регистры. Эффективная частота отображается только на современных CPU (AMD Ryzen 3000+, Intel 12th Gen+).</div>
+        </details>
+
+        <details>
+          <summary>Программа не удаляется полностью</summary>
+          <div class="faq-body">Перед удалением закройте программу через трей («Выход»). Затем удалите через «Параметры → Приложения». Установщик автоматически удалит все файлы, правила брандмауэра, ключи реестра и пользовательские данные.</div>
+        </details>
+
+        <details>
+          <summary>Хочу сбросить все настройки</summary>
+          <div class="faq-body">Откройте дашборд в браузере → нажмите кнопку сброса макета в панели инструментов. Это вернёт карточки в расположение по умолчанию. Темы и пресеты сохраняются отдельно.</div>
+        </details>
+      </div>
+    </section>
+
+    <!-- ========== УДАЛЕНИЕ ========== -->
+    <section class="win" id="uninstall">
+      <div class="win-title">🗑️ Удаление</div>
+      <div class="win-body">
+        <h2>Как удалить программу</h2>
+        <ol class="steps">
+          <li>Закройте программу: правый клик по иконке в трее → <strong>«Выход»</strong>.</li>
+          <li>Откройте <strong>Параметры → Приложения → Установленные приложения</strong> (или «Панель управления → Программы и компоненты»).</li>
+          <li>Найдите <strong>SystemMonitor</strong> → <strong>Удалить</strong>.</li>
+        </ol>
+        <p>Удалитель автоматически закроет программу, уберёт правила брандмауэра, ключ автозапуска из реестра, пользовательские данные (темы, историю, логи) и все установленные файлы.</p>
+        <div class="note info">ℹ️ Либо запустите удаление через меню Пуск: <strong>Пуск → SystemMonitor → Удалить SystemMonitor</strong>.</div>
+        <div class="note ok">✅ После удаления на вашем компьютере <strong>не останется следов</strong> программы — ни файлов, ни записей в реестре, ни правил брандмауэра.</div>
+      </div>
+    </section>
+
+    <!-- ФУТЕР -->
+    <footer class="win">
+      <div class="win-body" style="text-align:center;font-size:14px">
+        <p><strong>SystemMonitor</strong> • Руководство пользователя • v1.3</p>
+        <p>© 2026 — Свободное использование и распространение</p>
+        <p style="margin-top:10px">
+          <a href="#intro" style="color:var(--link)">↑ Вернуться к началу</a>
+        </p>
+      </div>
+    </footer>
+
+  </main>
+</div>
+
+<!-- Плавающие кнопки (мобильные) -->
+<button class="btn" id="menuToggle" title="Содержание">📑</button>
+<button class="btn" id="toTop" title="Наверх">⬆</button>
+
+<script>
+/* ============ ЗАГРУЗОЧНЫЙ ЭКРАН ============ */
+var bootLines = [
+  'SystemMonitor BIOS v1.3',
+  'Copyright (C) 2026 SystemMonitor Team',
+  '',
+  'Проверка памяти .............. OK',
+  'Проверка датчиков ............ OK',
+  'Проверка прав администратора . OK',
+  'Инициализация SuperIO ........ OK',
+  'Загрузка тем оформления ...... OK',
+  'Запуск руководства ...........'
+];
+var bootText = document.getElementById('bootText');
+var bootFill = document.getElementById('bootFill');
+var bootScreen = document.getElementById('bootScreen');
+var bootDone = false;
+
+function finishBoot(){
+  if (bootDone) return;
+  bootDone = true;
+  bootScreen.style.opacity = '0';
+  setTimeout(function(){ bootScreen.style.display = 'none'; }, 400);
+}
+bootScreen.addEventListener('click', finishBoot);
+
+(function runBoot(){
+  var i = 0;
+  var timer = setInterval(function(){
+    if (bootDone){ clearInterval(timer); return; }
+    bootText.textContent += bootLines[i] + '\n';
+    bootFill.style.width = Math.round(((i+1)/bootLines.length)*100) + '%';
+    i++;
+    if (i >= bootLines.length){
+      clearInterval(timer);
+      setTimeout(finishBoot, 500);
+    }
+  }, 240);
+})();
+
+/* ============ ТЁМНАЯ ТЕМА ============ */
+var themeBtn = document.getElementById('themeBtn');
+function applyTheme(dark){
+  document.body.classList.toggle('dark', dark);
+  themeBtn.textContent = dark ? '☀️ Светлая тема' : '🌙 Тёмная тема';
+  try { localStorage.setItem('guide-theme', dark ? 'dark' : 'light'); } catch(e){}
+}
+themeBtn.addEventListener('click', function(){
+  applyTheme(!document.body.classList.contains('dark'));
+});
+try {
+  if (localStorage.getItem('guide-theme') === 'dark') applyTheme(true);
+} catch(e){}
+
+/* ============ МОБИЛЬНОЕ МЕНЮ ============ */
+var menuToggle = document.getElementById('menuToggle');
+var sidebar = document.getElementById('sidebar');
+menuToggle.addEventListener('click', function(){
+  sidebar.classList.toggle('open');
+});
+var navLinks = document.querySelectorAll('.nav-list a');
+navLinks.forEach(function(a){
+  a.addEventListener('click', function(){ sidebar.classList.remove('open'); });
+});
+
+/* ============ ПОДСВЕТКА АКТИВНОГО РАЗДЕЛА ============ */
+var sections = document.querySelectorAll('main .win[id]');
+if ('IntersectionObserver' in window){
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (e.isIntersecting){
+        navLinks.forEach(function(l){
+          l.classList.toggle('active', l.getAttribute('href') === '#' + e.target.id);
+        });
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  sections.forEach(function(s){ observer.observe(s); });
+}
+
+/* ============ КНОПКА «НАВЕРХ» ============ */
+var toTop = document.getElementById('toTop');
+window.addEventListener('scroll', function(){
+  toTop.style.display = window.scrollY > 400 ? 'flex' : 'none';
+});
+toTop.addEventListener('click', function(){
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+</script>
+</body>
+</html>

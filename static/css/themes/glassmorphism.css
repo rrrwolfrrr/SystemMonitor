@@ -1,0 +1,714 @@
+/* ============================================================
+   СТЕКЛЯННЫЙ ИНТЕРФЕЙС (Glassmorphism)
+   Современный, лёгкий, «воздушный» стиль для системного монитора
+   ============================================================ */
+
+/* ---------- Корневые переменные ---------- */
+:root {
+    --bg-color: rgba(255, 255, 255, 0.05) !important;
+    --card-bg: rgba(255, 255, 255, 0.25) !important;
+    --text-color: #1a2a4a !important;
+    --border-light: rgba(255, 255, 255, 0.4) !important;
+    --border-dark: rgba(255, 255, 255, 0.2) !important;
+    --title-color: #1a2a4a !important;
+    --accent-color: #00bcd4 !important;
+    --shadow: 0 8px 32px rgba(100, 150, 255, 0.12) !important;
+    --font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif !important;
+    --header-bg: rgba(255, 255, 255, 0.15) !important;
+    --header-text: #1a2a4a !important;
+    --grid-opacity: 0.05 !important;
+    --snap-transition: 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+}
+
+/* ---------- Глобальный фон ---------- */
+body {
+    background: linear-gradient(135deg, #e8f0fe 0%, #fce4ec 40%, #f3e5f5 70%, #e8e0f0 100%) !important;
+    backdrop-filter: none !important;
+    color: #1a2a4a !important;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif !important;
+    min-height: 100vh;
+    padding: 20px !important;
+    position: relative;
+}
+
+/* Декоративные элементы фона (пузырьки/блики) — необязательно, но добавим лёгкие размытые круги */
+body::before,
+body::after {
+    content: '';
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+    filter: blur(60px);
+}
+body::before {
+    width: 60vw;
+    height: 60vw;
+    top: -10vw;
+    right: -10vw;
+    background: radial-gradient(circle, rgba(100, 180, 255, 0.15) 0%, transparent 70%);
+}
+body::after {
+    width: 50vw;
+    height: 50vw;
+    bottom: -10vw;
+    left: -10vw;
+    background: radial-gradient(circle, rgba(255, 150, 200, 0.15) 0%, transparent 70%);
+}
+
+/* ---------- Окно дашборда ---------- */
+.window {
+    background: rgba(255, 255, 255, 0.15) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 24px !important;
+    padding: 6px !important;
+    box-shadow: 0 20px 60px rgba(100, 150, 255, 0.10), inset 0 1px 0 rgba(255,255,255,0.3) !important;
+    overflow: hidden;
+}
+
+.window-title {
+    background: rgba(255, 255, 255, 0.10) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    color: #1a2a4a !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 18px 18px 0 0 !important;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif !important;
+    font-weight: 500 !important;
+    padding: 12px 16px !important;
+    letter-spacing: 0.01em !important;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.4) !important;
+}
+
+.window-title .controls select,
+.window-title .controls input[type="range"],
+.window-title .controls button {
+    background: rgba(255, 255, 255, 0.25) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 12px !important;
+    color: #1a2a4a !important;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif !important;
+    font-size: 13px !important;
+    font-weight: 450 !important;
+    padding: 4px 12px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+    transition: all 0.2s ease !important;
+}
+
+.window-title .controls select:hover,
+.window-title .controls input[type="range"]:hover,
+.window-title .controls button:hover {
+    background: rgba(255, 255, 255, 0.35) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 4px 12px rgba(100, 150, 255, 0.08) !important;
+}
+
+.window-title .controls input[type="range"] {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 20px !important;
+    height: 4px !important;
+    padding: 0 !important;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.05) !important;
+}
+
+.window-title .controls input[type="range"]::-webkit-slider-thumb {
+    background: linear-gradient(135deg, #00bcd4, #4dd0e1) !important;
+    border: 2px solid rgba(255,255,255,0.5) !important;
+    border-radius: 50% !important;
+    width: 16px !important;
+    height: 16px !important;
+    box-shadow: 0 2px 8px rgba(0, 188, 212, 0.3), 0 0 0 2px rgba(255,255,255,0.2) !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+}
+
+.window-title .controls input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.1) !important;
+    box-shadow: 0 4px 12px rgba(0, 188, 212, 0.4) !important;
+}
+
+.window-title .controls input[type="range"]::-moz-range-thumb {
+    background: linear-gradient(135deg, #00bcd4, #4dd0e1) !important;
+    border: 2px solid rgba(255,255,255,0.5) !important;
+    border-radius: 50% !important;
+    width: 16px !important;
+    height: 16px !important;
+    box-shadow: 0 2px 8px rgba(0, 188, 212, 0.3) !important;
+    cursor: pointer !important;
+}
+
+.window-title .btn-win {
+    background: rgba(255, 255, 255, 0.20) !important;
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 12px !important;
+    color: #1a2a4a !important;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif !important;
+    font-size: 14px !important;
+    width: 28px !important;
+    height: 28px !important;
+    line-height: 26px !important;
+    text-align: center !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03) !important;
+    transition: all 0.2s !important;
+}
+
+.window-title .btn-win:hover {
+    background: rgba(255, 255, 255, 0.35) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 4px 12px rgba(100, 150, 255, 0.08) !important;
+    transform: scale(1.05);
+}
+
+.window-body {
+    background: transparent !important;
+    border: none !important;
+    padding: 16px !important;
+    border-radius: 0 0 20px 20px !important;
+}
+
+/* ---------- Сетка ---------- */
+.grid {
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 20px !important;
+    padding: 8px !important;
+    min-height: 500px !important;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.02) !important;
+}
+
+.grid canvas.grid-overlay {
+    opacity: 0.05 !important;
+    border-radius: 16px !important;
+}
+
+/* ---------- Карточки ---------- */
+.card {
+    background: rgba(255, 255, 255, 0.30) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.35) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 8px 32px rgba(100, 150, 255, 0.08), 0 2px 8px rgba(0,0,0,0.02), inset 0 1px 0 rgba(255,255,255,0.4) !important;
+    color: #1a2a4a !important;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif !important;
+    padding: 12px 14px !important;
+    transition: all 0.3s ease !important;
+}
+
+.card:hover {
+    background: rgba(255, 255, 255, 0.40) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 12px 40px rgba(100, 150, 255, 0.12), 0 2px 8px rgba(0,0,0,0.02) !important;
+    transform: translateY(-2px);
+}
+
+.card-title {
+    color: #1a2a4a !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3) !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    letter-spacing: 0.02em !important;
+    padding-bottom: 6px !important;
+    margin-bottom: 6px !important;
+}
+
+.card-value {
+    color: #1a2a4a !important;
+    font-weight: 450 !important;
+}
+
+/* ---------- Прогресс-бары ---------- */
+.progress-bar {
+    background: rgba(255, 255, 255, 0.3) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 20px !important;
+    height: 10px !important;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.04) !important;
+    overflow: hidden !important;
+}
+
+.progress-bar .fill {
+    background: linear-gradient(90deg, #00bcd4, #4dd0e1, #80deea) !important;
+    border-radius: 20px !important;
+    height: 100% !important;
+    box-shadow: 0 0 12px rgba(0, 188, 212, 0.3) !important;
+    transition: width 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+}
+
+.progress-bar .fill.warning {
+    background: linear-gradient(90deg, #ffa726, #ffb74d, #ffcc80) !important;
+    box-shadow: 0 0 12px rgba(255, 167, 38, 0.3) !important;
+}
+
+.progress-bar .fill.danger {
+    background: linear-gradient(90deg, #ef5350, #e57373, #ef9a9a) !important;
+    box-shadow: 0 0 12px rgba(239, 83, 80, 0.3) !important;
+}
+
+/* ---------- Элементы строк ---------- */
+.line-item .label {
+    color: #1a2a4a !important;
+    font-weight: 450 !important;
+    opacity: 0.7 !important;
+}
+
+.line-item {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+    padding: 4px 0 !important;
+}
+
+.line-item .value {
+    font-weight: 500 !important;
+    color: #1a2a4a !important;
+}
+
+/* ---------- Индикаторы температуры ---------- */
+.temp-indicator {
+    transition: color 0.3s !important;
+}
+.temp-indicator.warning {
+    color: #ff8f00 !important;
+}
+.temp-indicator.danger {
+    color: #d32f2f !important;
+    animation: blink 1s infinite alternate !important;
+}
+@keyframes blink {
+    0% { opacity: 1; }
+    100% { opacity: 0.5; }
+}
+
+/* ---------- Диски и вентиляторы ---------- */
+.card-disk .name {
+    color: #1a2a4a !important;
+    font-weight: 500 !important;
+}
+.card-disk .temp {
+    color: #1a2a4a !important;
+    opacity: 0.7 !important;
+}
+.fans-list span {
+    background: rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 12px !important;
+    color: #1a2a4a !important;
+    padding: 2px 12px !important;
+    font-size: 12px !important;
+}
+
+/* ---------- Подвал ---------- */
+.footer {
+    color: rgba(26, 42, 74, 0.5) !important;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif !important;
+    font-weight: 400 !important;
+    font-size: 13px !important;
+    text-shadow: 0 1px 2px rgba(255,255,255,0.3) !important;
+}
+.footer a {
+    color: #00bcd4 !important;
+    text-decoration: none !important;
+    font-weight: 500 !important;
+    transition: color 0.2s !important;
+}
+.footer a:hover {
+    color: #00838f !important;
+    text-decoration: underline !important;
+}
+
+/* ---------- Время обновления ---------- */
+.update-time {
+    background: rgba(255, 255, 255, 0.20) !important;
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 20px !important;
+    color: #1a2a4a !important;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif !important;
+    font-weight: 450 !important;
+    padding: 2px 14px !important;
+    font-size: 13px !important;
+}
+
+/* ---------- Кнопки настроек и справки ---------- */
+.settings-btn, .help-btn {
+    color: #1a2a4a !important;
+    background: rgba(255, 255, 255, 0.15) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border-radius: 50% !important;
+    width: 32px !important;
+    height: 32px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 18px !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    transition: all 0.2s !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03) !important;
+}
+.settings-btn:hover, .help-btn:hover {
+    background: rgba(255, 255, 255, 0.30) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    transform: scale(1.05) !important;
+}
+
+/* ---------- Панель настроек ---------- */
+.settings-panel {
+    background: rgba(255, 255, 255, 0.40) !important;
+    backdrop-filter: blur(30px) !important;
+    -webkit-backdrop-filter: blur(30px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 24px !important;
+    color: #1a2a4a !important;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif !important;
+    box-shadow: 0 20px 60px rgba(100, 150, 255, 0.15), inset 0 1px 0 rgba(255,255,255,0.5) !important;
+    padding: 24px !important;
+    backdrop-filter: blur(30px) !important;
+    -webkit-backdrop-filter: blur(30px) !important;
+}
+.settings-panel .panel-title {
+    color: #1a2a4a !important;
+    font-weight: 600 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+    padding-bottom: 12px !important;
+    margin-bottom: 16px !important;
+}
+.settings-panel label {
+    color: #1a2a4a !important;
+    font-weight: 450 !important;
+}
+.settings-panel input[type="checkbox"] {
+    accent-color: #00bcd4 !important;
+    width: 18px !important;
+    height: 18px !important;
+    border-radius: 6px !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02) !important;
+}
+.settings-panel .close-btn {
+    background: rgba(255, 255, 255, 0.20) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 12px !important;
+    color: #1a2a4a !important;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif !important;
+    padding: 0 12px !important;
+    transition: all 0.2s !important;
+}
+.settings-panel .close-btn:hover {
+    background: rgba(255, 255, 255, 0.35) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* ---------- Панель справки ---------- */
+.help-panel {
+    background: rgba(255, 255, 255, 0.40) !important;
+    backdrop-filter: blur(30px) !important;
+    -webkit-backdrop-filter: blur(30px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 24px !important;
+    color: #1a2a4a !important;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif !important;
+    box-shadow: 0 20px 60px rgba(100, 150, 255, 0.15), inset 0 1px 0 rgba(255,255,255,0.5) !important;
+    padding: 24px !important;
+}
+.help-panel .panel-title {
+    color: #1a2a4a !important;
+    font-weight: 600 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+    padding-bottom: 12px !important;
+    margin-bottom: 16px !important;
+}
+.help-panel .close-btn {
+    background: rgba(255, 255, 255, 0.20) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 12px !important;
+    color: #1a2a4a !important;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif !important;
+    padding: 0 12px !important;
+    transition: all 0.2s !important;
+}
+.help-panel .close-btn:hover {
+    background: rgba(255, 255, 255, 0.35) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+}
+.help-panel li:before {
+    color: #00bcd4 !important;
+}
+
+/* ---------- Панель логов ---------- */
+.logs-panel {
+    background: rgba(255, 255, 255, 0.40) !important;
+    backdrop-filter: blur(30px) !important;
+    -webkit-backdrop-filter: blur(30px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 24px !important;
+    color: #1a2a4a !important;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif !important;
+    box-shadow: 0 20px 60px rgba(100, 150, 255, 0.15), inset 0 1px 0 rgba(255,255,255,0.5) !important;
+    padding: 24px !important;
+}
+.logs-panel .panel-title {
+    color: #1a2a4a !important;
+    font-weight: 600 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+    padding-bottom: 12px !important;
+    margin-bottom: 16px !important;
+}
+.logs-panel .close-btn {
+    background: rgba(255, 255, 255, 0.20) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 12px !important;
+    color: #1a2a4a !important;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif !important;
+    padding: 0 12px !important;
+    transition: all 0.2s !important;
+}
+.logs-panel .close-btn:hover {
+    background: rgba(255, 255, 255, 0.35) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+}
+.logs-panel .logs-content {
+    background: rgba(255, 255, 255, 0.15) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 16px !important;
+    color: #1a2a4a !important;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif !important;
+    padding: 12px !important;
+}
+.logs-panel .log-entry {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #1a2a4a !important;
+}
+.logs-panel .log-entry .log-time {
+    color: rgba(26, 42, 74, 0.5) !important;
+    font-weight: 400 !important;
+}
+.logs-panel .log-entry .log-type.info {
+    color: #1a2a4a !important;
+}
+.logs-panel .log-entry .log-type.warning {
+    color: #ff8f00 !important;
+}
+.logs-panel .log-entry .log-type.error {
+    color: #d32f2f !important;
+}
+.logs-panel .log-entry .log-type.success {
+    color: #00bcd4 !important;
+}
+.logs-panel .logs-actions button {
+    background: rgba(255, 255, 255, 0.20) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 12px !important;
+    color: #1a2a4a !important;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif !important;
+    font-weight: 500 !important;
+    padding: 6px 16px !important;
+    transition: all 0.2s !important;
+}
+.logs-panel .logs-actions button:hover {
+    background: rgba(255, 255, 255, 0.35) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* ---------- Палитра цветов ---------- */
+.color-picker-popup {
+    background: rgba(255, 255, 255, 0.40) !important;
+    backdrop-filter: blur(30px) !important;
+    -webkit-backdrop-filter: blur(30px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 20px 60px rgba(100, 150, 255, 0.15) !important;
+    padding: 16px !important;
+}
+.color-picker-popup .color-swatch {
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 12px !important;
+    transition: all 0.2s !important;
+}
+.color-picker-popup .color-swatch:hover {
+    border-color: #00bcd4 !important;
+    transform: scale(1.1) !important;
+}
+.color-picker-popup .eyedropper-btn {
+    background: rgba(255, 255, 255, 0.20) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 12px !important;
+    color: #1a2a4a !important;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif !important;
+    font-weight: 500 !important;
+    padding: 6px 12px !important;
+    transition: all 0.2s !important;
+}
+.color-picker-popup .eyedropper-btn:hover {
+    background: rgba(255, 255, 255, 0.35) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* ---------- Выпадающее меню стилей ---------- */
+.style-switch .dropdown-btn {
+    background: rgba(255, 255, 255, 0.20) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 12px !important;
+    color: #1a2a4a !important;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif !important;
+    font-weight: 500 !important;
+    padding: 4px 12px !important;
+}
+.style-switch .dropdown-content {
+    background: rgba(255, 255, 255, 0.40) !important;
+    backdrop-filter: blur(30px) !important;
+    -webkit-backdrop-filter: blur(30px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 20px 60px rgba(100, 150, 255, 0.15) !important;
+    padding: 4px !important;
+}
+.style-switch .dropdown-content button {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 12px !important;
+    color: #1a2a4a !important;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif !important;
+    font-weight: 450 !important;
+    padding: 8px 16px !important;
+    transition: all 0.2s !important;
+}
+.style-switch .dropdown-content button:hover {
+    background: rgba(255, 255, 255, 0.25) !important;
+}
+.style-switch .dropdown-content button.active {
+    background: rgba(0, 188, 212, 0.15) !important;
+    color: #00838f !important;
+    font-weight: 600 !important;
+}
+
+/* ---------- Ручка изменения размера сетки ---------- */
+.grid-resize-handle {
+    background: linear-gradient(135deg, transparent 50%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0.4) 55%, transparent 55%) !important;
+    background-size: 16px 16px !important;
+    background-position: bottom right !important;
+    background-repeat: no-repeat !important;
+    border-radius: 0 0 16px 0 !important;
+    opacity: 0.6 !important;
+    transition: opacity 0.2s !important;
+}
+.grid-resize-handle:hover {
+    opacity: 1 !important;
+}
+
+/* ---------- Тултип координат ---------- */
+.coords-tooltip {
+    background: rgba(255, 255, 255, 0.40) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 12px !important;
+    color: #1a2a4a !important;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif !important;
+    font-size: 12px !important;
+    padding: 4px 12px !important;
+    box-shadow: 0 8px 24px rgba(100, 150, 255, 0.10) !important;
+}
+
+/* ---------- Дополнительные элементы ---------- */
+.window-title .controls select option {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #1a2a4a !important;
+}
+.window-title .controls select {
+    background: rgba(255, 255, 255, 0.25) !important;
+    color: #1a2a4a !important;
+}
+input[type="file"] {
+    background: rgba(255, 255, 255, 0.20) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 12px !important;
+    color: #1a2a4a !important;
+    font-family: 'Inter', 'SF Pro Display', -apple-system, sans-serif !important;
+    padding: 4px 8px !important;
+}
+
+/* ---------- Стили для выделенных элементов ---------- */
+.card.selected {
+    outline: 2px solid #00bcd4 !important;
+    outline-offset: 2px !important;
+    border-color: #00bcd4 !important;
+}
+
+/* ---------- Полосы прокрутки ---------- */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+}
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+* {
+    scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+    scrollbar-width: thin;
+}
+
+/* ---------- Адаптивные корректировки ---------- */
+@media (max-width: 600px) {
+    .window {
+        border-radius: 16px !important;
+        padding: 4px !important;
+    }
+    .window-title {
+        border-radius: 12px 12px 0 0 !important;
+        padding: 10px 12px !important;
+    }
+    .window-body {
+        padding: 10px !important;
+    }
+    .grid {
+        border-radius: 12px !important;
+        padding: 4px !important;
+    }
+    .card {
+        border-radius: 12px !important;
+        padding: 8px 10px !important;
+    }
+    .settings-panel,
+    .help-panel,
+    .logs-panel {
+        border-radius: 16px !important;
+        padding: 16px !important;
+    }
+}

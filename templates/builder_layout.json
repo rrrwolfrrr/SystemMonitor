@@ -1,0 +1,222 @@
+{
+  "builder_positions": {
+    "window": {
+      "left": "120px",
+      "top": "80px",
+      "width": "970px",
+      "height": "762px",
+      "zIndex": "5000"
+    },
+    "title-line": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": ""
+    },
+    "window-title": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": ""
+    },
+    "btn-loadStyleBtn": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-resetStyleBtn": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-settingsToggle": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-toggleGridBtn": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-bgGridBtn": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-bgCardBtn": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-btn-win-mw9q7": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-btn-win-7q880": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "controls": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": ""
+    },
+    "btn-helpToggle": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-logsToggle": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-fontScale": {
+      "left": "",
+      "top": "",
+      "width": "70px",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-gridZoom": {
+      "left": "",
+      "top": "",
+      "width": "70px",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-undoBtn": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-redoBtn": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-intervalSelect": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-update-time-wpybb": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-exportCsvBtn": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-exportHistoryCsvBtn": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-alignBtn": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-orderBtn": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-addCardBtn": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-readOnlyToggle": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-exportLayoutBtn": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-importLayoutBtn": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-exportSettingsBtn": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "btn-importSettingsBtn": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": "10"
+    },
+    "footer": {
+      "left": "",
+      "top": "",
+      "width": "",
+      "height": "",
+      "zIndex": ""
+    }
+  },
+  "builder_mode": "on"
+}

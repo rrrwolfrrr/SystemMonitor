@@ -1,0 +1,141 @@
+{
+  "layout": {
+    "CPU": {
+      "type": "standard",
+      "mode": "grid",
+      "grid": {
+        "col": 0,
+        "row": 0,
+        "widthCells": 1,
+        "heightCells": 1
+      },
+      "free": {
+        "x": 0,
+        "y": 0,
+        "width": 256,
+        "height": 256
+      }
+    },
+    "GPU": {
+      "type": "standard",
+      "mode": "grid",
+      "grid": {
+        "col": 1,
+        "row": 0,
+        "widthCells": 1,
+        "heightCells": 1
+      },
+      "free": {
+        "x": 268,
+        "y": 0,
+        "width": 256,
+        "height": 256
+      }
+    },
+    "Вентиляторы": {
+      "type": "standard",
+      "mode": "grid",
+      "grid": {
+        "col": 0,
+        "row": 1,
+        "widthCells": 1,
+        "heightCells": 1
+      },
+      "free": {
+        "x": 0,
+        "y": 268,
+        "width": 256,
+        "height": 256
+      }
+    },
+    "Диски": {
+      "type": "standard",
+      "mode": "grid",
+      "grid": {
+        "col": 1,
+        "row": 1,
+        "widthCells": 1,
+        "heightCells": 1
+      },
+      "free": {
+        "x": 268,
+        "y": 268,
+        "width": 256,
+        "height": 256
+      }
+    },
+    "Материнская плата": {
+      "type": "standard",
+      "mode": "grid",
+      "grid": {
+        "col": 0,
+        "row": 2,
+        "widthCells": 1,
+        "heightCells": 1
+      },
+      "free": {
+        "x": 0,
+        "y": 536,
+        "width": 256,
+        "height": 256
+      }
+    },
+    "Память (RAM)": {
+      "type": "standard",
+      "mode": "grid",
+      "grid": {
+        "col": 1,
+        "row": 2,
+        "widthCells": 1,
+        "heightCells": 1
+      },
+      "free": {
+        "x": 268,
+        "y": 536,
+        "width": 256,
+        "height": 256
+      }
+    },
+    "Сеть": {
+      "type": "standard",
+      "mode": "grid",
+      "grid": {
+        "col": 0,
+        "row": 3,
+        "widthCells": 1,
+        "heightCells": 1
+      },
+      "free": {
+        "x": 0,
+        "y": 804,
+        "width": 256,
+        "height": 256
+      }
+    },
+    "Система": {
+      "type": "standard",
+      "mode": "grid",
+      "grid": {
+        "col": 1,
+        "row": 3,
+        "widthCells": 1,
+        "heightCells": 1
+      },
+      "free": {
+        "x": 268,
+        "y": 804,
+        "width": 256,
+        "height": 256
+      }
+    }
+  },
+  "zoom": 1,
+  "freeMode": false,
+  "lockMode": false,
+  "gridBgColor": "#c0c0c0",
+  "cardBgColor": "#c0c0c0",
+  "gridSize": {
+    "width": null,
+    "height": null
+  }
+}

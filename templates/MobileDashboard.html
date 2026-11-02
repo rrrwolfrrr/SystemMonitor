@@ -1,0 +1,2150 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Монитор (моб.)</title>
+    <style>
+        /* Базовые стили (стандартная тема) */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            padding: 12px;
+            padding-bottom: 80px;
+            transition: background 0.3s, color 0.3s;
+        }
+        body.dark-theme { background: #1a1a1a; color: #e0e0e0; }
+        body.dark-theme .card { background: #2d2d2d; border-color: #555; color: #e0e0e0; }
+        body.dark-theme .card-title { color: #8ab4f8; border-bottom-color: #555; }
+        body.dark-theme .progress-bar { background: #444; }
+        body.dark-theme .value { color: #fff; }
+        body.dark-theme .update-time { background: #2d2d2d; color: #8ab4f8; }
+        body.dark-theme .footer { color: #777; }
+        body.dark-theme .footer a { color: #8ab4f8; }
+        body.dark-theme .settings-panel { background: #2d2d2d; border-color: #555; color: #e0e0e0; }
+        body.dark-theme .settings-panel .close-btn { color: #fff; }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #333;
+        }
+        .header h1 { font-size: 1.5rem; color: #e0e0e0; margin: 0; }
+        .header h1 span { font-size: 0.7rem; color: #666; }
+        .header .actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .header .actions button {
+            background: none;
+            border: none;
+            color: #ccc;
+            font-size: 1.6rem;
+            cursor: pointer;
+            min-width: 44px;
+            min-height: 44px;
+            padding: 6px;
+            transition: color 0.2s;
+        }
+        .header .actions button:hover { color: #fff; }
+        .header .actions button.locked { color: #ff6b6b; }
+
+        .cards-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .cards-grid.horizontal, .cards-grid.responsive { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        @media (min-width: 640px) { .cards-grid.horizontal, .cards-grid.responsive { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (min-width: 1000px) { .cards-grid.horizontal, .cards-grid.responsive { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+        .card {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 14px 16px;
+            border-left: 4px solid #0f3460;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            transition: background 0.3s, box-shadow 0.15s, border-color 0.2s;
+            cursor: default;
+            touch-action: pan-y;
+            position: relative;
+        }
+
+        .card-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-title-text { flex: 1; min-width: 0; }
+        .card-actions { display: flex; gap: 3px; }
+        .card-actions button, .summary-item button, .sensor-row button, .mobile-action {
+            min-width: 40px;
+            min-height: 40px;
+            border: 1px solid rgba(255,255,255,.18);
+            border-radius: 8px;
+            color: inherit;
+            background: rgba(255,255,255,.08);
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        .card.collapsed .card-content { display: none; }
+        .card.collapsed .card-title { margin-bottom: 0; }
+        .card-content { min-width: 0; }
+        .card-title .icon { font-size: 1.2rem; }
+        .card-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.95rem;
+        }
+        .card-row:last-child { border-bottom: none; }
+        .card-row .label { color: #ccc; }
+        .card-row .label { overflow-wrap: anywhere; }
+        .card-row .value { font-weight: 600; color: #fff; }
+        .card-row .value { text-align: right; overflow-wrap: anywhere; }
+        .value.high { color: #ff6b6b; }
+        .value.danger { color: #ff6b6b; }
+        .value.warning { color: #feca57; }
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #2d2d44;
+            border-radius: 4px;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+        .progress-bar .fill {
+            height: 100%;
+            background: #0f3460;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+        .progress-bar .fill.warning { background: #feca57; }
+        .progress-bar .fill.danger { background: #ff6b6b; }
+        .progress-bar .fill.battery-charge { background: linear-gradient(90deg, #22c55e, #86efac); }
+        .progress-bar .fill.battery-charge.charging { background: linear-gradient(90deg, #2196f3, #67e8f9); }
+        .mobile-toolbar { display: flex; gap: 8px; margin: 0 0 12px; }
+        .mobile-action { flex: 1; padding: 8px; font-size: .9rem; background: #16213e; }
+        .coffee-action {
+            display: block;
+            margin: 0 0 12px;
+            padding: 10px 14px;
+            border: 1px solid #9a6a2f;
+            border-radius: 9px;
+            background: #3a2815;
+            color: #ffe0ad;
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+        }
+        .coffee-action:hover { background: #513819; }
+        .overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 8px; margin-bottom: 12px; }
+        .overview:empty { display: none; }
+        .summary-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; padding: 9px 10px; border: 1px solid rgba(255,255,255,.14); border-radius: 10px; background: rgba(15,52,96,.62); }
+        .summary-label { min-width: 0; font-size: .78rem; color: #cbd5e1; overflow-wrap: anywhere; }
+        .summary-value { font-weight: 700; white-space: nowrap; }
+        .connection-status { margin: 0 0 10px; padding: 8px 10px; border-radius: 8px; color: #a7f3d0; background: rgba(16,120,75,.2); font-size: .85rem; }
+        .connection-status.error { color: #fecaca; background: rgba(180,35,35,.24); }
+        .fps-panel { margin: 0 0 12px; padding: 12px; border: 1px solid rgba(255,255,255,.18); border-radius: 12px; background: #16213e; }
+        .fps-panel h2 { margin: 0 0 5px; font-size: 1rem; }
+        .fps-status, .fps-target { color: #bdc8d8; font-size: .82rem; }
+        .fps-metrics { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 7px; margin: 9px 0; }
+        .fps-metric { min-width: 0; padding: 7px; border: 1px solid rgba(255,255,255,.12); border-radius: 8px; }
+        .fps-metric strong, .fps-metric span { display: block; }
+        .fps-metric strong { font-size: 1.05rem; overflow-wrap: anywhere; }
+        .fps-metric span { color: #bdc8d8; font-size: .72rem; }
+        .fps-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+        .fps-controls select { grid-column: 1 / -1; width: 100%; min-height: 42px; padding: 8px; border: 1px solid #555; border-radius: 8px; background: #2d2d44; color: #fff; font: inherit; }
+        .fps-controls button { min-height: 42px; padding: 7px; border: 1px solid #555; border-radius: 8px; color: #eee; background: #243454; font: inherit; }
+        body.dark-theme .fps-panel { background: #2d2d2d; border-color: #555; }
+        .sensor-row { display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.1); }
+        .sensor-row:last-child { border-bottom: 0; }
+        .sensor-info { min-width: 0; overflow-wrap: anywhere; }
+        .sensor-info small { display: block; opacity: .7; }
+        .sensor-row .sensor-actions { display: flex; gap: 3px; }
+        .modal-overlay { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; padding: 12px; background: rgba(0,0,0,.65); }
+        .modal-overlay.open { display: flex; }
+        .mobile-modal { width: min(620px, 100%); max-height: min(90dvh, 900px); overflow: auto; overscroll-behavior: contain; padding: 16px; border: 1px solid #555; border-radius: 16px; background: #1a1a2e; box-shadow: 0 8px 30px rgba(0,0,0,.7); }
+        .mobile-modal-header { position: sticky; top: -16px; z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; background: #1a1a2e; }
+        .mobile-modal-header h2 { font-size: 1.15rem; }
+        .mobile-modal input[type="search"], .mobile-modal input[type="text"], .mobile-modal select { width: 100%; min-height: 44px; margin: 6px 0; padding: 9px 10px; border: 1px solid #555; border-radius: 8px; background: #2d2d44; color: #fff; font: inherit; }
+        .mobile-modal button { min-height: 44px; padding: 7px 10px; border: 1px solid #555; border-radius: 8px; background: #16213e; color: #fff; font: inherit; }
+        .modal-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .sensor-list { max-height: 48dvh; overflow: auto; }
+        .history-chart { display: block; width: 100%; height: 180px; margin: 8px 0 18px; border-radius: 8px; background: rgba(0,0,0,.22); }
+        .history-legend { font-size: .9rem; }
+        .history-legend span { margin-right: 14px; }
+        .history-legend .cpu { color: #60a5fa; }
+        .history-legend .gpu { color: #f97316; }
+        .preset-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.12); }
+        .preset-actions { display: flex; gap: 6px; }
+        .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+        body.dark-theme .mobile-action, body.dark-theme .card-actions button { background: #2d2d2d; }
+        body.dark-theme .coffee-action { background: #3a2815; color: #ffe0ad; }
+        body.dark-theme .mobile-toolbar { background: #1a1a1a; }
+        body.dark-theme .summary-item { background: #222; }
+        body.dark-theme .mobile-modal, body.dark-theme .mobile-modal-header { background: #222; }
+        body.terminal-theme .mobile-action, body.terminal-theme .card-actions button { background: #000; color: #33ff33; border-color: #33ff33; }
+        body.terminal-theme .coffee-action { background: #000; color: #33ff33; border-color: #33ff33; }
+        body.terminal-theme .summary-item { background: #000; border-color: #33ff33; }
+        body.terminal-theme .mobile-modal, body.terminal-theme .mobile-modal-header { background: #050505; color: #33ff33; }
+        body.terminal-theme .mobile-modal button, body.terminal-theme .mobile-modal input, body.terminal-theme .mobile-modal select { background: #000; color: #33ff33; border-color: #33ff33; }
+        body.high-contrast-theme { background: #000; color: #fff; }
+        body.high-contrast-theme .card, body.high-contrast-theme .summary-item, body.high-contrast-theme .mobile-action { background: #000; border: 2px solid #fff; }
+        body.high-contrast-theme .card-row .label, body.high-contrast-theme .summary-label { color: #fff; }
+        .card-actions button:disabled { opacity: .4; cursor: default; }
+
+        .cmd-terminal { display: none; }
+        body.cmd-theme {
+            min-height: 100vh;
+            padding: 0;
+            background: #0c0c0c;
+            color: #cccccc;
+            font-family: "Cascadia Mono", Consolas, "Courier New", monospace;
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+        }
+        body.cmd-theme .container { width: 100%; max-width: none; min-height: 100vh; padding: 10px 12px; }
+        body.cmd-theme .header,
+        body.cmd-theme .mobile-toolbar,
+        body.cmd-theme .coffee-action,
+        body.cmd-theme .overview,
+        body.cmd-theme .connection-status,
+        body.cmd-theme #cardsContainer,
+        body.cmd-theme .update-time,
+        body.cmd-theme .footer { display: none !important; }
+        body.cmd-theme .cmd-terminal { display: block; }
+        body.mobile-compact .header,
+        body.mobile-compact .mobile-toolbar,
+        body.mobile-compact > .container > .coffee-action,
+        body.mobile-compact .overview,
+        body.mobile-compact .connection-status,
+        body.mobile-compact .cmd-terminal,
+        body.mobile-compact .update-time,
+        body.mobile-compact .footer { display: none !important; }
+        body.mobile-compact #cardsContainer { display: grid !important; }
+        .mobile-control-dock {
+            position: fixed;
+            top: 50%;
+            right: 0;
+            z-index: 1200;
+            display: flex;
+            align-items: stretch;
+            transform: translateY(-50%);
+        }
+        .mobile-control-handle {
+            align-self: center;
+            width: 22px;
+            min-width: 22px;
+            min-height: 38px;
+            padding: 4px 2px;
+            border: 1px solid rgba(170,170,170,.22);
+            border-right: 0;
+            border-radius: 10px 0 0 10px;
+            background: rgba(105,105,105,.28);
+            color: rgba(185,185,185,.64);
+            font: inherit;
+            font-size: .85rem;
+            font-weight: 400;
+            line-height: 1;
+            box-shadow: 0 2px 8px rgba(0,0,0,.12);
+            cursor: pointer;
+        }
+        .mobile-control-panel {
+            display: grid;
+            align-content: center;
+            gap: 8px;
+            width: 212px;
+            max-width: 0;
+            min-width: 0;
+            padding: 12px 0;
+            border: 0 solid rgba(255,255,255,.25);
+            border-right: 0;
+            border-radius: 12px 0 0 12px;
+            background: #26334f;
+            box-shadow: 0 3px 16px rgba(0,0,0,.35);
+            opacity: 0;
+            overflow: hidden;
+            visibility: hidden;
+            transition: max-width .2s ease, padding .2s ease, opacity .15s ease, visibility 0s linear .2s;
+        }
+        .mobile-control-dock.open .mobile-control-panel {
+            max-width: 212px;
+            padding: 12px;
+            border-width: 1px 0 1px 1px;
+            opacity: 1;
+            visibility: visible;
+            transition: max-width .2s ease, padding .2s ease, opacity .15s ease, visibility 0s;
+        }
+        .mobile-control-panel button {
+            min-height: 42px;
+            padding: 9px 12px;
+            border: 1px solid rgba(255,255,255,.2);
+            border-radius: 8px;
+            background: #34466b;
+            color: #fff;
+            font: inherit;
+            font-size: .9rem;
+            text-align: left;
+            cursor: pointer;
+        }
+        .mobile-control-panel button:hover { background: #405780; }
+        .mobile-control-handle:hover,
+        .mobile-control-handle:focus-visible {
+            background: rgba(105,105,105,.48);
+            color: rgba(220,220,220,.82);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .mobile-control-panel { transition: none; }
+        }
+        body.mobile-compact.cmd-theme #cardsContainer { display: grid !important; }
+        .cmd-titlebar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #333;
+            color: #f2f2f2;
+        }
+        .cmd-caption { overflow-wrap: anywhere; }
+        .cmd-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+        .cmd-actions button {
+            min-height: 38px;
+            padding: 6px 10px;
+            border: 1px solid #484848;
+            border-radius: 4px;
+            background: #181818;
+            color: #e5e5e5;
+            font: inherit;
+        }
+        .cmd-actions .coffee-action {
+            display: inline-flex;
+            align-items: center;
+            margin: 0;
+            padding: 6px 9px;
+            border-color: #666;
+            border-radius: 2px;
+            background: #1b1b1b;
+            color: #ddd;
+            font: inherit;
+            text-decoration: none;
+        }
+        .cmd-actions button:hover,
+        .cmd-actions button:focus-visible { background: #292929; border-color: #777; }
+        .cmd-window-version { margin: 0 0 4px; color: #cccccc; }
+        .cmd-welcome { margin-bottom: 14px; color: #cccccc; }
+        .cmd-session { margin: 0 0 10px; color: #a8a8a8; }
+        .cmd-session.error { color: #ff8f8f; }
+        .cmd-heading,
+        .cmd-sensor-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(100px, auto);
+            gap: 12px;
+            align-items: baseline;
+        }
+        .cmd-heading {
+            margin-bottom: 4px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #383838;
+            color: #9a9a9a;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        .cmd-sensor-row { padding: 4px 0; }
+        .cmd-sensor-device,
+        .cmd-sensor-name { min-width: 0; overflow-wrap: anywhere; }
+        .cmd-sensor-value { color: #f2f2f2; text-align: right; overflow-wrap: anywhere; }
+        .cmd-empty { padding: 8px 0; color: #b8b8b8; }
+        .cmd-prompt { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; color: #f2f2f2; }
+        .cmd-prompt-path { color: #cccccc; }
+        .cmd-cursor { animation: cmd-blink 1.1s steps(2, start) infinite; }
+        @keyframes cmd-blink { to { visibility: hidden; } }
+        body.cmd-theme .mobile-modal,
+        body.cmd-theme .mobile-modal-header { background: #111; color: #ddd; }
+        body.cmd-theme .mobile-modal button,
+        body.cmd-theme .mobile-modal input,
+        body.cmd-theme .mobile-modal select {
+            background: #181818;
+            border-color: #555;
+            border-radius: 4px;
+            color: #eee;
+            font-family: inherit;
+        }
+        body.cmd-theme .sensor-row { border-bottom-color: #333; }
+        body.cmd-theme .sensor-info small { color: #aaa; }
+        @media (max-width: 520px) {
+            body.cmd-theme .container { padding: 8px; }
+            .cmd-titlebar { align-items: flex-start; }
+            .cmd-heading { display: none; }
+            .cmd-sensor-row { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 6px 0; border-bottom: 1px solid #252525; }
+            .cmd-sensor-device { display: none; }
+            .cmd-sensor-name { font-size: 13px; }
+            .cmd-sensor-value { font-size: 13px; }
+        }
+
+        /* ========== ТЕМА "РЕТРО ТЕРМИНАЛ" ========== */
+        body.terminal-theme {
+            background: #000 !important;
+            color: #33ff33 !important;
+            font-family: 'Courier New', Courier, monospace !important;
+        }
+        body.terminal-theme .header h1 {
+            color: #33ff33;
+            border-bottom-color: #33ff33;
+        }
+        body.terminal-theme .header .actions button {
+            color: #33ff33;
+        }
+        body.terminal-theme .card {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 4px 0 !important;
+            border-radius: 0 !important;
+            cursor: default !important;
+            touch-action: auto !important;
+        }
+        body.terminal-theme .card-title {
+            color: #33ff33 !important;
+            border-bottom: 1px solid #33ff33;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 4px;
+        }
+        body.terminal-theme .card-row {
+            border-bottom: none !important;
+            padding: 2px 0 !important;
+            font-size: 0.9rem !important;
+            color: #33ff33 !important;
+        }
+        body.terminal-theme .card-row .label {
+            color: #33ff33 !important;
+        }
+        body.terminal-theme .card-row .value {
+            color: #33ff33 !important;
+            font-weight: normal !important;
+        }
+        body.terminal-theme .card-row .value.high,
+        body.terminal-theme .card-row .value.warning,
+        body.terminal-theme .card-row .value.danger {
+            color: #ff4444 !important;
+        }
+        body.terminal-theme .progress-bar {
+            display: none !important;
+        }
+        body.terminal-theme .update-time {
+            color: #33ff33 !important;
+            background: transparent !important;
+        }
+        body.terminal-theme .footer {
+            color: #33ff33 !important;
+            border-top-color: #33ff33;
+        }
+        body.terminal-theme .footer a {
+            color: #33ff33 !important;
+        }
+        body.terminal-theme .settings-panel {
+            background: #111 !important;
+            border-color: #33ff33 !important;
+            color: #33ff33 !important;
+        }
+        body.terminal-theme .settings-panel .panel-header h2 {
+            color: #33ff33 !important;
+        }
+        body.terminal-theme .settings-panel .close-btn {
+            color: #33ff33 !important;
+        }
+        body.terminal-theme .settings-group label {
+            color: #33ff33 !important;
+        }
+        body.terminal-theme .settings-group .checkbox-grid label {
+            color: #33ff33 !important;
+        }
+        body.terminal-theme .settings-group select {
+            background: #222 !important;
+            color: #33ff33 !important;
+            border-color: #33ff33 !important;
+        }
+        body.terminal-theme .settings-group .file-input-wrapper input[type="file"] {
+            color: #33ff33 !important;
+        }
+        body.terminal-theme .settings-group .file-input-wrapper button {
+            background: #222 !important;
+            color: #33ff33 !important;
+            border: 1px solid #33ff33 !important;
+        }
+        body.terminal-theme .settings-actions button {
+            background: #222 !important;
+            color: #33ff33 !important;
+            border: 1px solid #33ff33 !important;
+        }
+        body.terminal-theme .settings-actions button.secondary {
+            background: #111 !important;
+        }
+
+        .update-time {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 20px;
+        }
+        .footer {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #555;
+            margin-top: 20px;
+            border-top: 1px solid #222;
+            padding-top: 12px;
+        }
+        .footer a { color: #888; text-decoration: none; }
+
+        /* Панель настроек */
+        .settings-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .settings-overlay.open { display: flex; }
+        .settings-panel {
+            background: #1a1a2e;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 460px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            border: 1px solid #444;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.7);
+        }
+        .settings-panel .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .settings-panel .panel-header h2 { font-size: 1.2rem; color: #e0e0e0; margin: 0; }
+        .settings-panel .close-btn {
+            background: none;
+            border: none;
+            color: #ccc;
+            font-size: 1.8rem;
+            cursor: pointer;
+        }
+        .settings-group { margin-bottom: 16px; }
+        .settings-group label {
+            display: block;
+            color: #ccc;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+        .settings-group .checkbox-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px 12px;
+        }
+        .settings-group .checkbox-grid label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.9rem;
+            color: #ddd;
+            cursor: pointer;
+        }
+        .settings-group .checkbox-grid input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #0f3460;
+        }
+        .settings-group select {
+            width: 100%;
+            padding: 8px 12px;
+            background: #2d2d44;
+            color: #eee;
+            border: 1px solid #555;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+        .settings-group .file-input-wrapper {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .settings-group .file-input-wrapper input[type="file"] {
+            flex: 1;
+            color: #ccc;
+            font-size: 0.8rem;
+        }
+        .settings-group .file-input-wrapper button {
+            padding: 6px 14px;
+            background: #0f3460;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .settings-group .file-input-wrapper button:hover { background: #1a4a7a; }
+        .settings-group .file-input-wrapper button.danger { background: #8b2f2f; }
+        .settings-group .file-input-wrapper button.danger:hover { background: #a33a3a; }
+        .settings-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 8px;
+        }
+        .settings-actions button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            background: #0f3460;
+            color: #fff;
+        }
+        .settings-actions button:hover { background: #1a4a7a; }
+        .settings-actions button.secondary { background: #444; }
+        .settings-actions button.secondary:hover { background: #666; }
+
+        @media (max-width: 480px) {
+            .card { padding: 10px 12px; }
+            .card-title { font-size: 0.75rem; }
+            .card-row { font-size: 0.8rem; padding: 3px 0; }
+            .progress-bar { height: 4px; }
+            .header h1 { font-size: 1.25rem; }
+            .mobile-toolbar { position: sticky; top: 0; z-index: 10; padding: 6px 0; background: #1a1a2e; }
+        }
+    </style>
+    <style id="custom-style"></style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Монитор <span>(моб.)</span></h1>
+            <div class="actions">
+                <button id="lockToggle" title="Блокировка интерфейса (скролл)">🔓</button>
+                <button id="themeToggle" title="Тёмная тема">🌙</button>
+                <button id="settingsToggle" title="Настройки">⚙️</button>
+            </div>
+        </div>
+
+        <div class="mobile-toolbar" aria-label="Быстрые действия">
+            <button class="mobile-action" id="historyToggle" type="button">📈 История</button>
+            <button class="mobile-action" id="presetsToggle" type="button">🗂 Профили</button>
+        </div>
+        <a class="coffee-action" href="https://www.donationalerts.com/r/monsterhairy" target="_blank" rel="noopener noreferrer" title="Поддержать разработчика">☕ Угостить кофе</a>
+        <div class="overview" id="favoritesOverview" aria-label="Избранные датчики"></div>
+        <div class="connection-status" id="connectionStatus" role="status" aria-live="polite">Подключение к SystemMonitor…</div>
+        <section class="fps-panel" aria-label="Мониторинг FPS">
+            <h2>🎮 FPS игры или приложения</h2>
+            <div class="fps-status" id="mobileFpsStatus" role="status" aria-live="polite">Ожидание активного приложения…</div>
+            <div class="fps-metrics">
+                <div class="fps-metric"><strong id="mobileFpsCurrent">—</strong><span>Текущий FPS</span></div>
+                <div class="fps-metric"><strong id="mobileFpsAverage">—</strong><span>Средний FPS · 30 сек</span></div>
+                <div class="fps-metric"><strong id="mobileFpsOnePercentLow">—</strong><span>1% low</span></div>
+                <div class="fps-metric"><strong id="mobileFpsFrameTime">—</strong><span>Время кадра</span></div>
+            </div>
+            <div class="fps-target" id="mobileFpsTarget">Целевой процесс: не выбран</div>
+            <div class="fps-controls">
+                <select id="mobileFpsProcessSelect" aria-label="Выберите процесс для измерения FPS">
+                    <option value="">Сначала загрузите список процессов</option>
+                </select>
+                <button id="mobileFpsRefreshProcesses" type="button">↻ Обновить список</button>
+                <button id="mobileFpsSelectProcess" type="button">Отслеживать выбранный</button>
+                <button id="mobileFpsAutoProcess" type="button">Следить за активным окном</button>
+            </div>
+        </section>
+        <div id="cardsContainer" class="cards-grid vertical"></div>
+        <section class="cmd-terminal" id="cmdTerminal" aria-label="CMD: монитор датчиков">
+            <div class="cmd-titlebar">
+                <div class="cmd-caption">⌘ SystemMonitor — Монитор датчиков</div>
+                <div class="cmd-actions">
+                    <button id="cmdSensorsToggle" type="button">Датчики</button>
+                    <button id="cmdSettingsToggle" type="button">Настройки</button>
+                    <button id="cmdHistoryToggle" type="button">История</button>
+                    <a class="coffee-action" href="https://www.donationalerts.com/r/monsterhairy" target="_blank" rel="noopener noreferrer" title="Поддержать разработчика">☕ Кофе</a>
+                </div>
+            </div>
+            <div class="cmd-window-version">Microsoft Windows [Version 10.0]</div>
+            <div class="cmd-welcome">(c) Microsoft Corporation. All rights reserved.</div>
+            <div class="cmd-session" id="cmdSession">SystemMonitor CMD · ожидание показаний</div>
+            <div class="cmd-heading" aria-hidden="true">
+                <span>Устройство</span><span>Датчик</span><span>Значение</span>
+            </div>
+            <div id="cmdSensorRows" aria-live="polite"></div>
+            <div class="cmd-prompt"><span class="cmd-prompt-path">C:\SystemMonitor&gt;</span><span>sensors --watch</span><span class="cmd-cursor">█</span></div>
+        </section>
+
+        <div class="update-time">🔄 Обновлено: <span id="lastUpdate">--</span></div>
+        <div class="footer">© 2026 · <a href="/dashboard">Полная версия</a></div>
+
+        <div class="settings-overlay" id="settingsOverlay">
+            <div class="settings-panel" id="settingsPanel">
+                <div class="panel-header">
+                    <h2>⚙️ Настройки</h2>
+                    <button class="close-btn" id="settingsClose">&times;</button>
+                </div>
+
+                <div class="settings-group">
+                    <label><strong>Отображаемые карточки</strong></label>
+                    <div class="checkbox-grid" id="cardToggles">
+                        <label><input type="checkbox" data-card="cpu" checked> CPU</label>
+                        <label><input type="checkbox" data-card="gpu" checked> GPU</label>
+                        <label><input type="checkbox" data-card="ram" checked> Память</label>
+                        <label><input type="checkbox" data-card="network" checked> Сеть</label>
+                        <label><input type="checkbox" data-card="disks" checked> Диски</label>
+                        <label><input type="checkbox" data-card="fans" checked> Вентиляторы</label>
+                        <label><input type="checkbox" data-card="motherboard" checked> Материнская плата</label>
+                        <label><input type="checkbox" data-card="system" checked> Система</label>
+                        <label><input type="checkbox" data-card="battery" checked> Батарея</label>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <label><strong>Макет карточек</strong></label>
+                    <select id="layoutSelect">
+                        <option value="responsive">Автоматически по ширине экрана</option>
+                        <option value="vertical">Вертикальный (одна колонка)</option>
+                        <option value="horizontal">Сетка (до трёх колонок)</option>
+                    </select>
+                </div>
+
+                <div class="settings-group">
+                    <label><strong>Тема оформления</strong></label>
+                    <select id="themeSelect">
+                        <option value="default">Стандартная</option>
+                        <option value="dark">Тёмная</option>
+                        <option value="high-contrast">Высокий контраст</option>
+                        <option value="terminal">Ретро терминал (80-е)</option>
+                        <option value="cmd">CMD (Windows 11)</option>
+                    </select>
+                </div>
+
+                <div class="settings-group">
+                    <label><strong>Интервал обновления</strong></label>
+                    <select id="intervalSelect">
+                        <option value="1000">1 сек</option>
+                        <option value="2000">2 сек</option>
+                        <option value="5000">5 сек</option>
+                        <option value="10000">10 сек</option>
+                        <option value="30000">30 сек</option>
+                        <option value="60000">1 мин</option>
+                    </select>
+                </div>
+
+                <div class="settings-group">
+                    <label><strong>Пользовательский CSS</strong></label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="cssFileInput" accept=".css">
+                        <button id="loadCssBtn">Загрузить</button>
+                        <button id="resetCssBtn" class="danger">Сбросить</button>
+                    </div>
+                </div>
+
+                <div class="settings-actions">
+                    <button class="secondary" id="settingsCancel">Отмена</button>
+                    <button id="settingsSave">Сохранить</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="sensorOverlay" role="dialog" aria-modal="true" aria-labelledby="sensorModalTitle">
+            <div class="mobile-modal">
+                <div class="mobile-modal-header">
+                    <h2 id="sensorModalTitle">Датчики карточки</h2>
+                    <button type="button" data-close-modal="sensorOverlay" aria-label="Закрыть">✕</button>
+                </div>
+                <label id="builtInMetricsControl"><input type="checkbox" id="builtInMetricsToggle"> Показывать стандартные показатели карточки</label>
+                <input type="search" id="sensorSearch" placeholder="Поиск датчиков…" autocomplete="off">
+                <div class="sensor-list" id="sensorList"></div>
+                <div class="modal-actions"><button type="button" data-close-modal="sensorOverlay">Готово</button></div>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="historyOverlay" role="dialog" aria-modal="true" aria-labelledby="historyModalTitle">
+            <div class="mobile-modal">
+                <div class="mobile-modal-header">
+                    <h2 id="historyModalTitle">📈 История температур</h2>
+                    <button type="button" data-close-modal="historyOverlay" aria-label="Закрыть">✕</button>
+                </div>
+                <label for="historyRange">Период</label>
+                <select id="historyRange">
+                    <option value="1">Последний час</option>
+                    <option value="6">6 часов</option>
+                    <option value="24" selected>24 часа</option>
+                </select>
+                <div id="historyMessage" role="status">Загрузка истории…</div>
+                <div id="historyCharts"></div>
+                <div class="modal-actions"><button type="button" data-close-modal="historyOverlay">Закрыть</button></div>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="presetsOverlay" role="dialog" aria-modal="true" aria-labelledby="presetsModalTitle">
+            <div class="mobile-modal">
+                <div class="mobile-modal-header">
+                    <h2 id="presetsModalTitle">🗂 Профили мобильного Dashboard</h2>
+                    <button type="button" data-close-modal="presetsOverlay" aria-label="Закрыть">✕</button>
+                </div>
+                <label for="presetName">Сохранить текущие настройки</label>
+                <input type="text" id="presetName" maxlength="60" placeholder="Например: Игры">
+                <div class="modal-actions"><button type="button" id="savePresetBtn">Сохранить профиль</button></div>
+                <div id="presetList"></div>
+                <div class="modal-actions"><button type="button" data-close-modal="presetsOverlay">Закрыть</button></div>
+            </div>
+        </div>
+    </div>
+    <aside class="mobile-control-dock" id="mobileControlDock">
+        <div class="mobile-control-panel" id="mobileControlPanel" aria-label="Быстрые настройки">
+            <button type="button" id="compactModeToggle" aria-pressed="false">Компактный вид</button>
+            <button type="button" id="mobileSettingsShortcut">Настройки</button>
+        </div>
+        <button type="button" class="mobile-control-handle" id="mobileControlHandle"
+                aria-label="Открыть быстрые настройки" aria-expanded="false" aria-controls="mobileControlPanel">‹</button>
+    </aside>
+
+    <script>
+        // --- Конфигурация ---
+        let timerId = null;
+        let currentData = null;
+        let updateInProgress = false;
+        let activeSensorCard = 'cpu';
+        let lastSuccessfulUpdate = null;
+        let mobileControlDockTimerId = null;
+        const cardKeys = ['cpu', 'gpu', 'ram', 'network', 'disks', 'fans', 'motherboard', 'system', 'battery'];
+
+        // --- Настройки ---
+        const defaultSettings = {
+            showCards: {
+                cpu: true,
+                gpu: true,
+                ram: true,
+                network: true,
+                disks: true,
+                fans: true,
+                motherboard: true,
+                system: true,
+                battery: true
+            },
+            layout: 'responsive',
+            darkMode: false,
+            cardOrder: ['cpu', 'gpu', 'ram', 'network', 'disks', 'fans', 'motherboard', 'system', 'battery'],
+            customCSS: '',
+            refreshInterval: 2000,
+            locked: false,
+            theme: 'default',
+            cardSensors: {},
+            cmdSensors: [],
+            hiddenBuiltIn: {},
+            sensorLabels: {},
+            favorites: [],
+            collapsedCards: [],
+            compactMode: false
+        };
+        const mobileCardMeta = {
+            cpu: { title: 'CPU', icon: '🔥' },
+            gpu: { title: 'GPU', icon: '🎮' },
+            ram: { title: 'Память (RAM)', icon: '🧠' },
+            network: { title: 'Сеть', icon: '🌐' },
+            disks: { title: 'Диски', icon: '💾' },
+            fans: { title: 'Вентиляторы', icon: '🌀' },
+            motherboard: { title: 'Материнская плата', icon: '🔌' },
+            system: { title: 'Система', icon: '⚙️' },
+            battery: { title: 'Батарея', icon: '🔋' }
+        };
+
+        function loadSettings() {
+            let saved = localStorage.getItem('mobileSettings');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Invalid mobile settings');
+                    const merged = { ...defaultSettings, ...parsed };
+                    merged.showCards = { ...defaultSettings.showCards, ...(parsed.showCards || {}) };
+                    merged.cardOrder = Array.isArray(parsed.cardOrder)
+                        ? cardKeys.filter(key => parsed.cardOrder.includes(key))
+                        : defaultSettings.cardOrder.slice();
+                    cardKeys.forEach(key => { if (!merged.cardOrder.includes(key)) merged.cardOrder.push(key); });
+                    merged.refreshInterval = Math.max(1000, Number(parsed.refreshInterval) || defaultSettings.refreshInterval);
+                    merged.layout = ['responsive', 'horizontal', 'vertical'].includes(parsed.layout) ? parsed.layout : 'responsive';
+                    merged.theme = ['default', 'dark', 'high-contrast', 'terminal', 'cmd'].includes(parsed.theme) ? parsed.theme : 'default';
+                    merged.cardSensors = parsed.cardSensors && typeof parsed.cardSensors === 'object' ? parsed.cardSensors : {};
+                    merged.cmdSensors = Array.isArray(parsed.cmdSensors) ? [...new Set(parsed.cmdSensors.filter(key => typeof key === 'string'))] : [];
+                    merged.hiddenBuiltIn = parsed.hiddenBuiltIn && typeof parsed.hiddenBuiltIn === 'object' ? parsed.hiddenBuiltIn : {};
+                    merged.sensorLabels = parsed.sensorLabels && typeof parsed.sensorLabels === 'object' ? parsed.sensorLabels : {};
+                    merged.favorites = Array.isArray(parsed.favorites) ? [...new Set(parsed.favorites.filter(key => typeof key === 'string'))] : [];
+                    merged.collapsedCards = Array.isArray(parsed.collapsedCards) ? [...new Set(parsed.collapsedCards.filter(key => cardKeys.includes(key)))] : [];
+                    merged.compactMode = parsed.compactMode === true;
+                    cardKeys.forEach(key => {
+                        merged.cardSensors[key] = Array.isArray(merged.cardSensors[key])
+                            ? [...new Set(merged.cardSensors[key].filter(sensorKey => typeof sensorKey === 'string'))]
+                            : [];
+                        merged.hiddenBuiltIn[key] = merged.hiddenBuiltIn[key] === true;
+                    });
+                    Object.keys(merged.sensorLabels).forEach(key => {
+                        if (typeof merged.sensorLabels[key] !== 'string') delete merged.sensorLabels[key];
+                        else merged.sensorLabels[key] = merged.sensorLabels[key].slice(0, 80);
+                    });
+                    merged.darkMode = parsed.darkMode === true;
+                    merged.locked = parsed.locked === true;
+                    return merged;
+                } catch (error) {
+                    console.error('Не удалось загрузить настройки мобильного Dashboard:', error);
+                }
+            }
+            return JSON.parse(JSON.stringify(defaultSettings));
+        }
+
+        function saveSettings(settings) {
+            try {
+                localStorage.setItem('mobileSettings', JSON.stringify(settings));
+            } catch (error) {
+                console.error('Не удалось сохранить настройки мобильного Dashboard:', error);
+                setConnectionStatus('Не удалось сохранить настройки. Проверьте доступное место в хранилище браузера.', true);
+            }
+        }
+
+        let settings = loadSettings();
+
+        // --- Тема ---
+        function applyCompactMode() {
+            const enabled = settings.compactMode === true;
+            document.body.classList.toggle('mobile-compact', enabled);
+            const button = document.getElementById('compactModeToggle');
+            if (!button) return;
+            button.textContent = enabled ? 'Обычный вид' : 'Компактный вид';
+            button.setAttribute('aria-pressed', String(enabled));
+            button.title = enabled ? 'Показать остальные элементы Dashboard' : 'Оставить на экране только FPS и карточки';
+        }
+
+        function setMobileControlDockOpen(open) {
+            const dock = document.getElementById('mobileControlDock');
+            const handle = document.getElementById('mobileControlHandle');
+            clearTimeout(mobileControlDockTimerId);
+            mobileControlDockTimerId = null;
+            dock.classList.toggle('open', open);
+            handle.setAttribute('aria-expanded', String(open));
+            handle.setAttribute('aria-label', open ? 'Закрыть быстрые настройки' : 'Открыть быстрые настройки');
+            handle.textContent = open ? '›' : '‹';
+            if (open) {
+                mobileControlDockTimerId = setTimeout(() => setMobileControlDockOpen(false), 5000);
+            }
+        }
+
+        function applyTheme() {
+            const darkMode = settings.darkMode || settings.theme === 'dark';
+            if (darkMode) {
+                document.body.classList.add('dark-theme');
+                document.getElementById('themeToggle').textContent = '☀️';
+            } else {
+                document.body.classList.remove('dark-theme');
+                document.getElementById('themeToggle').textContent = '🌙';
+            }
+            if (settings.theme === 'terminal') {
+                document.body.classList.add('terminal-theme');
+            } else {
+                document.body.classList.remove('terminal-theme');
+            }
+            document.body.classList.toggle('cmd-theme', settings.theme === 'cmd');
+            document.body.classList.toggle('high-contrast-theme', settings.theme === 'high-contrast');
+            applyCompactMode();
+        }
+        applyTheme();
+
+        // --- CSS ---
+        function applyCustomCSS(css) {
+            const styleEl = document.getElementById('custom-style');
+            if (!css || css.trim() === '') {
+                styleEl.textContent = '';
+                settings.customCSS = '';
+                saveSettings(settings);
+                return;
+            }
+            styleEl.textContent = css;
+            settings.customCSS = css;
+            saveSettings(settings);
+        }
+        if (settings.customCSS) applyCustomCSS(settings.customCSS);
+
+        // --- Блокировка ---
+        function updateLockState() {
+            const lockBtn = document.getElementById('lockToggle');
+            if (settings.locked) {
+                lockBtn.textContent = '🔒';
+                lockBtn.classList.add('locked');
+                lockBtn.setAttribute('aria-pressed', 'true');
+                lockBtn.title = 'Сортировка карточек заблокирована';
+                document.body.style.touchAction = 'auto';
+                document.body.style.overflow = 'auto';
+            } else {
+                lockBtn.textContent = '🔓';
+                lockBtn.classList.remove('locked');
+                lockBtn.setAttribute('aria-pressed', 'false');
+                lockBtn.title = 'Разрешить сортировку карточек';
+                document.body.style.touchAction = 'pan-y';
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // --- Форматирование ---
+        function formatValue(value, decimals=1, unit='') {
+            if (value === null || value === undefined || isNaN(value)) return '—';
+            return value.toFixed(decimals) + (unit ? ' ' + unit : '');
+        }
+        function formatPercent(value) {
+            if (value === null || value === undefined || isNaN(value)) return '—';
+            return value.toFixed(1) + ' %';
+        }
+        function formatSizeMb(value) {
+            if (value === null || value === undefined || isNaN(value)) return '—';
+            if (value > 1024) return (value/1024).toFixed(1) + ' GB';
+            return value.toFixed(0) + ' MB';
+        }
+        function formatUptime(seconds) {
+            if (!seconds) return '—';
+            const d = Math.floor(seconds / 86400);
+            const h = Math.floor((seconds % 86400) / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            return (d ? d+'д ' : '') + h+'ч '+m+'м';
+        }
+
+        // --- Построение данных ---
+        function getCardData(cardKey, data) {
+            let result = { title: '', icon: '', lines: [], hasProgress: false, progressValue: null };
+            switch(cardKey) {
+                case 'cpu': {
+                    const cpu = data.cpu || {};
+                    const cpuLoad = cpu.load ?? data.cpu_percent;
+                    result.title = 'CPU';
+                    result.icon = '🔥';
+                    result.lines = [
+                        { label: 'Температура', value: formatValue(cpu.temperature, 1, '°C'), cls: cpu.temperature > 80 ? 'danger' : cpu.temperature > 70 ? 'warning' : '' },
+                        { label: 'Загрузка', value: formatPercent(cpuLoad) },
+                        { label: 'Частота (факт.)', value: formatValue(cpu.frequency ?? data.cpu_freq_mhz, 0, 'МГц') },
+                        { label: 'Частота (эффект.)', value: formatValue(cpu.frequency_effective, 0, 'МГц') },
+                        { label: 'Напряжение', value: formatValue(cpu.voltage, 3, 'В') },
+                        { label: 'Мощность', value: formatValue(cpu.power, 1, 'Вт') },
+                    ];
+                    result.hasProgress = true; result.progressValue = cpuLoad;
+                    break;
+                }
+                case 'gpu': {
+                    const gpu = data.gpu || {};
+                    if ([
+                        gpu.temperature, gpu.hotspot_temperature, gpu.load, gpu.frequency,
+                        gpu.voltage, gpu.power, gpu.memory_used, gpu.memory_total,
+                        gpu.dedicated_memory_used_mb, gpu.dedicated_memory_total_mb,
+                        gpu.shared_memory_used_mb, gpu.shared_memory_total_mb
+                    ].every(value => value === null || value === undefined)) return null;
+                    result.title = 'GPU';
+                    result.icon = '🎮';
+                    const gpuTemperature = gpu.hotspot_temperature ?? gpu.temperature;
+                    const hotspotTemperature = gpu.temperature ?? gpu.hotspot_temperature;
+                    result.lines = [
+                        { label: 'Температура GPU', value: formatValue(gpuTemperature, 1, '°C'), cls: gpuTemperature > 80 ? 'danger' : gpuTemperature > 70 ? 'warning' : '' },
+                        { label: 'Hotspot', value: formatValue(hotspotTemperature, 1, '°C'), cls: hotspotTemperature > 90 ? 'danger' : hotspotTemperature > 80 ? 'warning' : '' },
+                        { label: 'Разница температур', value: Number.isFinite(gpuTemperature) && Number.isFinite(hotspotTemperature) && gpuTemperature !== 0 ? formatValue(((hotspotTemperature - gpuTemperature) / Math.abs(gpuTemperature)) * 100, 1, '%') : '—' },
+                        { label: 'Загрузка', value: formatPercent(gpu.load) },
+                        { label: 'Частота', value: formatValue(gpu.frequency, 0, 'МГц') },
+                        { label: 'Выделенная память', value: formatSizeMb(gpu.dedicated_memory_used_mb ?? gpu.memory_used) + ' / ' + formatSizeMb(gpu.dedicated_memory_total_mb ?? gpu.memory_total) },
+                        { label: 'Общая память', value: formatSizeMb(gpu.shared_memory_used_mb) + ' / ' + formatSizeMb(gpu.shared_memory_total_mb) },
+                    ];
+                    result.hasProgress = true; result.progressValue = gpu.load;
+                    break;
+                }
+                case 'ram': {
+                    const ramPercent = data.ram_percent;
+                    result.title = 'Память (RAM)';
+                    result.icon = '🧠';
+                    result.lines = [
+                        { label: 'Использовано', value: formatSizeMb(data.ram_used_mb) + ' / ' + formatSizeMb(data.ram_total_mb) },
+                        { label: 'Занято', value: formatPercent(ramPercent) },
+                    ];
+                    result.hasProgress = true; result.progressValue = ramPercent;
+                    break;
+                }
+                case 'network': {
+                    result.title = 'Сеть';
+                    result.icon = '🌐';
+                    result.lines = [
+                        { label: '⬇️ Приём', value: formatValue(data.net_recv_speed_kbps, 0, 'КБ/с') },
+                        { label: '⬆️ Отдача', value: formatValue(data.net_sent_speed_kbps, 0, 'КБ/с') },
+                    ];
+                    break;
+                }
+                case 'disks': {
+                    const disks = data.disks || [];
+                    if (disks.length === 0) return null;
+                    result.title = 'Диски';
+                    result.icon = '💾';
+                    result.lines = disks.map(d => ({ label: d.mount, value: d.percent.toFixed(1) + '% (' + d.used_gb.toFixed(1) + '/' + d.total_gb.toFixed(1) + ' ГБ)' }));
+                    const storage = data.storage || [];
+                    storage.forEach(s => {
+                        result.lines.push({ label: s.name, value: s.temp ? s.temp.toFixed(1) + ' °C' : '—' });
+                    });
+                    result.hasProgress = true; result.progressValue = disks[0]?.percent || 0;
+                    break;
+                }
+                case 'fans': {
+                    const fans = data.fans || [];
+                    if (fans.length === 0) return null;
+                    result.title = 'Вентиляторы';
+                    result.icon = '🌀';
+                    result.lines = fans.map(f => ({ label: f.name, value: f.rpm ? f.rpm + ' RPM' : '—' }));
+                    break;
+                }
+                case 'motherboard': {
+                    const mb = data.motherboard || {};
+                    if (!mb.temperature || mb.temperature.length === 0) return null;
+                    result.title = 'Материнская плата';
+                    result.icon = '🔌';
+                    result.lines = mb.temperature.map(t => ({ label: t.name, value: t.value + ' °C' }));
+                    if (mb.voltage && mb.voltage.length > 0) {
+                        mb.voltage.forEach(v => {
+                            result.lines.push({ label: v.name, value: v.value + ' V' });
+                        });
+                    }
+                    break;
+                }
+                case 'system': {
+                    result.title = 'Система';
+                    result.icon = '⚙️';
+                    result.lines = [
+                        { label: 'Время работы', value: formatUptime(data.uptime_seconds) },
+                        { label: 'Загрузка системы', value: data.boot_time || '—' },
+                    ];
+                    break;
+                }
+                case 'battery': {
+                    const battery = data.battery && typeof data.battery === 'object' ? data.battery : {};
+                    const packs = Array.isArray(battery.batteries) && battery.batteries.length
+                        ? battery.batteries
+                        : Object.keys(battery).length ? [battery] : [];
+                    const sensors = Array.isArray(data.raw_sensors)
+                        ? data.raw_sensors
+                        : Array.isArray(data.other) ? data.other : [];
+                    const batterySensors = sensors.filter(sensor => {
+                        if (!sensor || typeof sensor !== 'object' || !Number.isFinite(sensor.value)) return false;
+                        const hardwareType = String(sensor.hardware_type || '').toLocaleLowerCase();
+                        const hardwareName = String(sensor.hardware || sensor.hardware_path || sensor.subhardware || '');
+                        return hardwareType === 'battery' || /battery|батар/i.test(hardwareName);
+                    });
+                    const chemistryNames = {
+                        1: 'Другая', 2: 'Неизвестно', 3: 'Свинцово-кислотная',
+                        4: 'Никель-кадмиевая', 5: 'Никель-металлгидридная',
+                        6: 'Литий-ионная', 7: 'Цинк-воздушная', 8: 'Литий-полимерная'
+                    };
+                    const duration = (seconds, minutes) => {
+                        const totalMinutes = Number.isFinite(seconds) && seconds > 0
+                            ? Math.floor(seconds / 60)
+                            : Number.isFinite(minutes) && minutes > 0 ? Math.floor(minutes) : null;
+                        if (totalMinutes === null) return null;
+                        const hours = Math.floor(totalMinutes / 60);
+                        const remainder = totalMinutes % 60;
+                        return (hours ? hours + ' ч ' : '') + remainder + ' мин';
+                    };
+                    const statusNames = {
+                        charging: 'Заряжается',
+                        discharging: 'Разряжается',
+                        full: 'Полностью заряжена',
+                        ac_connected: 'Подключена к сети'
+                    };
+                    result.title = 'Батарея';
+                    result.icon = '🔋';
+                    result.lines = [];
+                    packs.forEach((pack, index) => {
+                        if (!pack || typeof pack !== 'object') return;
+                        if (packs.length > 1 || pack.name) {
+                            result.lines.push({
+                                label: 'Аккумулятор',
+                                value: pack.name || ('№ ' + (index + 1))
+                            });
+                        }
+                        if (Number.isFinite(pack.percent)) {
+                            result.lines.push({ label: 'Заряд', value: formatPercent(pack.percent) });
+                        }
+                        const status = statusNames[pack.status] || pack.battery_status || pack.wmi_status || pack.status;
+                        if (status) result.lines.push({
+                            label: 'Состояние',
+                            value: (pack.plugged ? '🔌 ' : '') + status
+                        });
+                        const remaining = duration(pack.secsleft, pack.remaining_minutes);
+                        if (remaining) result.lines.push({
+                            label: pack.status === 'charging' ? 'До полной зарядки' : 'Осталось',
+                            value: remaining
+                        });
+                        if (pack.device_id) result.lines.push({ label: 'Устройство', value: pack.device_id });
+                        if (pack.chemistry_code !== undefined) result.lines.push({
+                            label: 'Химический состав',
+                            value: chemistryNames[pack.chemistry_code] || ('Код ' + pack.chemistry_code)
+                        });
+                        if (Number.isFinite(pack.design_capacity_mwh)) result.lines.push({
+                            label: 'Проектная ёмкость',
+                            value: formatValue(pack.design_capacity_mwh / 1000, 2, 'Вт·ч')
+                        });
+                        if (Number.isFinite(pack.full_charge_capacity_mwh)) result.lines.push({
+                            label: 'Ёмкость полного заряда',
+                            value: formatValue(pack.full_charge_capacity_mwh / 1000, 2, 'Вт·ч')
+                        });
+                        if (Number.isFinite(pack.health_percent)) result.lines.push({
+                            label: 'Здоровье батареи',
+                            value: formatPercent(pack.health_percent)
+                        });
+                        if (Number.isFinite(pack.design_voltage_mv)) result.lines.push({
+                            label: 'Проектное напряжение',
+                            value: formatValue(pack.design_voltage_mv / 1000, 2, 'В')
+                        });
+                        if (Number.isFinite(pack.max_recharge_minutes)) result.lines.push({
+                            label: 'Макс. время зарядки',
+                            value: duration(null, pack.max_recharge_minutes)
+                        });
+                        if (Number.isFinite(pack.expected_life_seconds)) result.lines.push({
+                            label: 'Расчётное время работы',
+                            value: duration(pack.expected_life_seconds)
+                        });
+                        if (Number.isFinite(pack.expected_life_minutes)) result.lines.push({
+                            label: 'Расчётное время работы',
+                            value: duration(null, pack.expected_life_minutes)
+                        });
+                        if (Number.isFinite(pack.time_on_battery_seconds)) result.lines.push({
+                            label: 'Работа от батареи',
+                            value: duration(pack.time_on_battery_seconds)
+                        });
+                        if (Number.isFinite(pack.time_to_full_charge_seconds)) result.lines.push({
+                            label: 'До полной зарядки',
+                            value: duration(pack.time_to_full_charge_seconds)
+                        });
+                        if (Number.isFinite(pack.availability_code)) result.lines.push({
+                            label: 'Доступность',
+                            value: 'Код ' + pack.availability_code
+                        });
+                        if (Number.isFinite(pack.config_manager_error_code)) result.lines.push({
+                            label: 'Ошибка устройства',
+                            value: pack.config_manager_error_code === 0 ? 'Ошибок нет' : 'Код ' + pack.config_manager_error_code
+                        });
+                        if (typeof pack.power_management_supported === 'boolean') result.lines.push({
+                            label: 'Управление питанием',
+                            value: pack.power_management_supported ? 'Поддерживается' : 'Не поддерживается'
+                        });
+                        if (Number.isFinite(pack.status_info_code)) result.lines.push({
+                            label: 'Код состояния',
+                            value: 'Код ' + pack.status_info_code
+                        });
+                        if (pack.wmi_status) result.lines.push({
+                            label: 'Статус устройства',
+                            value: pack.wmi_status
+                        });
+                    });
+                    batterySensors.forEach((sensor, index) => {
+                        const hardware = sensor.hardware || sensor.hardware_path || sensor.subhardware || 'Батарея';
+                        result.lines.push({
+                            label: hardware + ' · ' + (sensor.name || ('Датчик ' + (index + 1))),
+                            value: formatValue(sensor.value, Number.isInteger(sensor.value) ? 0 : 1, sensor.unit || '')
+                        });
+                    });
+                    if (!result.lines.length) return null;
+                    result.hasProgress = Number.isFinite(battery.percent);
+                    result.progressValue = result.hasProgress ? battery.percent : null;
+                    break;
+                }
+                default: return null;
+            }
+            return result;
+        }
+
+        function getDisplayCardData(cardKey, data) {
+            const cardData = getCardData(cardKey, data);
+            if (cardData) return cardData;
+            return (settings.cardSensors[cardKey] || []).length
+                ? { ...mobileCardMeta[cardKey], lines: [], hasProgress: false, progressValue: null }
+                : null;
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, character => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[character]);
+        }
+
+        function sensorKey(sensor) {
+            if (typeof sensor.identifier === 'string' && sensor.identifier) return sensor.identifier;
+            return JSON.stringify([sensor.hardware || '', sensor.subhardware || sensor.hardware_path || '', sensor.name || '', sensor.type || '']);
+        }
+
+        function getSensorCatalog() {
+            const sensors = currentData && Array.isArray(currentData.raw_sensors)
+                ? currentData.raw_sensors
+                : currentData && Array.isArray(currentData.other) ? currentData.other : [];
+            const seen = new Set();
+            return sensors.filter(sensor => {
+                if (!sensor || typeof sensor !== 'object') return false;
+                const key = sensorKey(sensor);
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+        }
+
+        function formatSensorValue(sensor) {
+            if (typeof sensor.value !== 'number' || !Number.isFinite(sensor.value)) return '—';
+            const decimals = Number.isInteger(sensor.value) ? 0 : 1;
+            return formatValue(sensor.value, decimals, sensor.unit || '');
+        }
+
+        function setConnectionStatus(message, isError) {
+            const status = document.getElementById('connectionStatus');
+            if (!status) return;
+            status.textContent = message;
+            status.classList.toggle('error', !!isError);
+            const terminalStatus = document.getElementById('cmdSession');
+            if (terminalStatus) {
+                terminalStatus.textContent = message;
+                terminalStatus.classList.toggle('error', !!isError);
+            }
+        }
+
+        function sensorLabel(sensor, key) {
+            return settings.sensorLabels[key] || sensor.name || 'Датчик';
+        }
+
+        function renderFavorites() {
+            const overview = document.getElementById('favoritesOverview');
+            const catalog = new Map(getSensorCatalog().map(sensor => [sensorKey(sensor), sensor]));
+            overview.replaceChildren();
+            const shownKeys = new Set();
+            const addSummary = (labelText, valueText, key) => {
+                const item = document.createElement('div');
+                item.className = 'summary-item';
+                const label = document.createElement('span');
+                label.className = 'summary-label';
+                label.textContent = labelText;
+                const value = document.createElement('span');
+                value.className = 'summary-value';
+                value.textContent = valueText;
+                item.append(label, value);
+                if (key) {
+                    const unpin = document.createElement('button');
+                    unpin.type = 'button';
+                    unpin.textContent = '★';
+                    unpin.setAttribute('aria-label', 'Убрать из избранного: ' + labelText);
+                    unpin.addEventListener('click', () => toggleFavorite(key));
+                    item.appendChild(unpin);
+                }
+                overview.appendChild(item);
+            };
+            if (currentData) {
+                const cpu = currentData.cpu || {};
+                const gpu = currentData.gpu || {};
+                if (cpu.temperature !== null && cpu.temperature !== undefined) addSummary('CPU', formatValue(cpu.temperature, 1, '°C'));
+                const cpuLoad = cpu.load ?? currentData.cpu_percent;
+                if (cpuLoad !== null && cpuLoad !== undefined) addSummary('CPU · загрузка', formatPercent(cpuLoad));
+                const gpuTemp = gpu.hotspot_temperature ?? gpu.temperature;
+                if (gpuTemp !== null && gpuTemp !== undefined) addSummary('GPU', formatValue(gpuTemp, 1, '°C'));
+                if (currentData.ram_percent !== null && currentData.ram_percent !== undefined) addSummary('RAM', formatPercent(currentData.ram_percent));
+            }
+            settings.favorites.forEach(key => {
+                if (shownKeys.has(key)) return;
+                const sensor = catalog.get(key);
+                if (!sensor) return;
+                shownKeys.add(key);
+                addSummary(sensorLabel(sensor, key), formatSensorValue(sensor), key);
+            });
+        }
+
+        function toggleFavorite(key) {
+            const index = settings.favorites.indexOf(key);
+            if (index >= 0) settings.favorites.splice(index, 1);
+            else settings.favorites.push(key);
+            saveSettings(settings);
+            renderFavorites();
+            renderSensorList();
+        }
+
+        function getSelectedSensorKeys() {
+            return activeSensorCard === 'cmd'
+                ? settings.cmdSensors
+                : (settings.cardSensors[activeSensorCard] || []);
+        }
+
+        function saveSelectedSensorKeys(keys) {
+            if (activeSensorCard === 'cmd') settings.cmdSensors = keys;
+            else settings.cardSensors[activeSensorCard] = keys;
+        }
+
+        function renderSensorList() {
+            const list = document.getElementById('sensorList');
+            if (!list) return;
+            list.replaceChildren();
+            const selected = getSelectedSensorKeys();
+            const search = document.getElementById('sensorSearch').value.trim().toLocaleLowerCase();
+            const catalog = getSensorCatalog();
+            const selectedSet = new Set(selected);
+            const sorted = catalog.slice().sort((a, b) => {
+                const ai = selected.indexOf(sensorKey(a));
+                const bi = selected.indexOf(sensorKey(b));
+                return (ai < 0 ? Number.MAX_SAFE_INTEGER : ai) - (bi < 0 ? Number.MAX_SAFE_INTEGER : bi);
+            });
+            if (!sorted.length) {
+                list.textContent = 'Данные датчиков ещё не получены.';
+                return;
+            }
+            let shown = 0;
+            sorted.forEach(sensor => {
+                const key = sensorKey(sensor);
+                const labelText = [sensor.hardware, sensor.subhardware || sensor.hardware_path, sensor.name, sensor.type, sensor.unit].filter(Boolean).join(' ').toLocaleLowerCase();
+                if (search && !labelText.includes(search)) return;
+                shown++;
+                const row = document.createElement('div');
+                row.className = 'sensor-row';
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = selectedSet.has(key);
+                checkbox.setAttribute('aria-label', 'Показывать ' + (sensor.name || 'датчик'));
+                checkbox.addEventListener('change', () => {
+                    const keys = getSelectedSensorKeys();
+                    const index = keys.indexOf(key);
+                    if (checkbox.checked && index < 0) keys.push(key);
+                    if (!checkbox.checked && index >= 0) keys.splice(index, 1);
+                    saveSelectedSensorKeys(keys);
+                    saveSettings(settings);
+                    renderSensorList();
+                    if (currentData) renderCards(currentData);
+                });
+                const info = document.createElement('div');
+                info.className = 'sensor-info';
+                const name = document.createElement('span');
+                name.textContent = sensorLabel(sensor, key);
+                const details = document.createElement('small');
+                details.textContent = [sensor.hardware, sensor.type, sensor.unit].filter(Boolean).join(' · ');
+                info.append(name, details);
+                if (selectedSet.has(key)) {
+                    const rename = document.createElement('input');
+                    rename.type = 'text';
+                    rename.maxLength = 80;
+                    rename.placeholder = sensor.name || 'Название датчика';
+                    rename.value = settings.sensorLabels[key] || '';
+                    rename.setAttribute('aria-label', 'Пользовательское название датчика');
+                    rename.addEventListener('change', () => {
+                        if (rename.value.trim()) settings.sensorLabels[key] = rename.value.trim();
+                        else delete settings.sensorLabels[key];
+                        saveSettings(settings);
+                        renderFavorites();
+                        if (currentData) renderCards(currentData);
+                    });
+                    info.appendChild(rename);
+                }
+                const actions = document.createElement('div');
+                actions.className = 'sensor-actions';
+                const favorite = document.createElement('button');
+                favorite.type = 'button';
+                favorite.textContent = settings.favorites.includes(key) ? '★' : '☆';
+                favorite.setAttribute('aria-label', settings.favorites.includes(key) ? 'Убрать из избранного' : 'Добавить в избранное');
+                favorite.addEventListener('click', () => toggleFavorite(key));
+                actions.appendChild(favorite);
+                if (selectedSet.has(key)) {
+                    const move = (delta, glyph, title) => {
+                        const button = document.createElement('button');
+                        button.type = 'button';
+                        button.textContent = glyph;
+                        button.title = title;
+                        button.disabled = selected.indexOf(key) + delta < 0 || selected.indexOf(key) + delta >= selected.length;
+                        button.addEventListener('click', () => {
+                            const index = selected.indexOf(key), next = index + delta;
+                            if (next < 0 || next >= selected.length) return;
+                            selected.splice(index, 1);
+                            selected.splice(next, 0, key);
+                            saveSelectedSensorKeys(selected);
+                            saveSettings(settings);
+                            renderSensorList();
+                            if (currentData) renderCards(currentData);
+                        });
+                        actions.appendChild(button);
+                    };
+                    move(-1, '↑', 'Переместить выше');
+                    move(1, '↓', 'Переместить ниже');
+                }
+                row.append(checkbox, info, actions);
+                list.appendChild(row);
+            });
+            if (!shown) list.textContent = 'По запросу ничего не найдено.';
+        }
+
+        function openSensorSettings(cardKey) {
+            activeSensorCard = cardKey;
+            const cardData = currentData && getCardData(cardKey, currentData);
+            const isCmd = cardKey === 'cmd';
+            document.getElementById('sensorModalTitle').textContent = isCmd ? 'Датчики CMD' : 'Датчики: ' + (cardData ? cardData.title : cardKey.toUpperCase());
+            document.getElementById('sensorSearch').value = '';
+            document.getElementById('builtInMetricsControl').hidden = isCmd;
+            document.getElementById('builtInMetricsToggle').checked = !isCmd && settings.hiddenBuiltIn[cardKey] !== true;
+            openModal('sensorOverlay');
+            renderSensorList();
+        }
+
+        function renderCmdTerminal(data) {
+            const rows = document.getElementById('cmdSensorRows');
+            const session = document.getElementById('cmdSession');
+            if (!rows || !session) return;
+            rows.replaceChildren();
+            session.textContent = 'SystemMonitor CMD · ' + (window.location.hostname || 'localhost') + ' · обновлено ' + new Date().toLocaleTimeString();
+            session.classList.remove('error');
+            const catalog = new Map(getSensorCatalog().map(sensor => [sensorKey(sensor), sensor]));
+            const selected = settings.cmdSensors;
+            const visibleSensors = selected.map(key => ({ key, sensor: catalog.get(key) })).filter(item => item.sensor);
+            if (!selected.length) {
+                const empty = document.createElement('div');
+                empty.className = 'cmd-empty';
+                empty.textContent = 'Нет выбранных датчиков. Нажмите «Датчики» и выберите показатели для вывода.';
+                rows.appendChild(empty);
+                return;
+            }
+            if (!visibleSensors.length) {
+                const empty = document.createElement('div');
+                empty.className = 'cmd-empty';
+                empty.textContent = 'Выбранные датчики пока не передали значения.';
+                rows.appendChild(empty);
+                return;
+            }
+            const fragment = document.createDocumentFragment();
+            visibleSensors.forEach(({ key, sensor }) => {
+                const row = document.createElement('div');
+                row.className = 'cmd-sensor-row';
+                const device = document.createElement('span');
+                device.className = 'cmd-sensor-device';
+                device.textContent = sensor.subhardware || sensor.hardware_path || sensor.hardware || 'Устройство';
+                const name = document.createElement('span');
+                name.className = 'cmd-sensor-name';
+                name.textContent = sensorLabel(sensor, key) + (sensor.type ? ' [' + sensor.type + ']' : '');
+                const value = document.createElement('span');
+                value.className = 'cmd-sensor-value';
+                value.textContent = formatSensorValue(sensor);
+                row.append(device, name, value);
+                fragment.appendChild(row);
+            });
+            rows.appendChild(fragment);
+        }
+
+        function toggleCardOrder(cardKey, delta) {
+            if (settings.locked) return;
+            const index = settings.cardOrder.indexOf(cardKey);
+            const next = index + delta;
+            if (index < 0 || next < 0 || next >= settings.cardOrder.length) return;
+            [settings.cardOrder[index], settings.cardOrder[next]] = [settings.cardOrder[next], settings.cardOrder[index]];
+            saveSettings(settings);
+            if (currentData) renderCards(currentData);
+        }
+
+        // --- Построение HTML карточки (стандартная) ---
+        function buildCardHTML(cardKey, data) {
+            const cardData = getDisplayCardData(cardKey, data);
+            if (!cardData) return '';
+            const showBuiltIn = settings.hiddenBuiltIn[cardKey] !== true;
+            const linesHTML = (showBuiltIn ? cardData.lines : []).map(line => {
+                const valueClass = line.cls ? `value ${escapeHtml(line.cls)}` : 'value';
+                return `<div class="card-row"><span class="label">${escapeHtml(line.label)}</span><span class="${valueClass}">${escapeHtml(line.value)}</span></div>`;
+            }).join('');
+            let progressHTML = '';
+            if (showBuiltIn && cardData.hasProgress && cardData.progressValue !== null && cardData.progressValue !== undefined) {
+                const pct = Math.min(100, Math.max(0, cardData.progressValue));
+                let cls = 'fill';
+                if (cardKey === 'battery') {
+                    cls += ' battery-charge';
+                    if (data.battery && data.battery.status === 'charging') cls += ' charging';
+                } else if (pct > 80) cls += ' danger';
+                else if (pct > 60) cls += ' warning';
+                progressHTML = `<div class="progress-bar"><div class="${cls}" style="width:${pct}%;"></div></div>`;
+            }
+            const extraRows = buildAdditionalSensorRows(cardKey);
+            return buildCardShell(cardKey, cardData, linesHTML + extraRows + progressHTML);
+        }
+
+        // --- Построение HTML для терминальной темы ---
+        function buildTerminalHTML(cardKey, data) {
+            const cardData = getDisplayCardData(cardKey, data);
+            if (!cardData) return '';
+            const showBuiltIn = settings.hiddenBuiltIn[cardKey] !== true;
+            const linesHTML = (showBuiltIn ? cardData.lines : []).map(line => {
+                return `<div class="card-row"><span class="label">${escapeHtml(line.label)}:</span> <span class="value">${escapeHtml(line.value)}</span></div>`;
+            }).join('');
+            const extraRows = buildAdditionalSensorRows(cardKey, true);
+            return buildCardShell(cardKey, cardData, linesHTML + extraRows);
+        }
+
+        function buildAdditionalSensorRows(cardKey, terminal) {
+            const byKey = new Map(getSensorCatalog().map(sensor => [sensorKey(sensor), sensor]));
+            return (settings.cardSensors[cardKey] || []).map(key => {
+                const sensor = byKey.get(key);
+                if (!sensor) return '';
+                const valueClass = sensor.type === 'Temperature' && typeof sensor.value === 'number'
+                    ? sensor.value >= 85 ? 'value high' : sensor.value >= 70 ? 'value warning' : 'value'
+                    : 'value';
+                return `<div class="card-row"><span class="label">${escapeHtml(sensorLabel(sensor, key))}${terminal ? ':' : ''}</span><span class="${valueClass}">${escapeHtml(formatSensorValue(sensor))}</span></div>`;
+            }).join('');
+        }
+
+        function buildCardShell(cardKey, cardData, content) {
+            const index = settings.cardOrder.indexOf(cardKey);
+            const collapsed = settings.collapsedCards.includes(cardKey);
+            const title = escapeHtml(cardData.title);
+            return `<section class="card${collapsed ? ' collapsed' : ''}" data-card="${cardKey}">
+                <div class="card-title">
+                    <span class="icon" aria-hidden="true">${escapeHtml(cardData.icon || '')}</span>
+                    <span class="card-title-text">${title}</span>
+                    <span class="card-actions">
+                        <button type="button" data-card-action="move-up" data-card-key="${cardKey}" aria-label="Переместить ${title} выше" title="Выше"${index <= 0 || settings.locked ? ' disabled' : ''}>↑</button>
+                        <button type="button" data-card-action="move-down" data-card-key="${cardKey}" aria-label="Переместить ${title} ниже" title="Ниже"${index >= settings.cardOrder.length - 1 || settings.locked ? ' disabled' : ''}>↓</button>
+                        <button type="button" data-card-action="sensors" data-card-key="${cardKey}" aria-label="Настроить датчики ${title}" title="Настроить датчики">⚙</button>
+                        <button type="button" data-card-action="collapse" data-card-key="${cardKey}" aria-label="${collapsed ? 'Развернуть' : 'Свернуть'} ${title}" aria-expanded="${!collapsed}" title="${collapsed ? 'Развернуть' : 'Свернуть'}">${collapsed ? '▾' : '▴'}</button>
+                    </span>
+                </div>
+                <div class="card-content">${content || '<div class="card-row">Нет выбранных показателей</div>'}</div>
+            </section>`;
+        }
+
+        // --- Рендер ---
+        function renderCards(data) {
+            const container = document.getElementById('cardsContainer');
+            if (settings.theme === 'cmd' && !settings.compactMode) {
+                container.replaceChildren();
+                renderCmdTerminal(data);
+                if (document.getElementById('sensorOverlay').classList.contains('open')) renderSensorList();
+                return;
+            }
+            container.className = 'cards-grid ' + settings.layout;
+
+            let visibleCards = settings.cardOrder.filter(key => {
+                if (!settings.showCards[key]) return false;
+                return getDisplayCardData(key, data) !== null;
+            });
+
+            if (visibleCards.length === 0) {
+                container.textContent = 'Нет отображаемых карточек. Включите их в настройках.';
+                return;
+            }
+
+            let html = '';
+            const isTerminal = (settings.theme === 'terminal');
+            visibleCards.forEach(key => {
+                if (isTerminal) {
+                    html += buildTerminalHTML(key, data);
+                } else {
+                    html += buildCardHTML(key, data);
+                }
+            });
+            container.innerHTML = html;
+            renderFavorites();
+            if (document.getElementById('sensorOverlay').classList.contains('open')) renderSensorList();
+        }
+
+        function renderFpsStatus(data) {
+            const fps = data && typeof data === 'object' ? data : {};
+            const messages = {
+                waiting_for_application: 'Ожидание активного графического приложения',
+                waiting_for_frames: 'Процесс выбран, ожидание кадров',
+                starting: 'Запуск захвата кадров…',
+                capturing: 'Измерение выполняется',
+                process_exited: 'Отслеживаемый процесс завершился',
+                presentmon_unavailable: 'Не найден PresentMon; переустановите или пересоберите приложение',
+                capture_error: fps.error || 'Ошибка захвата FPS',
+                unavailable: fps.error || 'Мониторинг FPS недоступен'
+            };
+            document.getElementById('mobileFpsStatus').textContent = messages[fps.status] || 'Ожидание данных FPS';
+            document.getElementById('mobileFpsCurrent').textContent = fps.fps == null ? '—' : fps.fps + ' FPS';
+            document.getElementById('mobileFpsAverage').textContent = fps.average_fps == null ? '—' : fps.average_fps + ' FPS';
+            document.getElementById('mobileFpsOnePercentLow').textContent = fps.one_percent_low_fps == null ? '—' : fps.one_percent_low_fps + ' FPS';
+            document.getElementById('mobileFpsFrameTime').textContent = fps.frame_time_ms == null ? '—' : fps.frame_time_ms + ' мс';
+            const target = fps.target;
+            document.getElementById('mobileFpsTarget').textContent = 'Целевой процесс: ' +
+                (target ? target.name + ' (PID ' + target.pid + ')' : 'не выбран') +
+                ' · режим: ' + (fps.mode === 'manual' ? 'ручной' : 'активное окно');
+        }
+
+        async function refreshFpsStatus() {
+            if (document.hidden) return;
+            try {
+                const response = await fetch('/api/fps', { cache: 'no-store' });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || ('HTTP ' + response.status));
+                renderFpsStatus(data);
+            } catch (error) {
+                document.getElementById('mobileFpsStatus').textContent = 'Не удалось получить FPS: ' + error.message;
+            }
+        }
+
+        async function refreshFpsProcesses() {
+            const select = document.getElementById('mobileFpsProcessSelect');
+            const previous = select.value;
+            try {
+                const response = await fetch('/api/fps/processes', { cache: 'no-store' });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || ('HTTP ' + response.status));
+                select.replaceChildren();
+                const placeholder = document.createElement('option');
+                placeholder.value = '';
+                placeholder.textContent = 'Выберите запущенный процесс…';
+                select.appendChild(placeholder);
+                (data.processes || []).forEach(process => {
+                    const option = document.createElement('option');
+                    option.value = String(process.pid);
+                    option.textContent = process.name + ' (PID ' + process.pid + ')';
+                    select.appendChild(option);
+                });
+                if (previous && Array.from(select.options).some(option => option.value === previous)) select.value = previous;
+                else if (data.target && Array.from(select.options).some(option => option.value === String(data.target.pid))) select.value = String(data.target.pid);
+                if (!data.processes || data.processes.length === 0) placeholder.textContent = 'Не найдено доступных процессов';
+            } catch (error) {
+                select.replaceChildren();
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'Ошибка списка процессов: ' + error.message;
+                select.appendChild(option);
+            }
+        }
+
+        async function setFpsTarget(target) {
+            try {
+                const response = await fetch('/api/fps/target', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(target)
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || ('HTTP ' + response.status));
+                renderFpsStatus(data);
+            } catch (error) {
+                document.getElementById('mobileFpsStatus').textContent = 'Не удалось изменить процесс: ' + error.message;
+            }
+        }
+
+        // --- Обновление данных ---
+        async function update() {
+            if (updateInProgress || document.hidden) return;
+            updateInProgress = true;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+            try {
+                const response = await fetch('/stats', { cache: 'no-store', signal: controller.signal });
+                if (!response.ok) throw new Error('Ошибка сервера: ' + response.status);
+                const data = await response.json();
+                if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Сервер вернул некорректные данные');
+                currentData = data;
+                lastSuccessfulUpdate = new Date();
+                document.getElementById('lastUpdate').textContent = lastSuccessfulUpdate.toLocaleTimeString();
+                setConnectionStatus('Данные обновлены · ' + lastSuccessfulUpdate.toLocaleTimeString(), false);
+                renderCards(data);
+                if (data.fps) renderFpsStatus(data.fps);
+            } catch (error) {
+                console.error('Ошибка обновления мобильного Dashboard:', error);
+                const stale = lastSuccessfulUpdate
+                    ? ' · последние данные от ' + lastSuccessfulUpdate.toLocaleTimeString()
+                    : '';
+                setConnectionStatus('Нет связи с SystemMonitor: ' + error.message + stale, true);
+                if (!currentData) document.getElementById('cardsContainer').textContent = 'Ожидание первых данных датчиков…';
+            } finally {
+                clearTimeout(timeoutId);
+                updateInProgress = false;
+            }
+        }
+
+        function startAutoUpdate(interval) {
+            if (timerId) clearInterval(timerId);
+            const refreshInterval = Math.max(1000, Number(interval) || settings.refreshInterval || 2000);
+            timerId = setInterval(update, refreshInterval);
+            update();
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.add('open');
+            document.body.style.overflow = 'hidden';
+            const firstControl = document.querySelector('#' + id + ' button, #' + id + ' input, #' + id + ' select');
+            if (firstControl) firstControl.focus();
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('open');
+            if (!document.querySelector('.modal-overlay.open, .settings-overlay.open')) document.body.style.overflow = '';
+        }
+
+        async function loadHistory() {
+            const message = document.getElementById('historyMessage');
+            const charts = document.getElementById('historyCharts');
+            const hours = Number(document.getElementById('historyRange').value) || 24;
+            message.textContent = 'Загрузка истории…';
+            charts.replaceChildren();
+            try {
+                const response = await fetch('/history-data?hours=' + encodeURIComponent(hours), { cache: 'no-store' });
+                if (!response.ok) throw new Error('Ошибка сервера: ' + response.status);
+                const rows = await response.json();
+                if (!Array.isArray(rows)) throw new Error('Сервер вернул неверный формат истории');
+                const cutoff = Date.now() - hours * 60 * 60 * 1000;
+                const points = rows.filter(row => row && Date.parse(row.timestamp) >= cutoff);
+                if (!points.length) {
+                    message.textContent = 'За выбранный период записей пока нет.';
+                    return;
+                }
+                message.textContent = points.length + ' записей за выбранный период';
+                [
+                    { field: 'cpu_temp', title: 'Температура CPU', color: '#60a5fa' },
+                    { field: 'gpu_temp', title: 'Температура GPU', color: '#f97316' }
+                ].forEach(series => {
+                    const values = points.map(row => row[series.field])
+                        .filter(value => value !== null && value !== undefined && Number.isFinite(Number(value)))
+                        .map(Number);
+                    if (!values.length) return;
+                    const min = Math.min(...values), max = Math.max(...values);
+                    const range = Math.max(1, max - min);
+                    const coords = points.map((row, index) => {
+                        if (row[series.field] === null || row[series.field] === undefined) return null;
+                        const value = Number(row[series.field]);
+                        if (!Number.isFinite(value)) return null;
+                        const x = points.length < 2 ? 50 : (index / (points.length - 1)) * 100;
+                        const y = 90 - ((value - min) / range) * 75;
+                        return x.toFixed(2) + ',' + y.toFixed(2);
+                    }).filter(Boolean);
+                    const chart = document.createElement('div');
+                    chart.className = 'history-legend';
+                    const heading = document.createElement('strong');
+                    heading.textContent = series.title + ' · ' + min.toFixed(1) + '–' + max.toFixed(1) + ' °C';
+                    heading.style.color = series.color;
+                    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    svg.setAttribute('viewBox', '0 0 100 100');
+                    svg.setAttribute('preserveAspectRatio', 'none');
+                    svg.setAttribute('class', 'history-chart');
+                    svg.setAttribute('role', 'img');
+                    svg.setAttribute('aria-label', series.title + ' за выбранный период');
+                    const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+                    polyline.setAttribute('points', coords.join(' '));
+                    polyline.setAttribute('fill', 'none');
+                    polyline.setAttribute('stroke', series.color);
+                    polyline.setAttribute('stroke-width', '1.5');
+                    polyline.setAttribute('vector-effect', 'non-scaling-stroke');
+                    svg.appendChild(polyline);
+                    chart.append(heading, svg);
+                    charts.appendChild(chart);
+                });
+                if (!charts.childElementCount) message.textContent = 'Показаний температуры за выбранный период нет.';
+            } catch (error) {
+                console.error('Не удалось загрузить историю:', error);
+                message.textContent = 'Не удалось загрузить историю: ' + error.message;
+            }
+        }
+
+        const MOBILE_PRESETS_KEY = 'mobileDashboardPresets.v1';
+        function getMobilePresets() {
+            try {
+                const presets = JSON.parse(localStorage.getItem(MOBILE_PRESETS_KEY) || '[]');
+                return Array.isArray(presets) ? presets.filter(item => item && typeof item.id === 'string' && typeof item.name === 'string' && item.settings) : [];
+            } catch (error) {
+                console.error('Не удалось прочитать профили мобильного Dashboard:', error);
+                return [];
+            }
+        }
+
+        function renderPresets() {
+            const list = document.getElementById('presetList');
+            list.replaceChildren();
+            const presets = getMobilePresets();
+            if (!presets.length) {
+                list.textContent = 'Сохранённых профилей пока нет.';
+                return;
+            }
+            presets.forEach(preset => {
+                const row = document.createElement('div');
+                row.className = 'preset-row';
+                const name = document.createElement('span');
+                name.textContent = preset.name;
+                const actions = document.createElement('span');
+                actions.className = 'preset-actions';
+                const apply = document.createElement('button');
+                apply.type = 'button';
+                apply.textContent = 'Применить';
+                apply.addEventListener('click', () => {
+                    settings = loadSettingsFromObject(preset.settings);
+                    saveSettings(settings);
+                    applyTheme();
+                    updateLockState();
+                    startAutoUpdate(settings.refreshInterval);
+                    if (currentData) renderCards(currentData);
+                    closeModal('presetsOverlay');
+                    setConnectionStatus('Профиль «' + preset.name + '» применён.', false);
+                });
+                const remove = document.createElement('button');
+                remove.type = 'button';
+                remove.textContent = 'Удалить';
+                remove.addEventListener('click', () => {
+                    try {
+                        localStorage.setItem(MOBILE_PRESETS_KEY, JSON.stringify(getMobilePresets().filter(item => item.id !== preset.id)));
+                        renderPresets();
+                    } catch (error) {
+                        console.error('Не удалось удалить профиль:', error);
+                        setConnectionStatus('Не удалось удалить профиль: ' + error.message, true);
+                    }
+                });
+                actions.append(apply, remove);
+                row.append(name, actions);
+                list.appendChild(row);
+            });
+        }
+
+        function loadSettingsFromObject(source) {
+            const defaults = JSON.parse(JSON.stringify(defaultSettings));
+            const merged = { ...defaults, ...source };
+            merged.showCards = { ...defaults.showCards, ...(source.showCards || {}) };
+            merged.cardOrder = Array.isArray(source.cardOrder) ? cardKeys.filter(key => source.cardOrder.includes(key)) : defaults.cardOrder;
+            cardKeys.forEach(key => { if (!merged.cardOrder.includes(key)) merged.cardOrder.push(key); });
+            merged.refreshInterval = Math.max(1000, Number(source.refreshInterval) || defaults.refreshInterval);
+            merged.layout = ['responsive', 'horizontal', 'vertical'].includes(source.layout) ? source.layout : 'responsive';
+            merged.theme = ['default', 'dark', 'high-contrast', 'terminal', 'cmd'].includes(source.theme) ? source.theme : 'default';
+            merged.cardSensors = source.cardSensors && typeof source.cardSensors === 'object' ? source.cardSensors : {};
+            merged.cmdSensors = Array.isArray(source.cmdSensors) ? [...new Set(source.cmdSensors.filter(key => typeof key === 'string'))] : [];
+            merged.hiddenBuiltIn = source.hiddenBuiltIn && typeof source.hiddenBuiltIn === 'object' ? source.hiddenBuiltIn : {};
+            merged.sensorLabels = source.sensorLabels && typeof source.sensorLabels === 'object' ? source.sensorLabels : {};
+            merged.favorites = Array.isArray(source.favorites) ? source.favorites.filter(key => typeof key === 'string') : [];
+            merged.collapsedCards = Array.isArray(source.collapsedCards) ? source.collapsedCards.filter(key => cardKeys.includes(key)) : [];
+            merged.compactMode = source.compactMode === true;
+            cardKeys.forEach(key => {
+                merged.cardSensors[key] = Array.isArray(merged.cardSensors[key])
+                    ? [...new Set(merged.cardSensors[key].filter(sensorKey => typeof sensorKey === 'string'))]
+                    : [];
+                merged.hiddenBuiltIn[key] = merged.hiddenBuiltIn[key] === true;
+            });
+            Object.keys(merged.sensorLabels).forEach(key => {
+                if (typeof merged.sensorLabels[key] !== 'string') delete merged.sensorLabels[key];
+                else merged.sensorLabels[key] = merged.sensorLabels[key].slice(0, 80);
+            });
+            merged.darkMode = source.darkMode === true;
+            merged.locked = source.locked === true;
+            return merged;
+        }
+
+        function saveMobilePreset() {
+            const name = document.getElementById('presetName').value.trim();
+            if (!name) {
+                document.getElementById('presetName').focus();
+                setConnectionStatus('Введите название профиля.', true);
+                return;
+            }
+            try {
+                const presets = getMobilePresets();
+                presets.unshift({ id: 'mobile-' + Date.now().toString(36), name: name.slice(0, 60), settings: JSON.parse(JSON.stringify(settings)) });
+                localStorage.setItem(MOBILE_PRESETS_KEY, JSON.stringify(presets.slice(0, 30)));
+                document.getElementById('presetName').value = '';
+                renderPresets();
+            } catch (error) {
+                console.error('Не удалось сохранить профиль:', error);
+                setConnectionStatus('Не удалось сохранить профиль: ' + error.message, true);
+            }
+        }
+
+        // --- UI ---
+        const settingsOverlay = document.getElementById('settingsOverlay');
+        const settingsToggle = document.getElementById('settingsToggle');
+        const settingsClose = document.getElementById('settingsClose');
+        const settingsCancel = document.getElementById('settingsCancel');
+        const settingsSave = document.getElementById('settingsSave');
+        const lockToggle = document.getElementById('lockToggle');
+        document.getElementById('mobileFpsRefreshProcesses').addEventListener('click', refreshFpsProcesses);
+        document.getElementById('mobileFpsSelectProcess').addEventListener('click', function() {
+            const pid = Number(document.getElementById('mobileFpsProcessSelect').value);
+            if (!Number.isSafeInteger(pid) || pid <= 0) {
+                document.getElementById('mobileFpsStatus').textContent = 'Сначала выберите запущенный процесс';
+                return;
+            }
+            setFpsTarget({ mode: 'manual', pid: pid });
+        });
+        document.getElementById('mobileFpsAutoProcess').addEventListener('click', () => setFpsTarget({ mode: 'auto' }));
+
+        function openSettings() {
+            const toggles = document.querySelectorAll('#cardToggles input[type="checkbox"]');
+            toggles.forEach(cb => {
+                cb.checked = settings.showCards[cb.dataset.card] !== false;
+            });
+            document.getElementById('layoutSelect').value = settings.layout;
+            document.getElementById('themeSelect').value = settings.theme;
+            document.getElementById('intervalSelect').value = String(Math.max(1000, settings.refreshInterval));
+            openModal('settingsOverlay');
+        }
+
+        function closeSettings() {
+            closeModal('settingsOverlay');
+        }
+
+        settingsToggle.addEventListener('click', openSettings);
+        settingsClose.addEventListener('click', closeSettings);
+        settingsCancel.addEventListener('click', closeSettings);
+        settingsOverlay.addEventListener('click', function(e) {
+            if (e.target === this) closeSettings();
+        });
+
+        settingsSave.addEventListener('click', function() {
+            const toggles = document.querySelectorAll('#cardToggles input[type="checkbox"]');
+            toggles.forEach(cb => {
+                settings.showCards[cb.dataset.card] = cb.checked;
+            });
+            settings.layout = document.getElementById('layoutSelect').value;
+            settings.theme = document.getElementById('themeSelect').value;
+            settings.refreshInterval = Math.max(1000, parseInt(document.getElementById('intervalSelect').value, 10) || 2000);
+            if (settings.theme === 'dark') settings.darkMode = true;
+            if (settings.theme === 'default' || settings.theme === 'high-contrast' || settings.theme === 'terminal' || settings.theme === 'cmd') settings.darkMode = false;
+            saveSettings(settings);
+            applyTheme();
+            startAutoUpdate(settings.refreshInterval);
+            if (currentData) renderCards(currentData);
+            closeSettings();
+        });
+
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            if (settings.theme === 'dark' || settings.theme === 'high-contrast') settings.theme = 'default';
+            settings.darkMode = !settings.darkMode;
+            applyTheme();
+            saveSettings(settings);
+        });
+
+        document.getElementById('compactModeToggle').addEventListener('click', function() {
+            setMobileControlDockOpen(false);
+            const enabled = settings.compactMode !== true;
+            if (enabled) {
+                document.querySelectorAll('.modal-overlay.open').forEach(modal => closeModal(modal.id));
+                if (settingsOverlay.classList.contains('open')) closeSettings();
+            }
+            settings.compactMode = enabled;
+            saveSettings(settings);
+            applyCompactMode();
+            if (currentData) renderCards(currentData);
+        });
+        document.getElementById('mobileControlHandle').addEventListener('click', function() {
+            setMobileControlDockOpen(!document.getElementById('mobileControlDock').classList.contains('open'));
+        });
+        document.getElementById('mobileControlDock').addEventListener('pointerdown', function() {
+            if (this.classList.contains('open')) setMobileControlDockOpen(true);
+        });
+        document.getElementById('mobileControlDock').addEventListener('pointermove', function() {
+            if (this.classList.contains('open')) setMobileControlDockOpen(true);
+        });
+        document.getElementById('mobileSettingsShortcut').addEventListener('click', function() {
+            setMobileControlDockOpen(false);
+            openSettings();
+        });
+        document.addEventListener('click', function(event) {
+            const dock = document.getElementById('mobileControlDock');
+            if (dock.classList.contains('open') && !dock.contains(event.target)) setMobileControlDockOpen(false);
+        });
+
+        lockToggle.addEventListener('click', function() {
+            settings.locked = !settings.locked;
+            lockToggle.setAttribute('aria-pressed', String(settings.locked));
+            lockToggle.title = settings.locked ? 'Сортировка карточек заблокирована' : 'Разрешить сортировку карточек';
+            saveSettings(settings);
+            updateLockState();
+            if (currentData) renderCards(currentData);
+        });
+
+        document.getElementById('cardsContainer').addEventListener('click', function(event) {
+            const button = event.target.closest('button[data-card-action]');
+            if (!button) return;
+            const cardKey = button.dataset.cardKey;
+            if (button.dataset.cardAction === 'sensors') openSensorSettings(cardKey);
+            if (button.dataset.cardAction === 'move-up') toggleCardOrder(cardKey, -1);
+            if (button.dataset.cardAction === 'move-down') toggleCardOrder(cardKey, 1);
+            if (button.dataset.cardAction === 'collapse') {
+                const index = settings.collapsedCards.indexOf(cardKey);
+                if (index >= 0) settings.collapsedCards.splice(index, 1);
+                else settings.collapsedCards.push(cardKey);
+                saveSettings(settings);
+                if (currentData) renderCards(currentData);
+            }
+        });
+
+        document.getElementById('builtInMetricsToggle').addEventListener('change', function() {
+            settings.hiddenBuiltIn[activeSensorCard] = !this.checked;
+            saveSettings(settings);
+            if (currentData) renderCards(currentData);
+        });
+        document.getElementById('sensorSearch').addEventListener('input', renderSensorList);
+        document.getElementById('historyToggle').addEventListener('click', function() {
+            openModal('historyOverlay');
+            loadHistory();
+        });
+        document.getElementById('historyRange').addEventListener('change', loadHistory);
+        document.getElementById('cmdSensorsToggle').addEventListener('click', () => openSensorSettings('cmd'));
+        document.getElementById('cmdSettingsToggle').addEventListener('click', openSettings);
+        document.getElementById('cmdHistoryToggle').addEventListener('click', () => {
+            openModal('historyOverlay');
+            loadHistory();
+        });
+        document.getElementById('presetsToggle').addEventListener('click', function() {
+            renderPresets();
+            openModal('presetsOverlay');
+        });
+        document.getElementById('savePresetBtn').addEventListener('click', saveMobilePreset);
+        document.querySelectorAll('[data-close-modal]').forEach(button => {
+            button.addEventListener('click', () => closeModal(button.dataset.closeModal));
+        });
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', event => {
+                if (event.target === overlay) closeModal(overlay.id);
+            });
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                setMobileControlDockOpen(false);
+                document.querySelectorAll('.modal-overlay.open').forEach(modal => closeModal(modal.id));
+                if (settingsOverlay.classList.contains('open')) closeSettings();
+            }
+        });
+
+        document.getElementById('loadCssBtn').addEventListener('click', function() {
+            const fileInput = document.getElementById('cssFileInput');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Выберите CSS-файл');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const css = e.target.result;
+                applyCustomCSS(css);
+                alert('CSS загружен и сохранён.');
+                fileInput.value = '';
+            };
+            reader.readAsText(file);
+        });
+
+        document.getElementById('resetCssBtn').addEventListener('click', function() {
+            applyCustomCSS('');
+            alert('CSS сброшен.');
+        });
+
+        // --- Инициализация ---
+        document.addEventListener('DOMContentLoaded', function() {
+            updateLockState();
+            startAutoUpdate(settings.refreshInterval);
+            refreshFpsStatus();
+            refreshFpsProcesses();
+            setInterval(refreshFpsStatus, 1000);
+        });
+    </script>
+</body>
+</html>

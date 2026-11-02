@@ -1,0 +1,900 @@
+/* ============================================================
+   T-800 VISION THEME
+   Интерфейс терминатора T-800 из фильма "Терминатор 2: Судный день"
+   Красный монохромный HUD, рамки сканирования, машинный код
+   ============================================================ */
+
+/* ---------- Корневые переменные ---------- */
+:root {
+    --bg-color: #0a0000 !important;
+    --card-bg: #1a0505 !important;
+    --text-color: #ff0033 !important;
+    --border-light: #660000 !important;
+    --border-dark: #330000 !important;
+    --title-color: #ff0044 !important;
+    --accent-color: #ff0000 !important;
+    --shadow: 0 0 20px rgba(255, 0, 0, 0.15) !important;
+    --font-family: 'Courier New', 'Consolas', monospace !important;
+    --header-bg: #0a0000 !important;
+    --header-text: #ff0033 !important;
+    --grid-opacity: 0.15 !important;
+    --snap-transition: 0.1s ease-out !important;
+}
+
+/* ---------- Глобальные стили ---------- */
+body {
+    background: #0a0000 !important;
+    color: #ff0033 !important;
+    font-family: 'Courier New', 'Consolas', monospace !important;
+    font-size: 13px !important;
+    padding: 16px !important;
+    margin: 0 !important;
+    /* Эффект "сканирования" — едва заметные горизонтальные линии */
+    background-image: 
+        repeating-linear-gradient(0deg, 
+            rgba(255, 0, 0, 0.01) 0px, 
+            rgba(255, 0, 0, 0.01) 1px, 
+            transparent 1px, 
+            transparent 4px) !important;
+    /* Красное свечение по краям */
+    box-shadow: inset 0 0 100px rgba(255, 0, 0, 0.03) !important;
+    min-height: 100vh;
+}
+
+/* ---------- Окно дашборда ---------- */
+.window {
+    background: #0a0000 !important;
+    border: 2px solid #660000 !important;
+    border-radius: 0 !important;
+    padding: 3px !important;
+    box-shadow: 0 0 40px rgba(255, 0, 0, 0.08), inset 0 0 40px rgba(255, 0, 0, 0.03) !important;
+}
+
+/* ---------- Заголовок окна (HUD стиль) ---------- */
+.window-title {
+    background: #0a0000 !important;
+    color: #ff0033 !important;
+    border-bottom: 2px solid #660000 !important;
+    font-family: 'Courier New', 'Consolas', monospace !important;
+    font-size: 14px !important;
+    font-weight: bold !important;
+    padding: 6px 12px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.4) !important;
+    letter-spacing: 1px !important;
+    text-transform: uppercase !important;
+}
+
+/* Сканирующая строка в заголовке */
+.window-title::before {
+    content: "⏣ " !important;
+    color: #ff0033 !important;
+    font-size: 16px !important;
+    display: inline-block !important;
+    margin-right: 6px !important;
+    animation: scan-pulse 2s infinite !important;
+}
+
+@keyframes scan-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.window-title .controls select,
+.window-title .controls input[type="range"],
+.window-title .controls button {
+    background: #0a0000 !important;
+    border: 1px solid #660000 !important;
+    border-radius: 0 !important;
+    color: #ff0033 !important;
+    font-family: 'Courier New', 'Consolas', monospace !important;
+    font-size: 12px !important;
+    padding: 3px 10px !important;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.05) !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+.window-title .controls select:hover,
+.window-title .controls input[type="range"]:hover,
+.window-title .controls button:hover {
+    background: #1a0505 !important;
+    border-color: #ff0033 !important;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.15) !important;
+    color: #ff0044 !important;
+}
+
+.window-title .controls select:active,
+.window-title .controls input[type="range"]:active,
+.window-title .controls button:active {
+    background: #2a0000 !important;
+}
+
+.window-title .controls input[type="range"] {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    background: #0a0000 !important;
+    border: 1px solid #660000 !important;
+    height: 3px !important;
+    padding: 0 !important;
+    width: 70px !important;
+    border-radius: 0 !important;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.05) !important;
+}
+
+.window-title .controls input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    background: #ff0033 !important;
+    border: 1px solid #ff0033 !important;
+    border-radius: 0 !important;
+    width: 8px !important;
+    height: 16px !important;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.4) !important;
+    cursor: pointer !important;
+}
+
+.window-title .controls input[type="range"]::-moz-range-thumb {
+    background: #ff0033 !important;
+    border: 1px solid #ff0033 !important;
+    border-radius: 0 !important;
+    width: 8px !important;
+    height: 16px !important;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.4) !important;
+    cursor: pointer !important;
+}
+
+.window-title .btn-win {
+    background: #0a0000 !important;
+    border: 1px solid #660000 !important;
+    border-radius: 0 !important;
+    color: #ff0033 !important;
+    font-family: 'Courier New', 'Consolas', monospace !important;
+    font-size: 12px !important;
+    width: 24px !important;
+    height: 24px !important;
+    line-height: 22px !important;
+    text-align: center !important;
+    padding: 0 !important;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.05) !important;
+    transition: all 0.15s !important;
+}
+
+.window-title .btn-win:hover {
+    background: #1a0505 !important;
+    border-color: #ff0033 !important;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.15) !important;
+}
+
+/* ---------- Тело окна ---------- */
+.window-body {
+    background: #0a0000 !important;
+    border: none !important;
+    padding: 10px !important;
+}
+
+/* ---------- Сетка ---------- */
+.grid {
+    background: #0a0000 !important;
+    border: 1px solid #660000 !important;
+    border-radius: 0 !important;
+    padding: 4px !important;
+    min-height: 500px !important;
+    box-shadow: inset 0 0 50px rgba(255, 0, 0, 0.03) !important;
+    overflow: auto !important;
+}
+
+.grid canvas.grid-overlay {
+    opacity: 0.05 !important;
+}
+
+/* ---------- Карточки (объекты сканирования) ---------- */
+.card {
+    background: #1a0505 !important;
+    border: 1px solid #660000 !important;
+    border-radius: 0 !important;
+    padding: 8px 12px !important;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.05), inset 0 0 15px rgba(255, 0, 0, 0.02) !important;
+    color: #ff0033 !important;
+    font-family: 'Courier New', 'Consolas', monospace !important;
+    font-size: 13px !important;
+    cursor: grab !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+    min-width: 140px !important;
+    min-height: 70px !important;
+    position: relative !important;
+}
+
+/* Рамка сканирования вокруг карточки (эффект HUD) */
+.card::before {
+    content: '' !important;
+    position: absolute !important;
+    top: -2px !important;
+    left: -2px !important;
+    right: -2px !important;
+    bottom: -2px !important;
+    border: 1px solid rgba(255, 0, 0, 0.05) !important;
+    pointer-events: none !important;
+    animation: scan-border 3s infinite !important;
+}
+
+@keyframes scan-border {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.8; }
+}
+
+.card:hover {
+    border-color: #ff0033 !important;
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.12), inset 0 0 30px rgba(255, 0, 0, 0.05) !important;
+}
+
+.card.dragging {
+    opacity: 0.6 !important;
+    cursor: grabbing !important;
+    z-index: 1000 !important;
+    border-color: #ff0033 !important;
+    box-shadow: 0 0 40px rgba(255, 0, 0, 0.2) !important;
+}
+
+.card.ghost {
+    opacity: 0.2 !important;
+    z-index: 999 !important;
+    pointer-events: none !important;
+}
+
+.card.selected {
+    outline: 2px solid #ff0033 !important;
+    outline-offset: 2px !important;
+    border-color: #ff0033 !important;
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.2) !important;
+}
+
+.card.locked {
+    cursor: default !important;
+}
+.card.locked .card-title {
+    cursor: default !important;
+}
+.card.locked .resize-handle {
+    display: none !important;
+}
+
+/* ---------- Заголовок карточки (в стиле HUD) ---------- */
+.card-title {
+    font-weight: bold !important;
+    font-size: 13px !important;
+    font-family: 'Courier New', 'Consolas', monospace !important;
+    border-bottom: 1px solid #660000 !important;
+    padding-bottom: 4px !important;
+    margin-bottom: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    color: #ff0044 !important;
+    cursor: grab !important;
+    flex-shrink: 0 !important;
+    text-shadow: 0 0 12px rgba(255, 0, 0, 0.3) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+.card-title .icon {
+    font-size: 14px !important;
+    color: #ff0033 !important;
+}
+
+.card-title:active {
+    cursor: grabbing !important;
+}
+
+/* ---------- Содержимое карточки ---------- */
+.card-value {
+    font-size: 13px !important;
+    font-weight: normal !important;
+    padding: 2px 0 !important;
+    flex-grow: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+    overflow-y: auto !important;
+    color: #ff0033 !important;
+}
+
+/* ---------- Ручки изменения размера (угловые метки) ---------- */
+.resize-handle {
+    position: absolute !important;
+    width: 14px !important;
+    height: 14px !important;
+    background: transparent !important;
+    border: 1px solid #660000 !important;
+    z-index: 20 !important;
+    opacity: 0.6 !important;
+    transition: all 0.15s !important;
+}
+
+.resize-handle:hover {
+    background: #ff0033 !important;
+    border-color: #ff0033 !important;
+    opacity: 1 !important;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.3) !important;
+}
+
+.resize-handle.nw { top: -7px; left: -7px; cursor: nw-resize; }
+.resize-handle.n { top: -7px; left: 50%; transform: translateX(-50%); cursor: n-resize; width: 20px; }
+.resize-handle.ne { top: -7px; right: -7px; cursor: ne-resize; }
+.resize-handle.e { top: 50%; right: -7px; transform: translateY(-50%); cursor: e-resize; height: 20px; }
+.resize-handle.se { bottom: -7px; right: -7px; cursor: se-resize; }
+.resize-handle.s { bottom: -7px; left: 50%; transform: translateX(-50%); cursor: s-resize; width: 20px; }
+.resize-handle.sw { bottom: -7px; left: -7px; cursor: sw-resize; }
+.resize-handle.w { top: 50%; left: -7px; transform: translateY(-50%); cursor: w-resize; height: 20px; }
+
+/* ---------- Прогресс-бар (индикатор уровня HUD) ---------- */
+.progress-bar {
+    width: 100% !important;
+    height: 10px !important;
+    background: #0a0000 !important;
+    border: 1px solid #660000 !important;
+    margin-top: 4px !important;
+    position: relative !important;
+    flex-shrink: 0 !important;
+    border-radius: 0 !important;
+    overflow: hidden !important;
+    box-shadow: inset 0 0 10px rgba(255, 0, 0, 0.05) !important;
+}
+
+.progress-bar .fill {
+    height: 100% !important;
+    background: linear-gradient(90deg, #660000, #ff0033, #ff0044) !important;
+    border: none !important;
+    border-radius: 0 !important;
+    position: relative !important;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.2) !important;
+    transition: width 0.3s ease !important;
+}
+
+/* Эффект "сканирования" прогресс-бара */
+.progress-bar .fill::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%) !important;
+    animation: scan-line 2s infinite !important;
+}
+
+@keyframes scan-line {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.progress-bar .fill.warning {
+    background: linear-gradient(90deg, #662200, #ff4400, #ff6600) !important;
+    box-shadow: 0 0 20px rgba(255, 68, 0, 0.3) !important;
+}
+.progress-bar .fill.danger {
+    background: linear-gradient(90deg, #660000, #ff0000, #ff2200) !important;
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.4) !important;
+    animation: danger-pulse 0.5s infinite alternate !important;
+}
+
+@keyframes danger-pulse {
+    0% { opacity: 1; }
+    100% { opacity: 0.5; }
+}
+
+/* ---------- Индикаторы температуры (система предупреждений) ---------- */
+.temp-indicator {
+    transition: color 0.3s !important;
+}
+.temp-indicator.warning {
+    color: #ff4400 !important;
+    text-shadow: 0 0 15px rgba(255, 68, 0, 0.3) !important;
+}
+.temp-indicator.danger {
+    color: #ff0000 !important;
+    text-shadow: 0 0 20px rgba(255, 0, 0, 0.4) !important;
+    animation: warning-blink 0.4s infinite alternate !important;
+}
+
+@keyframes warning-blink {
+    0% { opacity: 1; }
+    100% { opacity: 0.2; }
+}
+
+/* ---------- Диски и вентиляторы ---------- */
+.card-disk {
+    font-size: 13px !important;
+    padding: 2px 0 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    border-bottom: 1px dotted #660000 !important;
+}
+.card-disk .name {
+    font-weight: bold !important;
+    color: #ff0033 !important;
+}
+.card-disk .temp {
+    color: #ff0033 !important;
+}
+
+.fans-list {
+    font-size: 13px !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4px 12px !important;
+}
+.fans-list span {
+    background: #0a0000 !important;
+    padding: 2px 10px !important;
+    border: 1px solid #660000 !important;
+    color: #ff0033 !important;
+    border-radius: 0 !important;
+    font-size: 12px !important;
+}
+.fans-list span::before {
+    content: "◈ " !important;
+    color: #ff0033 !important;
+}
+
+/* ---------- Строки данных ---------- */
+.line-item {
+    display: flex !important;
+    justify-content: space-between !important;
+    font-size: 13px !important;
+    border-bottom: 1px dotted #660000 !important;
+    padding: 2px 0 !important;
+}
+.line-item .label {
+    color: #993333 !important;
+    text-transform: uppercase !important;
+    font-size: 11px !important;
+    letter-spacing: 0.5px !important;
+}
+.line-item .value {
+    font-weight: bold !important;
+    color: #ff0033 !important;
+    font-family: 'Courier New', 'Consolas', monospace !important;
+    text-shadow: 0 0 8px rgba(255, 0, 0, 0.2) !important;
+}
+
+/* ---------- Подвал (строка состояния HUD) ---------- */
+.footer {
+    margin-top: 16px !important;
+    text-align: center !important;
+    font-size: 12px !important;
+    font-family: 'Courier New', 'Consolas', monospace !important;
+    color: #660000 !important;
+    border-top: 1px solid #660000 !important;
+    padding-top: 10px !important;
+    background: #0a0000 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+}
+
+.footer a {
+    color: #ff0033 !important;
+    text-decoration: none !important;
+    transition: color 0.2s !important;
+}
+.footer a:hover {
+    color: #ff0044 !important;
+    text-shadow: 0 0 15px rgba(255, 0, 0, 0.3) !important;
+}
+
+/* ---------- Время обновления ---------- */
+.update-time {
+    background: #0a0000 !important;
+    color: #ff0033 !important;
+    border: 1px solid #660000 !important;
+    padding: 2px 14px !important;
+    font-family: 'Courier New', 'Consolas', monospace !important;
+    font-size: 12px !important;
+    border-radius: 0 !important;
+    box-shadow: inset 0 0 15px rgba(255, 0, 0, 0.05) !important;
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.2) !important;
+}
+
+/* ---------- Кнопки настроек и справки ---------- */
+.settings-btn,
+.help-btn {
+    background: #0a0000 !important;
+    border: 1px solid #660000 !important;
+    color: #ff0033 !important;
+    font-size: 16px !important;
+    width: 28px !important;
+    height: 28px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    transition: all 0.15s !important;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.05) !important;
+}
+
+.settings-btn:hover,
+.help-btn:hover {
+    background: #1a0505 !important;
+    border-color: #ff0033 !important;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.15) !important;
+}
+
+/* ---------- Панель настроек ---------- */
+.settings-panel {
+    background: #0a0000 !important;
+    border: 2px solid #660000 !important;
+    border-radius: 0 !important;
+    color: #ff0033 !important;
+    font-family: 'Courier New', 'Consolas', monospace !important;
+    box-shadow: 0 0 60px rgba(255, 0, 0, 0.1) !important;
+    padding: 20px !important;
+}
+.settings-panel .panel-title {
+    color: #ff0044 !important;
+    font-weight: bold !important;
+    font-size: 14px !important;
+    border-bottom: 2px solid #660000 !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 12px !important;
+    text-shadow: 0 0 15px rgba(255, 0, 0, 0.3) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+}
+.settings-panel label {
+    color: #ff0033 !important;
+    font-size: 13px !important;
+    display: block !important;
+    margin: 4px 0 !important;
+}
+.settings-panel input[type="checkbox"] {
+    accent-color: #ff0033 !important;
+    margin-right: 6px !important;
+}
+.settings-panel .close-btn {
+    background: #0a0000 !important;
+    border: 1px solid #660000 !important;
+    color: #ff0033 !important;
+    padding: 0 12px !important;
+    float: right !important;
+    cursor: pointer !important;
+    border-radius: 0 !important;
+    transition: all 0.15s !important;
+}
+.settings-panel .close-btn:hover {
+    background: #1a0505 !important;
+    border-color: #ff0033 !important;
+}
+
+/* ---------- Панель справки ---------- */
+.help-panel {
+    background: #0a0000 !important;
+    border: 2px solid #660000 !important;
+    border-radius: 0 !important;
+    color: #ff0033 !important;
+    font-family: 'Courier New', 'Consolas', monospace !important;
+    box-shadow: 0 0 60px rgba(255, 0, 0, 0.1) !important;
+    padding: 20px !important;
+}
+.help-panel .panel-title {
+    color: #ff0044 !important;
+    font-weight: bold !important;
+    font-size: 14px !important;
+    border-bottom: 2px solid #660000 !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 12px !important;
+    text-shadow: 0 0 15px rgba(255, 0, 0, 0.3) !important;
+}
+.help-panel .close-btn {
+    background: #0a0000 !important;
+    border: 1px solid #660000 !important;
+    color: #ff0033 !important;
+    padding: 0 12px !important;
+    float: right !important;
+    cursor: pointer !important;
+    border-radius: 0 !important;
+    transition: all 0.15s !important;
+}
+.help-panel .close-btn:hover {
+    background: #1a0505 !important;
+    border-color: #ff0033 !important;
+}
+.help-panel li:before {
+    color: #ff0033 !important;
+}
+
+/* ---------- Панель логов (терминальный вывод) ---------- */
+.logs-panel {
+    background: #0a0000 !important;
+    border: 2px solid #660000 !important;
+    border-radius: 0 !important;
+    color: #ff0033 !important;
+    font-family: 'Courier New', 'Consolas', monospace !important;
+    box-shadow: 0 0 60px rgba(255, 0, 0, 0.1) !important;
+    padding: 20px !important;
+}
+.logs-panel .panel-title {
+    color: #ff0044 !important;
+    font-weight: bold !important;
+    font-size: 14px !important;
+    border-bottom: 2px solid #660000 !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 12px !important;
+    text-shadow: 0 0 15px rgba(255, 0, 0, 0.3) !important;
+}
+.logs-panel .close-btn {
+    background: #0a0000 !important;
+    border: 1px solid #660000 !important;
+    color: #ff0033 !important;
+    padding: 0 12px !important;
+    float: right !important;
+    cursor: pointer !important;
+    border-radius: 0 !important;
+    transition: all 0.15s !important;
+}
+.logs-panel .close-btn:hover {
+    background: #1a0505 !important;
+    border-color: #ff0033 !important;
+}
+.logs-panel .logs-content {
+    background: #0a0000 !important;
+    border: 1px solid #660000 !important;
+    border-radius: 0 !important;
+    color: #ff0033 !important;
+    font-family: 'Courier New', 'Consolas', monospace !important;
+    font-size: 12px !important;
+    padding: 10px !important;
+    box-shadow: inset 0 0 30px rgba(255, 0, 0, 0.03) !important;
+}
+.logs-panel .log-entry {
+    border-bottom: 1px dotted #660000 !important;
+    padding: 2px 0 !important;
+}
+.logs-panel .log-entry .log-time {
+    color: #660000 !important;
+}
+.logs-panel .log-entry .log-type.info {
+    color: #ff0033 !important;
+}
+.logs-panel .log-entry .log-type.warning {
+    color: #ff4400 !important;
+}
+.logs-panel .log-entry .log-type.error {
+    color: #ff0000 !important;
+    animation: warning-blink 0.4s infinite alternate !important;
+}
+.logs-panel .log-entry .log-type.success {
+    color: #66ff66 !important;
+}
+.logs-panel .logs-actions button {
+    background: #0a0000 !important;
+    border: 1px solid #660000 !important;
+    color: #ff0033 !important;
+    padding: 4px 16px !important;
+    cursor: pointer !important;
+    border-radius: 0 !important;
+    transition: all 0.15s !important;
+    font-family: 'Courier New', 'Consolas', monospace !important;
+    text-transform: uppercase !important;
+    font-size: 12px !important;
+}
+.logs-panel .logs-actions button:hover {
+    background: #1a0505 !important;
+    border-color: #ff0033 !important;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.15) !important;
+}
+
+/* ---------- Палитра цветов ---------- */
+.color-picker-popup {
+    background: #0a0000 !important;
+    border: 2px solid #660000 !important;
+    border-radius: 0 !important;
+    padding: 12px !important;
+    box-shadow: 0 0 40px rgba(255, 0, 0, 0.1) !important;
+}
+.color-picker-popup .color-swatch {
+    border: 1px solid #660000 !important;
+    border-radius: 0 !important;
+    transition: all 0.15s !important;
+}
+.color-picker-popup .color-swatch:hover {
+    border-color: #ff0033 !important;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.2) !important;
+    transform: scale(1.05) !important;
+}
+.color-picker-popup .eyedropper-btn {
+    background: #0a0000 !important;
+    border: 1px solid #660000 !important;
+    color: #ff0033 !important;
+    padding: 4px !important;
+    border-radius: 0 !important;
+    transition: all 0.15s !important;
+    font-family: 'Courier New', 'Consolas', monospace !important;
+}
+.color-picker-popup .eyedropper-btn:hover {
+    background: #1a0505 !important;
+    border-color: #ff0033 !important;
+}
+
+/* ---------- Выпадающее меню стилей ---------- */
+.style-switch .dropdown-btn {
+    background: #0a0000 !important;
+    border: 1px solid #660000 !important;
+    color: #ff0033 !important;
+    font-family: 'Courier New', 'Consolas', monospace !important;
+    padding: 3px 10px !important;
+    border-radius: 0 !important;
+    cursor: pointer !important;
+    transition: all 0.15s !important;
+    text-transform: uppercase !important;
+    font-size: 12px !important;
+}
+.style-switch .dropdown-btn:hover {
+    background: #1a0505 !important;
+    border-color: #ff0033 !important;
+}
+.style-switch .dropdown-content {
+    background: #0a0000 !important;
+    border: 1px solid #660000 !important;
+    border-radius: 0 !important;
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.1) !important;
+}
+.style-switch .dropdown-content button {
+    background: #0a0000 !important;
+    border: none !important;
+    border-bottom: 1px solid #660000 !important;
+    color: #ff0033 !important;
+    padding: 6px 14px !important;
+    text-align: left !important;
+    width: 100% !important;
+    font-family: 'Courier New', 'Consolas', monospace !important;
+    font-size: 12px !important;
+    cursor: pointer !important;
+    transition: all 0.15s !important;
+    text-transform: uppercase !important;
+}
+.style-switch .dropdown-content button:hover {
+    background: #1a0505 !important;
+    color: #ff0044 !important;
+}
+.style-switch .dropdown-content button.active {
+    background: #ff0033 !important;
+    color: #0a0000 !important;
+}
+
+/* ---------- Ручка изменения размера сетки ---------- */
+.grid-resize-handle {
+    background: linear-gradient(135deg, transparent 50%, #660000 50%, #660000 55%, transparent 55%) !important;
+    background-size: 16px 16px !important;
+    background-position: bottom right !important;
+    background-repeat: no-repeat !important;
+    border: none !important;
+    border-radius: 0 !important;
+    opacity: 0.5 !important;
+    transition: opacity 0.15s !important;
+}
+.grid-resize-handle:hover {
+    opacity: 1 !important;
+}
+
+/* ---------- Тултип координат ---------- */
+.coords-tooltip {
+    background: #0a0000 !important;
+    border: 1px solid #660000 !important;
+    color: #ff0033 !important;
+    font-family: 'Courier New', 'Consolas', monospace !important;
+    font-size: 12px !important;
+    padding: 2px 12px !important;
+    border-radius: 0 !important;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.1) !important;
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.2) !important;
+}
+
+/* ---------- Дополнительные элементы ---------- */
+input[type="file"] {
+    background: #0a0000 !important;
+    border: 1px solid #660000 !important;
+    color: #ff0033 !important;
+    font-family: 'Courier New', 'Consolas', monospace !important;
+    font-size: 12px !important;
+    padding: 2px 8px !important;
+    border-radius: 0 !important;
+}
+
+/* ---------- Полосы прокрутки (стиль терминатора) ---------- */
+::-webkit-scrollbar {
+    width: 14px !important;
+    height: 14px !important;
+    background: #0a0000 !important;
+}
+::-webkit-scrollbar-track {
+    background: #0a0000 !important;
+    border: 1px solid #660000 !important;
+}
+::-webkit-scrollbar-thumb {
+    background: #1a0505 !important;
+    border: 1px solid #660000 !important;
+    border-radius: 0 !important;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #2a0000 !important;
+    border-color: #ff0033 !important;
+}
+::-webkit-scrollbar-button {
+    background: #0a0000 !important;
+    border: 1px solid #660000 !important;
+    width: 14px !important;
+    height: 14px !important;
+    color: #ff0033 !important;
+}
+::-webkit-scrollbar-button:hover {
+    background: #1a0505 !important;
+    border-color: #ff0033 !important;
+}
+
+/* Firefox */
+* {
+    scrollbar-color: #1a0505 #0a0000 !important;
+    scrollbar-width: thin !important;
+}
+
+/* ---------- Адаптивность ---------- */
+@media (max-width: 600px) {
+    .window-title {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    .window-title .controls {
+        justify-content: space-between !important;
+    }
+    .window-title .controls input[type="range"] {
+        width: 50px !important;
+    }
+    .settings-panel,
+    .help-panel,
+    .logs-panel {
+        min-width: 90% !important;
+        padding: 16px !important;
+    }
+    .card {
+        min-height: 50px !important;
+        padding: 6px !important;
+    }
+    .card-title {
+        font-size: 11px !important;
+    }
+    .card-value {
+        font-size: 11px !important;
+    }
+    .line-item {
+        font-size: 11px !important;
+    }
+    .progress-bar {
+        height: 8px !important;
+    }
+    .resize-handle {
+        width: 10px !important;
+        height: 10px !important;
+    }
+    .color-picker-popup {
+        grid-template-columns: repeat(6, 24px) !important;
+    }
+    .color-picker-popup .color-swatch {
+        width: 24px !important;
+        height: 24px !important;
+    }
+    .grid-resize-handle {
+        width: 16px !important;
+        height: 16px !important;
+        background-size: 12px 12px !important;
+    }
+}
