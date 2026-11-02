@@ -41,7 +41,9 @@ replace a project license or change the third-party terms above.
 
 ## Project license
 
-SystemMonitor itself does not yet have a selected project license. Third-party
-licenses listed above apply only to their respective components; they do not
-grant rights to use or redistribute SystemMonitor. Add a project license only
-after the copyright holder has chosen one.
+The original SystemMonitor code is licensed under the MIT License; see the
+repository's `LICENSE` file. This license applies only to original project
+content for which the project owner may grant these rights. It does not replace
+or expand the licenses or permissions for third-party components listed above.
+In particular, permission to include the PawnIO setup executable remains
+limited to the scope stated in its entry above.
