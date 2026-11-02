@@ -10,7 +10,7 @@ per-process FPS monitoring through PresentMon and Windows ETW.
 
 <p align="center">
   <a href="https://www.donationalerts.com/r/monsterhairy" target="_blank" rel="noopener noreferrer">
-    <img src="assets/coffee-donation.gif" width="140" alt="Rotating 3D-style steaming coffee cup - support SystemMonitor">
+    <img src="assets/coffee-donation.gif" width="140" alt="Animated steaming coffee cup - support SystemMonitor">
   </a>
   <br>
   <a href="https://www.donationalerts.com/r/monsterhairy"><strong>Buy the author a coffee</strong></a>
@@ -47,9 +47,11 @@ per-process FPS monitoring through PresentMon and Windows ETW.
   source
 - The pinned runtime DLL dependencies and PresentMon executable used for the
   packaged app. The PawnIO driver is needed for some CPU/MSR/EC sensor
-  readings. The official PawnIO 2.1.0 setup executable is included with the
-  author's permission for this private repository. Driver source and license
-  notices are under `third_party/PawnIO/2.1.0`.
+  readings. The PawnIO.Setup v2.1.0 installer is not included in this Git
+  repository. To create a complete source build, download it from the
+  [official release](https://github.com/namazso/PawnIO.Setup/releases/tag/2.1.0)
+  and save it as `PawnIO_setup.exe` in the project root before building.
+  Driver source and license notices are under `third_party/PawnIO/2.1.0`.
   See [BUILD.md](BUILD.md) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 See [BUILD.md](BUILD.md) for setup, tests, and packaging instructions.
@@ -71,7 +73,7 @@ SystemMonitor — настольное приложение для Windows, пр
 
 <p align="center">
   <a href="https://www.donationalerts.com/r/monsterhairy" target="_blank" rel="noopener noreferrer">
-    <img src="assets/coffee-donation.gif" width="140" alt="Вращающаяся объёмная чашка кофе с паром — поддержать SystemMonitor">
+    <img src="assets/coffee-donation.gif" width="140" alt="Анимированная чашка кофе с паром — поддержать SystemMonitor">
   </a>
   <br>
   <a href="https://www.donationalerts.com/r/monsterhairy"><strong>Угостить автора кофе</strong></a>
@@ -86,9 +88,11 @@ SystemMonitor — настольное приложение для Windows, пр
   из исходного кода
 - Закреплённые версии DLL-библиотек и исполняемый файл PresentMon, необходимые
   для готовой сборки. Драйвер PawnIO нужен для получения некоторых показаний
-  датчиков CPU/MSR/EC. Официальный установщик PawnIO 2.1.0 включён с
-  разрешения автора для этого приватного репозитория. Исходный код драйвера и
-  сведения о лицензиях находятся в `third_party/PawnIO/2.1.0`. См.
+  датчиков CPU/MSR/EC. Установщик PawnIO.Setup 2.1.0 не включён в репозиторий
+  Git. Для полной самостоятельной сборки скачайте его с
+  [официальной страницы релиза](https://github.com/namazso/PawnIO.Setup/releases/tag/2.1.0)
+  и сохраните в корне проекта под именем `PawnIO_setup.exe`. Исходный код
+  драйвера и сведения о лицензиях находятся в `third_party/PawnIO/2.1.0`. См.
   [BUILD.md](BUILD.md) и
   [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 

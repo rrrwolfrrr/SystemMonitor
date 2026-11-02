@@ -8,9 +8,11 @@ PawnPP source dependency pinned by that release:
 - PawnPP commit `e64e4c37b2d8ba0d8ee57205faf8183aee12c438`, populated under
   `source/PawnPP` in place of the source archive's empty submodule directory
 
-The local project may contain a candidate `PawnIO_setup.exe` at its root. It
-reports version `2.1.0.0`, has a valid Authenticode signature from namazso, and
-its SHA-256 matches the official v2.1.0 release asset:
+The installer is not included in the current Git tree. For a complete source
+build, developers must download `PawnIO_setup.exe` from the official v2.1.0
+release and place it in the project root. A previously included copy reported
+version `2.1.0.0`, had a valid Authenticode signature from namazso, and its
+SHA-256 matched the official v2.1.0 release asset:
 
 `A3A46226C5E2824F4CDD42BE0EECBABFC672C86F7889710F5AB1E6AD385B47A0`
 
@@ -25,7 +27,8 @@ contains only a README and does not publish buildable installer source. The
 author has granted permission to include the unchanged setup executable in this
 private SystemMonitor repository. This records permission for this private
 repository only; it does not assert permission for public redistribution or
-distribution with separate application releases.
+distribution with separate application releases. Earlier Git history still
+contains the executable.
 
 Upstream references:
 
