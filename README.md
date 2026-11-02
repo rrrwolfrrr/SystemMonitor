@@ -10,7 +10,7 @@ per-process FPS monitoring through PresentMon and Windows ETW.
 
 <p align="center">
   <a href="https://www.donationalerts.com/r/monsterhairy" target="_blank" rel="noopener noreferrer">
-    <img src="assets/coffee-donation.gif" width="140" alt="Rotating 3D-style steaming coffee cup - support SystemMonitor">
+    <img src="assets/coffee-donation.gif" width="140" alt="Animated steaming coffee cup - support SystemMonitor">
   </a>
   <br>
   <a href="https://www.donationalerts.com/r/monsterhairy"><strong>Buy the author a coffee</strong></a>
@@ -71,7 +71,7 @@ SystemMonitor — настольное приложение для Windows, пр
 
 <p align="center">
   <a href="https://www.donationalerts.com/r/monsterhairy" target="_blank" rel="noopener noreferrer">
-    <img src="assets/coffee-donation.gif" width="140" alt="Вращающаяся объёмная чашка кофе с паром — поддержать SystemMonitor">
+    <img src="assets/coffee-donation.gif" width="140" alt="Анимированная чашка кофе с паром — поддержать SystemMonitor">
   </a>
   <br>
   <a href="https://www.donationalerts.com/r/monsterhairy"><strong>Угостить автора кофе</strong></a>
