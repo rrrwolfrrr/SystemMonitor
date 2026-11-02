@@ -9,6 +9,15 @@ if errorlevel 1 (
     exit /b 1
 )
 
+if not exist "PawnIO_setup.exe" (
+    echo ERROR: PawnIO_setup.exe is required to build the complete distribution.
+    echo Download PawnIO.Setup v2.1.0 from:
+    echo https://github.com/namazso/PawnIO.Setup/releases/tag/2.1.0
+    echo Save it as PawnIO_setup.exe in the project root, then run this script again.
+    pause
+    exit /b 1
+)
+
 echo === Building SystemMonitor ===
 echo.
 
