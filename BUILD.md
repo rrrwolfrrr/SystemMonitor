@@ -224,7 +224,11 @@ python -m PyInstaller build.spec --clean --noconfirm
 iscc installer.iss
 ```
 
-Результат: `installer_output\SystemMonitor_Setup_2.0.1.exe`.
+Результат: `installer_output\SystemMonitor_Setup_2.0.2.exe`.
+
+Для сборки двойным щелчком запустите `build_installer.bat` из корня проекта.
+Скрипт ищет Inno Setup 6/7 в `PATH` и стандартных каталогах установки. Если
+дистрибутив PyInstaller отсутствует, сначала запустите `build.bat`.
 
 Установщик работает в контексте текущего пользователя, чтобы его записи в
 `HKCU` и автозапуск относились к нужной учётной записи. При обновлении или
