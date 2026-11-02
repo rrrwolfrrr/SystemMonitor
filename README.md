@@ -24,11 +24,11 @@ See [BUILD.md](BUILD.md) for setup, tests, and packaging instructions.
 
 ### Project status
 
-This project is hosted in a private GitHub repository. The project license has
-not been selected yet. No license to use, modify, or redistribute the
-SystemMonitor project is granted until one is added. Third-party components
-retain their own licenses; review
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) before redistribution.
+SystemMonitor's original code is licensed under the MIT License; see
+[LICENSE](LICENSE). Third-party components retain their own licenses and are
+not relicensed by this license. Review
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) before redistributing the
+application or its bundled dependencies.
 
 ## Русский
 
@@ -54,8 +54,7 @@ SystemMonitor — настольное приложение для Windows, пр
 
 ### Статус проекта
 
-Проект размещён в приватном репозитории GitHub. Лицензия самого проекта пока не
-выбрана. До её добавления права на использование, изменение и распространение
-SystemMonitor не предоставляются. Сторонние компоненты сохраняют собственные
-лицензии; перед распространением ознакомьтесь с файлом
+Оригинальный код SystemMonitor распространяется по лицензии MIT; см.
+[LICENSE](LICENSE). Эта лицензия не заменяет лицензии сторонних компонентов.
+Перед распространением приложения и включённых зависимостей ознакомьтесь с
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
