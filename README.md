@@ -14,8 +14,11 @@ per-process FPS monitoring through PresentMon and Windows ETW.
 - Python and the project dependencies listed in `requirements.txt` to run from
   source
 - The pinned runtime DLL dependencies and PresentMon executable used for the
-  packaged app. The separate PawnIO setup executable is not included; its
-  driver source and license notices are under `third_party/PawnIO/2.1.0`.
+  packaged app. The PawnIO driver is needed for some CPU/MSR/EC sensor
+  readings. Its setup executable is not included; download the official
+  [PawnIO 2.1.0 installer](https://github.com/namazso/PawnIO.Setup/releases/download/2.1.0/PawnIO_setup.exe)
+  from the author while redistribution permission is pending. The driver
+  source and license notices are under `third_party/PawnIO/2.1.0`.
   See [BUILD.md](BUILD.md) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 See [BUILD.md](BUILD.md) for setup, tests, and packaging instructions.
@@ -41,8 +44,11 @@ SystemMonitor — настольное приложение для Windows, пр
 - Python и зависимости проекта, перечисленные в `requirements.txt`, для запуска
   из исходного кода
 - Закреплённые версии DLL-библиотек и исполняемый файл PresentMon, необходимые
-  для готовой сборки. Отдельный установщик PawnIO в репозиторий не включён;
-  исходный код драйвера и сведения о лицензиях находятся в
+  для готовой сборки. Драйвер PawnIO нужен для получения некоторых показаний
+  датчиков CPU/MSR/EC. Установщик в репозиторий не включён; пока уточняется
+  разрешение на распространение, скачайте [официальный установщик PawnIO
+  2.1.0](https://github.com/namazso/PawnIO.Setup/releases/download/2.1.0/PawnIO_setup.exe)
+  у автора. Исходный код драйвера и сведения о лицензиях находятся в
   `third_party/PawnIO/2.1.0`. См. [BUILD.md](BUILD.md) и
   [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
