@@ -8,6 +8,16 @@ SystemMonitor is a Windows desktop application for monitoring PC hardware and
 viewing sensor data in desktop and mobile dashboards. It also provides optional
 per-process FPS monitoring through PresentMon and Windows ETW.
 
+<p align="center">
+  <a href="https://www.donationalerts.com/r/monsterhairy" target="_blank" rel="noopener noreferrer">
+    <img src="assets/coffee-donation.gif" width="140" alt="Animated steaming coffee cup - support SystemMonitor">
+  </a>
+  <br>
+  <a href="https://www.donationalerts.com/r/monsterhairy"><strong>Buy the author a coffee</strong></a>
+  <br>
+  Support the continued development of SystemMonitor.
+</p>
+
 ### Requirements
 
 - Windows 10/11, 64-bit
@@ -36,6 +46,16 @@ SystemMonitor — настольное приложение для Windows, пр
 мониторинга оборудования компьютера и просмотра данных датчиков на настольной
 и мобильной панелях. Также приложение может отслеживать FPS отдельных процессов
 с помощью PresentMon и Windows ETW.
+
+<p align="center">
+  <a href="https://www.donationalerts.com/r/monsterhairy" target="_blank" rel="noopener noreferrer">
+    <img src="assets/coffee-donation.gif" width="140" alt="Анимированная чашка кофе с паром — поддержать SystemMonitor">
+  </a>
+  <br>
+  <a href="https://www.donationalerts.com/r/monsterhairy"><strong>Угостить автора кофе</strong></a>
+  <br>
+  На развитие программы ❤️
+</p>
 
 ### Требования
 
