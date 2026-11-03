@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import providers
 from fallback import _get_battery_wmi, apply_fallbacks, get_battery
-import providers
+from libre_monitor import LibreMonitorDirect
 from providers import (
     ProviderRegistry,
     _parse_smartctl_output,
@@ -185,8 +185,65 @@ class FallbackTests(unittest.TestCase):
         self.assertEqual(result["gpu"]["dedicated_memory_total_mb"], 16384.0)
         self.assertEqual(result["gpu"]["shared_memory_used_mb"], 716.0)
         self.assertEqual(result["gpu"]["shared_memory_total_mb"], 24576.0)
-        get_nvidia_metrics.assert_called_once()
         get_gpu_memory_metrics.assert_called_once()
+        get_nvidia_metrics.assert_called_once()
+
+
+class StorageTemperatureTests(unittest.TestCase):
+    @staticmethod
+    def make_sensor(name, value, identifier):
+        return SimpleNamespace(
+            SensorType="Temperature",
+            Name=name,
+            Value=value,
+            Identifier=identifier,
+        )
+
+    def parse_storage(self, sensors):
+        monitor = LibreMonitorDirect.__new__(LibreMonitorDirect)
+        hardware = SimpleNamespace(
+            HardwareType="Storage",
+            Name="Test NVMe",
+            Identifier="/nvme/0",
+            Sensors=sensors,
+            SubHardware=[],
+        )
+        result = {"storage": []}
+        monitor._parse_storage(hardware, result)
+        return result["storage"][0]
+
+    def test_composite_temperature_is_preferred_over_nvme_threshold_sensors(self):
+        disk = self.parse_storage([
+            self.make_sensor("Critical Temperature", 84, "/nvme/0/temperature/11"),
+            self.make_sensor("Warning Temperature", 84, "/nvme/0/temperature/10"),
+            self.make_sensor("Composite Temperature", 42, "/nvme/0/temperature/0"),
+        ])
+
+        self.assertEqual(disk["temp"], 42)
+        self.assertEqual(disk["temp_sensor"], "Composite Temperature")
+        self.assertEqual(disk["device_id"], "/nvme/0")
+        self.assertEqual(disk["identifier"], "/nvme/0/temperature/0")
+        self.assertEqual(disk["status"], "valid")
+
+    def test_temperature_fallback_skips_warning_and_critical_limits(self):
+        disk = self.parse_storage([
+            self.make_sensor("Critical Temperature", 84, "/nvme/0/temperature/11"),
+            self.make_sensor("Temperature #1", 43, "/nvme/0/temperature/1"),
+            self.make_sensor("Warning Temperature", 70, "/nvme/0/temperature/10"),
+        ])
+
+        self.assertEqual(disk["temp"], 43)
+        self.assertEqual(disk["temp_sensor"], "Temperature #1")
+
+    def test_only_limit_sensors_do_not_appear_as_current_temperature(self):
+        disk = self.parse_storage([
+            self.make_sensor("Warning Temperature", 70, "/nvme/0/temperature/10"),
+            self.make_sensor("Critical Temperature", 84, "/nvme/0/temperature/11"),
+        ])
+
+        self.assertIsNone(disk["temp"])
+        self.assertIsNone(disk["temp_sensor"])
+        self.assertEqual(disk["status"], "temporary_unavailable")
 
 
 class SmartDataTests(unittest.TestCase):

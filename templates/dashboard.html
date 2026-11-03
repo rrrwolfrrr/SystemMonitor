@@ -1295,7 +1295,7 @@ body { padding: 8px; }
 <div id="temperatureAlertsOverlay" class="overlay hidden"></div>
 <div id="temperatureAlertsPanel" class="modal hidden">
 <h2>⚠️ Предупреждения по температуре</h2>
-<p class="muted">Установите порог для CPU и GPU каждого компьютера. GPU проверяет основную и Hotspot температуры.</p>
+<p class="muted">Установите пороги CPU и GPU для каждого компьютера, а также отдельный порог для каждого обнаруженного накопителя. Для GPU учитывается более высокая основная температура или Hotspot. Для новых дисков порог по умолчанию — 70 °C; пустое поле отключает предупреждение.</p>
 <div id="temperatureAlertSettings" class="sensor-list"></div>
 <div class="modal-actions"><button id="temperatureAlertsCloseBtn" type="button">Готово</button></div>
 </div>
@@ -1476,19 +1476,38 @@ var parsed = JSON.parse(localStorage.getItem(ALERTS_KEY) || "{}"), settings = {}
 if (parsed && typeof parsed === "object") Object.keys(parsed).forEach(function (id) {
 var item = parsed[id];
 if (!item || typeof item !== "object") return;
-settings[id] = {};
+settings[id] = { disks: {} };
 ["cpu", "gpu"].forEach(function (kind) {
 var value = item[kind] === null ? null : Number(item[kind]);
 settings[id][kind] = value === null || (Number.isFinite(value) && value >= 30 && value <= 120) ? value : 85;
 });
+if (item.disks && typeof item.disks === "object" && !Array.isArray(item.disks)) {
+Object.keys(item.disks).forEach(function (key) {
+var value = item.disks[key] === null ? null : Number(item.disks[key]);
+settings[id].disks[key] = value === null || (Number.isFinite(value) && value >= 30 && value <= 120) ? value : 70;
+});
+}
 });
 return settings;
 } catch (e) { console.error("Не удалось загрузить пороги температур:", e); return {}; }
 }
 var temperatureAlertSettings = loadTemperatureAlertSettings();
+function storageDiskAlertKey(disk, index) {
+var key = disk && (disk.device_id || disk.hardware_identifier);
+if (!key && disk && disk.identifier) key = String(disk.identifier).replace(/\/temperature\/\d+$/i, "");
+if (!key && disk) key = disk.name;
+return String(key || ("disk-" + index));
+}
 function temperatureThreshold(sourceId, kind) {
 var settings = temperatureAlertSettings[sourceId];
 return settings && Object.prototype.hasOwnProperty.call(settings, kind) ? settings[kind] : 85;
+}
+function diskTemperatureThreshold(sourceId, diskKey) {
+var settings = temperatureAlertSettings[sourceId];
+if (settings && settings.disks && Object.prototype.hasOwnProperty.call(settings.disks, diskKey)) {
+return settings.disks[diskKey];
+}
+return 70;
 }
 function saveTemperatureAlertSettings() {
 try { localStorage.setItem(ALERTS_KEY, JSON.stringify(temperatureAlertSettings)); }
@@ -1503,17 +1522,32 @@ dataSources.forEach(function (source) {
 var data = sourceData[source.id];
 if (!data) return;
 var alerts = [];
+var previousAlerts = activeTemperatureAlerts[source.id];
+if (!previousAlerts || typeof previousAlerts !== "object") previousAlerts = {};
+var nextAlerts = Object.create(null);
+function addAlert(key, text) {
+alerts.push(text);
+nextAlerts[key] = true;
+if (!previousAlerts[key]) showToast(source.name + ": " + text, "warning");
+}
 var cpuTemp = data.cpu && data.cpu.temperature;
 var cpuThreshold = temperatureThreshold(source.id, "cpu");
-if (isNumber(cpuTemp) && cpuThreshold !== null && cpuTemp >= cpuThreshold) alerts.push("CPU " + fmt(cpuTemp, 1, "°C") + " (порог " + fmt(cpuThreshold, 0, "°C") + ")");
+if (isNumber(cpuTemp) && cpuThreshold !== null && cpuTemp >= cpuThreshold) addAlert("cpu", "CPU " + fmt(cpuTemp, 1, "°C") + " (порог " + fmt(cpuThreshold, 0, "°C") + ")");
 var gpu = data.gpu || {};
 var gpuTemp = [gpu.temperature, gpu.hotspot_temperature].filter(isNumber).reduce(function (max, value) { return Math.max(max, value); }, -Infinity);
 var gpuThreshold = temperatureThreshold(source.id, "gpu");
-if (Number.isFinite(gpuTemp) && gpuThreshold !== null && gpuTemp >= gpuThreshold) alerts.push("GPU " + fmt(gpuTemp, 1, "°C") + " (порог " + fmt(gpuThreshold, 0, "°C") + ")");
-var signature = alerts.join(" · ");
-if (signature && !activeTemperatureAlerts[source.id]) showToast(source.name + ": " + signature, "warning");
-if (signature) messages.push(source.name + ": " + signature);
-activeTemperatureAlerts[source.id] = signature;
+if (Number.isFinite(gpuTemp) && gpuThreshold !== null && gpuTemp >= gpuThreshold) addAlert("gpu", "GPU " + fmt(gpuTemp, 1, "°C") + " (порог " + fmt(gpuThreshold, 0, "°C") + ")");
+var storage = Array.isArray(data.storage) ? data.storage : [];
+storage.forEach(function (disk, index) {
+if (!disk || typeof disk !== "object" || !isNumber(disk.temp)) return;
+var diskKey = storageDiskAlertKey(disk, index);
+var threshold = diskTemperatureThreshold(source.id, diskKey);
+if (threshold !== null && disk.temp >= threshold) {
+addAlert("disk:" + diskKey, (disk.name || ("Диск " + (index + 1))) + " " + fmt(disk.temp, 1, "°C") + " (порог " + fmt(threshold, 0, "°C") + ")");
+}
+});
+if (alerts.length) messages.push(source.name + ": " + alerts.join(" · "));
+activeTemperatureAlerts[source.id] = nextAlerts;
 });
 if (!messages.length) { banner.classList.add("hidden"); return; }
 messages.forEach(function (message) { banner.appendChild(el("div", "", "⚠️ " + message)); });
@@ -1525,7 +1559,7 @@ var list = document.getElementById("temperatureAlertSettings");
 if (!list) return;
 clearNode(list);
 dataSources.forEach(function (source) {
-var row = el("div", "temperature-alert-setting"), name = el("strong", "", source.name);
+var row = el("div", "temperature-alert-setting"), name = el("strong", "", source.name + " · CPU/GPU");
 row.appendChild(name);
 ["cpu", "gpu"].forEach(function (kind) {
 var label = document.createElement("label");
@@ -1556,6 +1590,49 @@ group.appendChild(label);
 group.appendChild(input);
 row.appendChild(group);
 });
+var storage = sourceData[source.id] && Array.isArray(sourceData[source.id].storage)
+? sourceData[source.id].storage
+: [];
+if (storage.length) {
+var diskHeading = el("strong", "", "Накопители");
+row.appendChild(diskHeading);
+storage.forEach(function (disk, index) {
+if (!disk || typeof disk !== "object") return;
+var diskKey = storageDiskAlertKey(disk, index);
+var label = document.createElement("label");
+label.className = "muted";
+label.textContent = (disk.name || ("Диск " + (index + 1))) + " · °C";
+var input = document.createElement("input");
+input.type = "number";
+input.className = "custom-input";
+input.min = "30";
+input.max = "120";
+input.step = "1";
+var threshold = diskTemperatureThreshold(source.id, diskKey);
+input.value = threshold === null ? "" : String(threshold);
+input.setAttribute("aria-label", source.name + " " + (disk.name || ("диск " + (index + 1))) + " порог температуры");
+input.title = "По умолчанию 70 °C; оставьте пустым, чтобы отключить предупреждение.";
+input.addEventListener("change", function () {
+var value = input.value.trim() === "" ? null : Number(input.value);
+if (value !== null && (!Number.isFinite(value) || value < 30 || value > 120)) {
+input.value = diskTemperatureThreshold(source.id, diskKey) === null ? "" : String(diskTemperatureThreshold(source.id, diskKey));
+showToast("Порог должен быть от 30 до 120 °C", "warning");
+return;
+}
+if (!temperatureAlertSettings[source.id]) temperatureAlertSettings[source.id] = { disks: {} };
+if (!temperatureAlertSettings[source.id].disks) temperatureAlertSettings[source.id].disks = {};
+temperatureAlertSettings[source.id].disks[diskKey] = value;
+saveTemperatureAlertSettings();
+renderTemperatureAlertBanner();
+});
+var group = document.createElement("div");
+group.appendChild(label);
+group.appendChild(input);
+row.appendChild(group);
+});
+} else {
+row.appendChild(el("div", "muted", sourceErrors[source.id] ? "Нет связи с компьютером; список дисков недоступен." : "Накопители пока не обнаружены."));
+}
 list.appendChild(row);
 });
 }
@@ -2682,7 +2759,7 @@ if (!isSensorHidden("network", "sent")) b.appendChild(line(getSensorLabel("netwo
 }
 function updateDisks(d) { var b = getBody("disks"); if (!b) return; clearNode(b); var disks = Array.isArray(d.disks) ? d.disks : [], st = Array.isArray(d.storage) ? d.storage : [], vc = 0;
 disks.forEach(function (dk, i) { if (!dk || typeof dk !== "object") return; var k = "disk:" + i + ":" + (dk.mount || "диск"); if (isSensorHidden("disks", k)) return; var u = isNumber(dk.used_gb) ? dk.used_gb.toFixed(1) : "—", t = isNumber(dk.total_gb) ? dk.total_gb.toFixed(1) : "—", p = isNumber(dk.percent) ? dk.percent.toFixed(1) : "—"; b.appendChild(line(getSensorLabel("disks", k, dk.mount || ("Диск " + i)), u + " / " + t + " ГБ (" + p + "%)", percentClass(dk.percent), k)); b.appendChild(progressBar(dk.percent, k)); vc++; });
-var tt = false; st.forEach(function (s, i) { if (!s || typeof s !== "object") return; var k = "disktemp:" + i + ":" + (s.name || "накопитель"); if (isSensorHidden("disks", k)) return; if (!tt) { b.appendChild(el("div", "section-title", "Температура накопителей")); tt = true; } b.appendChild(line(getSensorLabel("disks", k, s.name || ("Накопитель " + i)), fmt(s.temp, 1, "°C"), tempClass(s.temp), k)); vc++; });
+var tt = false; st.forEach(function (s, i) { if (!s || typeof s !== "object") return; var k = "disktemp:" + i + ":" + (s.name || "накопитель"); if (isSensorHidden("disks", k)) return; if (!tt) { b.appendChild(el("div", "section-title", "Температура накопителей")); tt = true; } var diskLabel = getSensorLabel("disks", k, s.name || ("Накопитель " + i)); if (s.temp_sensor) diskLabel += " · " + s.temp_sensor; b.appendChild(line(diskLabel, fmt(s.temp, 1, "°C"), tempClass(s.temp), k)); vc++; });
 if (vc === 0) b.appendChild(line("Диски", "Нет данных"));
 }
 function updateSmart(d) {
@@ -3273,6 +3350,13 @@ nextAlerts[sourceId] = {};
 var value = item[kind] === null ? null : Number(item[kind]);
 nextAlerts[sourceId][kind] = value === null || (Number.isFinite(value) && value >= 30 && value <= 120) ? value : 85;
 });
+nextAlerts[sourceId].disks = {};
+if (item.disks && typeof item.disks === "object" && !Array.isArray(item.disks)) {
+Object.keys(item.disks).forEach(function (diskKey) {
+var value = item.disks[diskKey] === null ? null : Number(item.disks[diskKey]);
+nextAlerts[sourceId].disks[diskKey] = value === null || (Number.isFinite(value) && value >= 30 && value <= 120) ? value : 70;
+});
+}
 });
 }
 var activeId = seenTabIds.has(raw.activeTabId) ? raw.activeTabId : nextTabs[0].id;
