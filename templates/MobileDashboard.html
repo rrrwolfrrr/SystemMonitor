@@ -1160,15 +1160,21 @@
                 }
                 case 'disks': {
                     const disks = data.disks || [];
-                    if (disks.length === 0) return null;
+                    const storage = Array.isArray(data.storage) ? data.storage : [];
+                    if (disks.length === 0 && storage.length === 0) return null;
                     result.title = 'Диски';
                     result.icon = '💾';
                     result.lines = disks.map(d => ({ label: d.mount, value: d.percent.toFixed(1) + '% (' + d.used_gb.toFixed(1) + '/' + d.total_gb.toFixed(1) + ' ГБ)' }));
-                    const storage = data.storage || [];
                     storage.forEach(s => {
-                        result.lines.push({ label: s.name, value: s.temp ? s.temp.toFixed(1) + ' °C' : '—' });
+                        const temperature = Number.isFinite(s.temp) ? s.temp : null;
+                        result.lines.push({
+                            label: s.name + (s.temp_sensor ? ' · ' + s.temp_sensor : ''),
+                            value: temperature === null ? '—' : temperature.toFixed(1) + ' °C',
+                            cls: temperature >= 85 ? 'danger' : temperature >= 70 ? 'warning' : ''
+                        });
                     });
-                    result.hasProgress = true; result.progressValue = disks[0]?.percent || 0;
+                    result.hasProgress = disks.length > 0;
+                    result.progressValue = disks.length > 0 ? disks[0].percent : null;
                     break;
                 }
                 case 'fans': {

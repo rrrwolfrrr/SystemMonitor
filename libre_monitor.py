@@ -654,27 +654,53 @@ class LibreMonitorDirect:
             disk = {
                 "name": hw_name,
                 "temp": None,
+                "temp_sensor": None,
                 "hardware_type": hw_type,
+                "device_id": self._hardware_identifier(hw),
                 "identifier": None,
                 "status": "temporary_unavailable",
             }
+            temperature_sensors = []
             for sensor in hw.Sensors:
                 try:
                     stype = str(sensor.SensorType)
+                    if stype != "Temperature":
+                        continue
+                    sensor_name = str(sensor.Name)
                     val = self._get_val(sensor)
                     if val is None:
                         continue
-                    if stype == "Temperature":
-                        val = self._validated("storage.temperature", val)
-                        if val is None:
-                            continue
-                        disk.update({
-                            "temp": round(val, 1),
-                            "identifier": self._identifier(sensor),
-                            "status": "valid",
-                        })
+                    val = self._validated("storage.temperature", val)
+                    if val is None:
+                        continue
+                    normalized_name = sensor_name.casefold()
+                    is_limit = any(
+                        marker in normalized_name
+                        for marker in ("warning", "critical", "threshold", "limit")
+                    )
+                    temperature_sensors.append((
+                        "composite" in normalized_name and not is_limit,
+                        not is_limit,
+                        sensor_name,
+                        val,
+                        self._identifier(sensor),
+                    ))
                 except Exception as e:
                     logger.debug(f"Ошибка парсинга storage сенсора: {e}")
+            current_sensors = [
+                sensor for sensor in temperature_sensors if sensor[1]
+            ]
+            if current_sensors:
+                selected = next(
+                    (sensor for sensor in current_sensors if sensor[0]),
+                    current_sensors[0],
+                )
+                disk.update({
+                    "temp": round(selected[3], 1),
+                    "temp_sensor": selected[2],
+                    "identifier": selected[4],
+                    "status": "valid",
+                })
             # Keep the disk visible when its temperature sensor is absent.
             result["storage"].append(disk)
 
