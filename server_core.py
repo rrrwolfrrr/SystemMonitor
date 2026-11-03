@@ -25,6 +25,7 @@ from routes import register_routes
 from utils import get_psutil_data, parse_libre_data
 from logging_setup import configure_logging
 from network_utils import get_local_ip
+from providers import get_smart_status
 
 
 def resource_path(relative_path):
@@ -202,6 +203,7 @@ def background_updater():
                     # Обновление кеша
                     cache.refresh(parsed, ps_data)
                     merged_data = cache.get()
+                    merged_data["smart"] = get_smart_status()
                     merged_data["fps"] = fps_monitor.get_status()
                     broadcast_data(merged_data)
                     logger.debug("Кеш обновлён")
