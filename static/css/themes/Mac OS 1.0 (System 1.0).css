@@ -1087,3 +1087,193 @@ input[type="file"]:hover {
         background-size: 12px 12px !important;
     }
 }
+/* Current SystemMonitor desktop and mobile dashboard compatibility */
+:root {
+    --bg: var(--bg-color, #202124) !important;
+    --window-bg: var(--card-bg, #2d2d2d) !important;
+    --text: var(--text-color, #f1f1f1) !important;
+    --muted: var(--text-color, #b8b8b8) !important;
+    --accent: var(--accent-color, #4b9cff) !important;
+    --line: var(--border-dark, #555) !important;
+    --danger: var(--danger-color, #ef4444) !important;
+    --warning: var(--warning-color, #f59e0b) !important;
+    --ok: var(--ok-color, #22c55e) !important;
+}
+
+body,
+.desktop,
+.container {
+    color: var(--text-color, #f1f1f1) !important;
+    font-family: var(--font-family, sans-serif) !important;
+}
+
+body {
+    background: var(--bg-color, #202124) !important;
+}
+
+.window,
+.card,
+.fps-panel,
+.fps-metric,
+.mobile-modal,
+.settings-panel,
+.mobile-control-panel {
+    background: var(--card-bg, #2d2d2d) !important;
+    color: var(--text-color, #f1f1f1) !important;
+    border-color: var(--border-dark, #555) !important;
+    box-shadow: var(--shadow, none) !important;
+}
+
+.titlebar,
+.header,
+.mobile-toolbar,
+.dashboard-tabs,
+.card-header,
+.card-title,
+.mobile-modal-header {
+    background: var(--header-bg, var(--card-bg, #2d2d2d)) !important;
+    color: var(--title-color, var(--text-color, #f1f1f1)) !important;
+    border-color: var(--border-dark, #555) !important;
+}
+
+.toolbar button,
+.toolbar select,
+.toolbar .toolbar-button,
+.dashboard-tab,
+.mobile-toolbar button,
+.mobile-action,
+.card-actions button,
+.mobile-modal button,
+.settings-panel button,
+.mobile-control-handle,
+button,
+select,
+input,
+textarea {
+    background-color: var(--card-bg, #2d2d2d) !important;
+    color: var(--text-color, #f1f1f1) !important;
+    border-color: var(--border-dark, #555) !important;
+    font-family: var(--font-family, sans-serif) !important;
+}
+
+.dashboard-tab.active,
+button:hover,
+.toolbar .toolbar-button:hover,
+.card-actions button:hover,
+.mobile-action:hover {
+    border-color: var(--accent-color, #4b9cff) !important;
+}
+
+.board {
+    background: var(--bg-color, #202124) !important;
+    border-color: var(--border-dark, #555) !important;
+}
+
+.card-header,
+.card-title {
+    border-bottom-color: var(--border-dark, #555) !important;
+}
+
+.card-body,
+.card-content,
+.card-row,
+.line,
+.fps-card-metric,
+.fps-metric,
+.settings-group,
+.sensor-list {
+    color: var(--text-color, #f1f1f1) !important;
+    border-color: var(--border-dark, #555) !important;
+}
+
+.card-row .label,
+.line .label,
+.muted,
+.section-title,
+.fps-panel-status,
+.fps-card-status,
+.fps-card-target,
+.update-time,
+.footer {
+    color: var(--text-color, #b8b8b8) !important;
+    opacity: .8;
+}
+
+.card-row .value,
+.line .value,
+.value {
+    color: var(--text-color, #f1f1f1) !important;
+}
+
+.progress,
+.progress-bar {
+    background: var(--bg-color, #202124) !important;
+    border-color: var(--border-dark, #555) !important;
+}
+
+.progress .fill,
+.progress-bar .fill {
+    background: var(--accent-color, #4b9cff) !important;
+}
+
+.progress .fill.warning,
+.progress-bar .fill.warning,
+.value.warning {
+    background-color: var(--warning-color, #f59e0b) !important;
+    color: var(--warning-color, #f59e0b) !important;
+}
+
+.progress .fill.danger,
+.progress-bar .fill.danger,
+.value.danger {
+    background-color: var(--danger-color, #ef4444) !important;
+    color: var(--danger-color, #ef4444) !important;
+}
+
+.value.ok {
+    color: var(--ok-color, #22c55e) !important;
+}
+
+.statusbar,
+.dashboard-tabs,
+.mobile-toolbar,
+.modal,
+.overlay,
+.mobile-modal,
+.settings-panel {
+    border-color: var(--border-dark, #555) !important;
+}
+
+.cards-grid > .card {
+    position: relative !important;
+    inset: auto !important;
+    width: auto !important;
+    height: auto !important;
+    min-width: 0 !important;
+}
+
+.modal,
+.mobile-modal,
+.settings-panel {
+    background-color: var(--card-bg, #2d2d2d) !important;
+    color: var(--text-color, #f1f1f1) !important;
+}
+
+:focus-visible {
+    outline: 2px solid var(--accent-color, #4b9cff) !important;
+    outline-offset: 2px;
+}
+.value.warning,
+.value.danger {
+    background-color: transparent !important;
+}
+
+.window,
+.card,
+.fps-panel,
+.fps-metric,
+.mobile-modal,
+.settings-panel,
+.mobile-control-panel {
+    border-color: var(--border-light, #777) var(--border-dark, #555) var(--border-dark, #555) var(--border-light, #777) !important;
+}

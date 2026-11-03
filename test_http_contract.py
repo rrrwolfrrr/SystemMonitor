@@ -103,6 +103,19 @@ class HttpContractTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["mode"], "auto")
 
+    def test_stats_includes_smart_status(self):
+        smart_status = {
+            "enabled": True,
+            "available": True,
+            "status": "ready",
+            "reason": None,
+            "devices": [],
+        }
+        with patch("routes.get_smart_status", return_value=smart_status):
+            response = self.client.get("/stats")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()["smart"], smart_status)
+
     def test_fps_target_rejects_invalid_request(self):
         for payload in (None, {}, {"mode": "other"}, {"mode": "manual", "pid": "bad"}):
             with self.subTest(payload=payload):

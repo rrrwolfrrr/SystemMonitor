@@ -12,6 +12,9 @@ The program collects data on the Windows PC where it is installed. You can
 view that data locally or open the dashboards in a browser on another computer,
 phone, or tablet.
 
+You can also view this computer's sensor data from other computers or mobile
+devices using a web browser, regardless of the device's operating system.
+
 <p align="center">
   <a href="https://dalink.to/monsterhairy" target="_blank" rel="noopener noreferrer">
     <img src="assets/coffee-donation.gif" width="140" alt="Animated steaming coffee cup - support SystemMonitor">
@@ -31,8 +34,11 @@ phone, or tablet.
   layouts, themes, and sensor selections.
 - Show available sensors in a separate card for each detected GPU; custom
   cards can combine sensors from different adapters.
-- Display temperature history and configure per-computer CPU/GPU and per-drive
-  storage temperature warning thresholds.
+- Show detailed read-only drive SMART information in a separately configurable
+  card, including health, firmware, serial number, interface, power-on time,
+  power cycles, and NVMe host read/write totals when the drive reports them.
+- Display temperature history and configure CPU/GPU warning thresholds and
+  per-drive storage temperature warning thresholds.
 - Show battery information on supported laptops and GPU memory information
   when Windows and the graphics driver provide it.
 - Track one process at a time with PresentMon and Windows ETW. It can show
@@ -43,6 +49,13 @@ phone, or tablet.
 
 Sensor availability and accuracy depend on the hardware, Windows, and
 installed drivers. Some CPU/MSR/EC readings require the PawnIO driver.
+
+The optional SMART card uses `smartctl` from smartmontools and is disabled by
+default. To enable it, install smartmontools, make `smartctl` available on
+`PATH`, set `SYSTEMMONITOR_ENABLE_SMART=True` in `env.env`, and restart
+SystemMonitor. SMART polling is read-only and does not change drive settings.
+The card can include the drive serial number, which is also present in the
+`/stats` response visible to devices connected to the dashboard.
 
 ### Where it runs and where you can view the data
 
@@ -259,8 +272,11 @@ SystemMonitor — программа для Windows, которая помога
 - Показывает доступные датчики каждой обнаруженной видеокарты в отдельной
   карточке; в пользовательской карточке можно объединять датчики разных
   адаптеров.
-- Позволяет просматривать историю температур и задавать отдельные пороги
-  предупреждений для CPU, GPU и каждого накопителя.
+- Показывает подробные сведения SMART о накопителях в отдельной настраиваемой
+  карточке: состояние, прошивку, серийный номер, интерфейс, часы работы,
+  включения и счётчики чтения/записи NVMe, если они доступны.
+- Позволяет просматривать историю температур и задавать пороги предупреждений
+  для CPU, GPU и каждого накопителя.
 - Может показывать сведения о батарее на поддерживаемых ноутбуках и
   использовании видеопамяти, если эти данные доступны от Windows и драйвера.
 - Отслеживает FPS одного процесса за раз с помощью PresentMon и Windows ETW.

@@ -1,5 +1,6 @@
 """Небольшие автономные проверки валидатора и цепочки fallback."""
 
+import json
 import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -7,7 +8,13 @@ from unittest.mock import patch
 import providers
 from fallback import _get_battery_wmi, apply_fallbacks, get_battery
 from libre_monitor import LibreMonitorDirect
-from providers import ProviderRegistry, create_default_registry, get_gpu_memory_metrics
+from providers import (
+    ProviderRegistry,
+    _parse_smartctl_output,
+    _smart_scan_devices,
+    create_default_registry,
+    get_gpu_memory_metrics,
+)
 from sensor_resolver import SensorResolver, StaleValueCache
 from validator import is_valid_reading, validate_reading
 
@@ -237,6 +244,149 @@ class StorageTemperatureTests(unittest.TestCase):
         self.assertIsNone(disk["temp"])
         self.assertIsNone(disk["temp_sensor"])
         self.assertEqual(disk["status"], "temporary_unavailable")
+
+
+class SmartDataTests(unittest.TestCase):
+    def test_smart_scan_parses_paths_and_device_types(self):
+        self.assertEqual(
+            _smart_scan_devices(
+                '/dev/sda -d sat # ATA device\n'
+                r'\\.\PhysicalDrive2 -d nvme # NVMe device' + "\n"
+            ),
+            [("/dev/sda", "sat"), (r"\\.\PhysicalDrive2", "nvme")],
+        )
+
+    def test_windows_smart_volume_map_groups_letters_by_physical_disk(self):
+        response = SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps([
+                {"DiskNumber": 1, "DriveLetter": "D"},
+                {"DiskNumber": 1, "DriveLetter": "E"},
+                {"DiskNumber": 2, "DriveLetter": "F"},
+            ]),
+            stderr="",
+        )
+        with patch.object(providers, "os", SimpleNamespace(name="nt")):
+            with patch("providers.subprocess.run", return_value=response) as run:
+                volumes = providers._smart_windows_volumes()
+
+        self.assertEqual(volumes, {1: "D:, E:", 2: "F:"})
+        self.assertEqual(run.call_args.kwargs["timeout"], 4)
+
+    def test_smart_status_reports_disabled_without_scanning(self):
+        with patch.dict(providers.os.environ, {"SYSTEMMONITOR_ENABLE_SMART": "False"}):
+            with patch("providers.shutil.which") as which:
+                status = providers.get_smart_status()
+
+        self.assertEqual(status["status"], "disabled")
+        self.assertEqual(status["devices"], [])
+        which.assert_not_called()
+
+    def test_smart_status_explains_missing_smartctl(self):
+        with patch.dict(providers.os.environ, {"SYSTEMMONITOR_ENABLE_SMART": "True"}):
+            with patch("providers.shutil.which", return_value=None):
+                status = providers.get_smart_status()
+
+        self.assertEqual(status["status"], "unavailable")
+        self.assertEqual(status["reason"], "smartctl_not_found")
+        self.assertEqual(status["devices"], [])
+
+    def test_smart_collection_uses_read_only_smartctl_query_and_caches_results(self):
+        payload = {
+            "model_name": "Example NVMe",
+            "smart_status": {"passed": True},
+            "nvme_smart_health_information_log": {"temperature": 42},
+        }
+        scan_result = SimpleNamespace(stdout=r'\\.\PhysicalDrive0 -d nvme # drive' + "\n")
+        smart_result = SimpleNamespace(stdout=json.dumps(payload))
+        with patch.dict(providers._SMART_CACHE, {
+            "timestamp": 0.0,
+            "value": [],
+            "status": "idle",
+            "reason": None,
+        }):
+            with patch("providers._smart_windows_volumes", return_value={0: "D:"}):
+                with patch("providers.subprocess.run", side_effect=[scan_result, smart_result]) as run:
+                    providers._collect_smart_data("smartctl")
+            self.assertEqual(providers._SMART_CACHE["status"], "ready")
+            self.assertEqual(providers._SMART_CACHE["value"][0]["temperature"], 42)
+            self.assertEqual(providers._SMART_CACHE["value"][0]["volume"], "D:")
+
+        self.assertIn("--scan-open", run.call_args_list[0].args[0])
+        self.assertEqual(
+            run.call_args_list[1].args[0],
+            ["smartctl", "--json=o", "--all", r"\\.\PhysicalDrive0", "-d", "nvme"],
+        )
+
+    def test_nvme_smart_json_includes_detailed_drive_information(self):
+        disk = _parse_smartctl_output({
+            "device": {"protocol": "NVMe"},
+            "model_name": "Example NVMe",
+            "serial_number": "EXAMPLE-SERIAL",
+            "firmware_version": "1.23",
+            "nvme_version": {"string": "NVMe 1.4"},
+            "smart_support": {"available": True},
+            "smart_status": {"passed": True},
+            "temperature": {"current": 38},
+            "interface_speed": {
+                "current": {"value": 8.0, "units": "GT/s"},
+                "max": {"value": 8.0, "units": "GT/s"},
+            },
+            "nvme_smart_health_information_log": {
+                "temperature": 39,
+                "percentage_used": 12,
+                "available_spare": 98,
+                "power_on_hours": 1200,
+                "power_cycles": 45,
+                "media_errors": 2,
+                "data_units_read": 2500,
+                "data_units_written": 1000,
+            },
+        }, r"\\.\PhysicalDrive0")
+
+        self.assertEqual(disk["model"], "Example NVMe")
+        self.assertEqual(disk["protocol"], "NVMe")
+        self.assertEqual(disk["interface"], "NVMe Express")
+        self.assertEqual(disk["standard"], "NVMe 1.4")
+        self.assertEqual(disk["firmware_version"], "1.23")
+        self.assertEqual(disk["serial_number"], "EXAMPLE-SERIAL")
+        self.assertEqual(disk["transfer_mode"], "текущая: 8 GT/s / макс.: 8 GT/s")
+        self.assertEqual(disk["capabilities"], ["S.M.A.R.T."])
+        self.assertEqual(disk["rotation_label"], "SSD")
+        self.assertEqual(disk["health_percent"], 88)
+        self.assertEqual(disk["health"], "passed")
+        self.assertEqual(disk["temperature"], 38)
+        self.assertEqual(disk["percentage_used"], 12)
+        self.assertEqual(disk["available_spare_percent"], 98)
+        self.assertEqual(disk["power_on_hours"], 1200)
+        self.assertEqual(disk["power_cycles"], 45)
+        self.assertEqual(disk["media_errors"], 2)
+        self.assertEqual(disk["data_units_read"], 2500)
+        self.assertEqual(disk["data_units_written"], 1000)
+
+    def test_ata_smart_attributes_are_mapped_and_invalid_numbers_ignored(self):
+        disk = _parse_smartctl_output({
+            "model_name": "Example SATA",
+            "smart_status": {"passed": False},
+            "ata_smart_attributes": {
+                "table": [
+                    {"name": "Reallocated_Sector_Ct", "raw": {"value": 3}},
+                    {"name": "Current_Pending_Sector", "raw": {"value": 1}},
+                    {"name": "Offline_Uncorrectable", "raw": {"value": 0}},
+                    {"name": "Temperature_Celsius", "raw": {"value": 41}},
+                    {"name": "Percent_Lifetime_Remain", "raw": {"value": 99}},
+                    {"name": "Power_On_Hours", "raw": {"value": "unknown"}},
+                ],
+            },
+        }, r"\\.\PhysicalDrive1")
+
+        self.assertEqual(disk["health"], "failed")
+        self.assertEqual(disk["temperature"], 41)
+        self.assertEqual(disk["reallocated_sectors"], 3)
+        self.assertEqual(disk["pending_sectors"], 1)
+        self.assertEqual(disk["uncorrectable_errors"], 0)
+        self.assertEqual(disk["health_percent"], 99)
+        self.assertIsNone(disk["power_on_hours"])
 
 
 class ResolverTests(unittest.TestCase):

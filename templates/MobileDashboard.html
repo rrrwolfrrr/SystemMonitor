@@ -833,7 +833,7 @@
         let activeSensorCard = 'cpu';
         let lastSuccessfulUpdate = null;
         let mobileControlDockTimerId = null;
-        const cardKeys = ['cpu', 'gpu', 'ram', 'network', 'disks', 'fans', 'motherboard', 'system', 'battery'];
+        const cardKeys = ['cpu', 'gpu', 'ram', 'network', 'disks', 'smart', 'fans', 'motherboard', 'system', 'battery'];
 
         // --- Настройки ---
         const defaultSettings = {
@@ -843,6 +843,7 @@
                 ram: true,
                 network: true,
                 disks: true,
+                smart: true,
                 fans: true,
                 motherboard: true,
                 system: true,
@@ -850,7 +851,7 @@
             },
             layout: 'responsive',
             darkMode: false,
-            cardOrder: ['cpu', 'gpu', 'ram', 'network', 'disks', 'fans', 'motherboard', 'system', 'battery'],
+            cardOrder: ['cpu', 'gpu', 'ram', 'network', 'disks', 'smart', 'fans', 'motherboard', 'system', 'battery'],
             customCSS: '',
             refreshInterval: 2000,
             locked: false,
@@ -1175,6 +1176,62 @@
                     });
                     result.hasProgress = disks.length > 0;
                     result.progressValue = disks.length > 0 ? disks[0].percent : null;
+                    break;
+                }
+                case 'smart': {
+                    const smart = Array.isArray(data.smart)
+                        ? { enabled: true, status: data.smart.length ? 'ready' : 'empty', devices: data.smart }
+                        : data.smart && typeof data.smart === 'object' ? data.smart : {};
+                    const devices = Array.isArray(smart.devices) ? smart.devices : [];
+                    result.title = 'SMART накопителей';
+                    result.icon = '🩺';
+                    if (!smart.enabled) {
+                        result.lines = [{ label: 'SMART', value: 'Отключён. Включите SYSTEMMONITOR_ENABLE_SMART=True в env.env.' }];
+                        break;
+                    }
+                    if (smart.status === 'unavailable') {
+                        result.lines = [{ label: 'SMART', value: 'Установите smartmontools и добавьте smartctl в PATH.' }];
+                        break;
+                    }
+                    if (!devices.length) {
+                        const message = smart.status === 'scanning'
+                            ? 'Поиск SMART-накопителей…'
+                            : smart.status === 'error'
+                                ? 'Не удалось выполнить SMART-опрос (' + (smart.reason || 'ошибка') + ').'
+                                : 'SMART-совместимые накопители не обнаружены.';
+                        result.lines = [{ label: 'SMART', value: message }];
+                        break;
+                    }
+                    result.lines = [];
+                    devices.forEach(disk => {
+                        if (!disk || typeof disk !== 'object') return;
+                        const label = (disk.model || disk.device || 'Накопитель') + (disk.device ? ' · ' + disk.device : '');
+                        result.lines.push({
+                            label,
+                            value: disk.health === 'passed' ? 'SMART: исправен' : disk.health === 'failed' ? 'SMART: есть предупреждение' : 'SMART: неизвестно',
+                            cls: disk.health === 'failed' ? 'danger' : ''
+                        });
+                        if (Number.isFinite(disk.health_percent)) result.lines.push({ label: '  Техсостояние', value: formatPercent(disk.health_percent), cls: disk.health_percent <= 10 ? 'danger' : disk.health_percent <= 30 ? 'warning' : 'ok' });
+                        if (disk.firmware_version) result.lines.push({ label: '  Прошивка', value: disk.firmware_version });
+                        if (disk.serial_number) result.lines.push({ label: '  Серийный номер', value: disk.serial_number });
+                        if (disk.interface) result.lines.push({ label: '  Интерфейс', value: disk.interface });
+                        if (disk.transfer_mode) result.lines.push({ label: '  Режим передачи', value: disk.transfer_mode });
+                        if (disk.volume) result.lines.push({ label: '  Буква тома', value: disk.volume });
+                        if (disk.standard) result.lines.push({ label: '  Стандарт', value: disk.standard });
+                        if (Array.isArray(disk.capabilities) && disk.capabilities.length) result.lines.push({ label: '  Возможности', value: disk.capabilities.join(', ') });
+                        if (disk.rotation_label) result.lines.push({ label: '  Скорость вращения', value: disk.rotation_label });
+                        if (Number.isFinite(disk.temperature)) result.lines.push({ label: '  Температура', value: formatValue(disk.temperature, 0, '°C'), cls: disk.temperature >= 85 ? 'danger' : disk.temperature >= 70 ? 'warning' : '' });
+                        if (Number.isFinite(disk.percentage_used)) result.lines.push({ label: '  Износ', value: formatPercent(disk.percentage_used), cls: disk.percentage_used >= 90 ? 'danger' : disk.percentage_used >= 70 ? 'warning' : '' });
+                        if (Number.isFinite(disk.available_spare_percent)) result.lines.push({ label: '  Резерв ресурса', value: formatPercent(disk.available_spare_percent) });
+                        if (Number.isFinite(disk.power_on_hours)) result.lines.push({ label: '  Часы работы', value: formatValue(disk.power_on_hours, 0, ' ч') });
+                        if (Number.isFinite(disk.power_cycles)) result.lines.push({ label: '  Включения', value: formatValue(disk.power_cycles, 0) });
+                        if (Number.isFinite(disk.data_units_read)) result.lines.push({ label: '  Всего хост-чтений', value: formatValue(disk.data_units_read * 512000 / 1e9, 0, ' GB') });
+                        if (Number.isFinite(disk.data_units_written)) result.lines.push({ label: '  Всего хост-записей', value: formatValue(disk.data_units_written * 512000 / 1e9, 0, ' GB') });
+                        if (Number.isFinite(disk.reallocated_sectors)) result.lines.push({ label: '  Переназначенные секторы', value: formatValue(disk.reallocated_sectors, 0), cls: disk.reallocated_sectors > 0 ? 'warning' : '' });
+                        if (Number.isFinite(disk.pending_sectors)) result.lines.push({ label: '  Ожидающие секторы', value: formatValue(disk.pending_sectors, 0), cls: disk.pending_sectors > 0 ? 'danger' : '' });
+                        if (Number.isFinite(disk.uncorrectable_errors)) result.lines.push({ label: '  Неисправимые ошибки', value: formatValue(disk.uncorrectable_errors, 0), cls: disk.uncorrectable_errors > 0 ? 'danger' : '' });
+                        if (Number.isFinite(disk.media_errors)) result.lines.push({ label: '  Ошибки носителя', value: formatValue(disk.media_errors, 0), cls: disk.media_errors > 0 ? 'danger' : '' });
+                    });
                     break;
                 }
                 case 'fans': {
