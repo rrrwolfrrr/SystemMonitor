@@ -8,9 +8,11 @@ disabled unless explicitly enabled in the configuration.
 from __future__ import annotations
 
 import importlib
+import json
 import logging
 import os
 import ctypes
+import re
 import shutil
 import subprocess
 import threading
@@ -19,7 +21,9 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Iterable, Optional
 
 logger = logging.getLogger(__name__)
-_SMART_CACHE = {"timestamp": 0.0, "value": []}
+_SMART_CACHE = {"timestamp": 0.0, "value": [], "status": "idle", "reason": None}
+_SMART_LOCK = threading.Lock()
+_SMART_REFRESH_THREAD = None
 _GPU_MEMORY_CACHE = {"timestamp": 0.0, "value": {}}
 _GPU_MEMORY_CACHE_TTL = 1.0
 _GPU_MEMORY_LOCK = threading.Lock()
@@ -391,31 +395,318 @@ def get_gpu_memory_metrics() -> Dict[str, float]:
         return dict(result)
 
 
-def get_smart_devices():
-    """Return a bounded SMART device listing when smartctl is explicitly enabled."""
-    if not _env_bool("SYSTEMMONITOR_ENABLE_SMART", False):
-        return []
-    now = time.time()
-    if now - _SMART_CACHE["timestamp"] < 30:
-        return list(_SMART_CACHE["value"])
-    executable = shutil.which("smartctl")
-    if not executable:
-        return []
+def _smart_number(value):
+    if isinstance(value, bool):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if number >= 0 and number != float("inf") else None
+
+
+def _parse_smartctl_output(payload, device_path):
+    """Reduce smartctl JSON to display-ready metrics."""
+    device = payload.get("device") if isinstance(payload.get("device"), dict) else {}
+    nvme = payload.get("nvme_smart_health_information_log")
+    nvme = nvme if isinstance(nvme, dict) else {}
+    temperature = payload.get("temperature")
+    temperature = temperature if isinstance(temperature, dict) else {}
+    power_on_time = payload.get("power_on_time")
+    power_on_time = power_on_time if isinstance(power_on_time, dict) else {}
+    smart_status = payload.get("smart_status")
+    smart_status = smart_status if isinstance(smart_status, dict) else {}
+    smart_support = payload.get("smart_support")
+    smart_support = smart_support if isinstance(smart_support, dict) else {}
+    attributes = payload.get("ata_smart_attributes")
+    attributes = attributes.get("table", []) if isinstance(attributes, dict) else []
+    attribute_values = {}
+    for attribute in attributes:
+        if not isinstance(attribute, dict):
+            continue
+        name = str(attribute.get("name", "")).casefold().replace(" ", "_")
+        raw = attribute.get("raw")
+        value = raw.get("value") if isinstance(raw, dict) else None
+        if name and _smart_number(value) is not None:
+            attribute_values[name] = _smart_number(value)
+
+    def metric(*names):
+        for name in names:
+            if name in attribute_values:
+                return attribute_values[name]
+        return None
+
+    current_temperature = _smart_number(temperature.get("current"))
+    if current_temperature is None:
+        current_temperature = _smart_number(nvme.get("temperature"))
+    if current_temperature is None:
+        current_temperature = metric("temperature_celsius", "airflow_temperature_cel")
+
+    health_passed = smart_status.get("passed")
+    if not isinstance(health_passed, bool):
+        health_passed = None
+
+    percentage_used = _smart_number(nvme.get("percentage_used"))
+    health_percent = max(0, 100 - percentage_used) if percentage_used is not None else None
+    if health_percent is None:
+        remaining_life = metric("percent_lifetime_remain", "remaining_lifetime_percent")
+        if remaining_life is not None:
+            health_percent = min(100, remaining_life)
+    data_units_read = _smart_number(nvme.get("data_units_read"))
+    interface_speed = payload.get("interface_speed")
+    interface_speed = interface_speed if isinstance(interface_speed, dict) else {}
+
+    def speed_label(key):
+        speed = interface_speed.get(key)
+        if not isinstance(speed, dict):
+            return None
+        value = _smart_number(speed.get("value"))
+        units = str(speed.get("units") or "").strip()
+        return f"{value:g} {units}".strip() if value is not None else None
+
+    protocol = str(device.get("protocol") or "")[:30]
+    standard = payload.get("nvme_version") if protocol.casefold() == "nvme" else payload.get("ata_version")
+    standard = standard.get("string") if isinstance(standard, dict) else None
+    capabilities = []
+    if smart_support.get("available") is True or smart_support.get("enabled") is True:
+        capabilities.append("S.M.A.R.T.")
+    if payload.get("trim_supported") is True:
+        capabilities.append("TRIM")
+    if payload.get("volatile_write_cache") is True:
+        capabilities.append("VolatileWriteCache")
+    rotation_rate = _smart_number(payload.get("rotation_rate"))
+    if protocol.casefold() == "nvme":
+        rotation_label = "SSD"
+    elif rotation_rate == 0:
+        rotation_label = "SSD"
+    elif rotation_rate is not None:
+        rotation_label = f"{rotation_rate:g} RPM"
+    else:
+        rotation_label = None
+
+    result = {
+        "device": device_path,
+        "model": str(payload.get("model_name") or payload.get("product") or device_path)[:120],
+        "protocol": protocol,
+        "serial_number": str(payload.get("serial_number") or "").strip()[:80] or None,
+        "firmware_version": str(payload.get("firmware_version") or "").strip()[:80] or None,
+        "interface": "NVMe Express" if protocol.casefold() == "nvme" else protocol or None,
+        "standard": str(standard).strip()[:120] if standard else None,
+        "transfer_mode": " / ".join(
+            f"{label}: {value}"
+            for label, value in (("текущая", speed_label("current")), ("макс.", speed_label("max")))
+            if value
+        ) or None,
+        "capabilities": capabilities,
+        "rotation_rate": rotation_rate,
+        "rotation_label": rotation_label,
+        "health_percent": health_percent,
+        "health": "passed" if health_passed is True else "failed" if health_passed is False else "unknown",
+        "temperature": current_temperature,
+        "power_on_hours": _smart_number(power_on_time.get("hours")),
+        "power_cycles": _smart_number(payload.get("power_cycle_count")),
+        "percentage_used": percentage_used,
+        "available_spare_percent": _smart_number(nvme.get("available_spare")),
+        "media_errors": _smart_number(nvme.get("media_errors")),
+        "data_units_read": data_units_read,
+        "data_units_written": _smart_number(nvme.get("data_units_written")),
+        "reallocated_sectors": metric("reallocated_sector_ct"),
+        "pending_sectors": metric("current_pending_sector"),
+        "uncorrectable_errors": metric("offline_uncorrectable"),
+    }
+    if result["power_on_hours"] is None:
+        result["power_on_hours"] = _smart_number(nvme.get("power_on_hours"))
+    if result["power_cycles"] is None:
+        result["power_cycles"] = _smart_number(nvme.get("power_cycles"))
+    return result
+
+
+def _smart_windows_volumes():
+    """Map physical disk numbers to mounted drive letters on Windows."""
+    if os.name != "nt":
+        return {}
+    command = [
+        "powershell.exe",
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        "Get-Partition | Where-Object DriveLetter | "
+        "Select-Object DiskNumber,DriveLetter | ConvertTo-Json -Compress",
+    ]
     try:
         result = subprocess.run(
-            [executable, "--scan"],
+            command,
             capture_output=True,
             text=True,
-            timeout=3,
+            timeout=4,
             check=False,
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         )
-        devices = [{"device": line.split("#", 1)[0].strip()} for line in result.stdout.splitlines() if line.strip()]
-        _SMART_CACHE.update({"timestamp": now, "value": devices})
-        return devices
-    except Exception:
-        _SMART_CACHE.update({"timestamp": now, "value": []})
+        if result.returncode != 0:
+            logger.warning("Could not map SMART devices to Windows volumes: %s", result.stderr.strip())
+            return {}
+        payload = json.loads(result.stdout) if result.stdout else []
+        partitions = payload if isinstance(payload, list) else [payload]
+        volumes = {}
+        for partition in partitions:
+            if not isinstance(partition, dict):
+                continue
+            number = partition.get("DiskNumber")
+            letter = str(partition.get("DriveLetter") or "").strip()
+            if isinstance(number, int) and letter:
+                volumes.setdefault(number, []).append(f"{letter}:")
+        return {number: ", ".join(letters) for number, letters in volumes.items()}
+    except (OSError, subprocess.TimeoutExpired, ValueError) as exc:
+        logger.warning("Could not map SMART devices to Windows volumes: %s", exc)
+        return {}
+
+
+def _smart_scan_devices(output):
+    devices = []
+    for line in output.splitlines():
+        entry = line.split("#", 1)[0].strip()
+        if not entry:
+            continue
+        parts = entry.split()
+        path = parts[0].strip('"')
+        device_type = None
+        if len(parts) >= 3 and parts[1] == "-d":
+            device_type = parts[2]
+        devices.append((path, device_type))
+        if len(devices) >= 12:
+            break
+    return devices
+
+
+def _collect_smart_data(executable):
+    try:
+        scan = subprocess.run(
+            [executable, "--scan-open"],
+            capture_output=True,
+            text=True,
+            timeout=4,
+            check=False,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+        devices = []
+        scanned_devices = _smart_scan_devices(scan.stdout or "")
+        volume_map = _smart_windows_volumes()
+        failed_reads = 0
+        for path, device_type in scanned_devices:
+            command = [executable, "--json=o", "--all", path]
+            if device_type:
+                command.extend(["-d", device_type])
+            try:
+                result = subprocess.run(
+                    command,
+                    capture_output=True,
+                    text=True,
+                    timeout=2,
+                    check=False,
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+                )
+                payload = json.loads(result.stdout) if result.stdout else None
+                if isinstance(payload, dict):
+                    device = _parse_smartctl_output(payload, path)
+                    match = re.search(r"PhysicalDrive(\d+)$", path, re.IGNORECASE)
+                    if match:
+                        device["volume"] = volume_map.get(int(match.group(1)))
+                    devices.append(device)
+                else:
+                    logger.warning("smartctl returned invalid JSON for device %s", path)
+                    failed_reads += 1
+            except subprocess.TimeoutExpired:
+                logger.warning("smartctl timed out while reading device %s", path)
+                failed_reads += 1
+            except (OSError, ValueError) as exc:
+                logger.warning("Could not read SMART data for device %s: %s", path, exc)
+                failed_reads += 1
+        with _SMART_LOCK:
+            status = "ready" if devices else "error" if scanned_devices and failed_reads else "empty"
+            if devices:
+                reason = None
+            elif scanned_devices and failed_reads:
+                reason = "device_read_failed"
+            elif scan.returncode != 0:
+                status, reason = "error", "scan_failed"
+            else:
+                reason = "no_devices"
+            _SMART_CACHE.update({
+                "timestamp": time.time(),
+                "value": devices,
+                "status": status,
+                "reason": reason,
+            })
+    except subprocess.TimeoutExpired:
+        logger.warning("smartctl device scan timed out")
+        with _SMART_LOCK:
+            _SMART_CACHE.update(timestamp=time.time(), value=[], status="error", reason="scan_timeout")
+    except OSError as exc:
+        logger.warning("smartctl device scan failed: %s", exc)
+        with _SMART_LOCK:
+            _SMART_CACHE.update(timestamp=time.time(), value=[], status="error", reason="scan_failed")
+
+
+def _start_smart_refresh(executable):
+    global _SMART_REFRESH_THREAD
+    now = time.time()
+    with _SMART_LOCK:
+        if _SMART_REFRESH_THREAD and _SMART_REFRESH_THREAD.is_alive():
+            return
+        if now - _SMART_CACHE["timestamp"] < 30:
+            return
+        _SMART_CACHE.update(status="scanning", reason=None)
+        _SMART_REFRESH_THREAD = threading.Thread(
+            target=_collect_smart_data,
+            args=(executable,),
+            name="SystemMonitor-SMART",
+            daemon=True,
+        )
+        _SMART_REFRESH_THREAD.start()
+
+
+def get_smart_devices():
+    """Return cached read-only SMART metrics when smartctl is explicitly enabled."""
+    if not _env_bool("SYSTEMMONITOR_ENABLE_SMART", False):
         return []
+    executable = shutil.which("smartctl")
+    if not executable:
+        return []
+    _start_smart_refresh(executable)
+    with _SMART_LOCK:
+        return [dict(device) for device in _SMART_CACHE["value"]]
+
+
+def get_smart_status():
+    """Return SMART provider status and cached metrics for dashboard cards."""
+    if not _env_bool("SYSTEMMONITOR_ENABLE_SMART", False):
+        return {
+            "enabled": False,
+            "available": False,
+            "status": "disabled",
+            "reason": "feature_disabled",
+            "devices": [],
+        }
+    executable = shutil.which("smartctl")
+    if not executable:
+        return {
+            "enabled": True,
+            "available": False,
+            "status": "unavailable",
+            "reason": "smartctl_not_found",
+            "devices": [],
+        }
+    devices = get_smart_devices()
+    with _SMART_LOCK:
+        status = _SMART_CACHE["status"]
+        reason = _SMART_CACHE["reason"]
+    return {
+        "enabled": True,
+        "available": status == "ready",
+        "status": status,
+        "reason": reason,
+        "devices": devices,
+    }
 
 
 def create_default_registry(

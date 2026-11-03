@@ -40,7 +40,7 @@ from storage import (
 )
 from system_detect import get_all_diagnostics
 from diagnostic_snapshot import collect_snapshot, _dll_inventory
-from providers import get_provider_registry
+from providers import get_provider_registry, get_smart_status
 
 app = None
 cache = None
@@ -106,6 +106,7 @@ def register_routes(
                 return jsonify({"error": "Данные ещё не собраны"}), 503
             if fps_monitor_instance is not None:
                 data["fps"] = fps_monitor_instance.get_status()
+            data["smart"] = get_smart_status()
             return jsonify(data)
         except Exception as e:
             return jsonify({"error": str(e)}), 500

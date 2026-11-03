@@ -2642,6 +2642,7 @@ if (cardUsesSource("gpu", sourceId)) renderCardIfChanged("gpu", [d.gpu, addedSen
 if (cardUsesSource("ram", sourceId)) renderCardIfChanged("ram", [d.ram_used_mb, d.ram_total_mb, d.ram_percent, addedSensorData("ram")], function () { updateRam(d); renderAdditionalCardSensors("ram"); });
 if (cardUsesSource("network", sourceId)) renderCardIfChanged("network", [d.net_recv_speed_kbps, d.net_sent_speed_kbps, addedSensorData("network")], function () { updateNetwork(d); renderAdditionalCardSensors("network"); });
 if (cardUsesSource("disks", sourceId)) renderCardIfChanged("disks", [d.disks, d.storage, addedSensorData("disks")], function () { updateDisks(d); renderAdditionalCardSensors("disks"); });
+if (cardUsesSource("smart", sourceId)) renderCardIfChanged("smart", [d.smart], function () { updateSmart(d); });
 if (cardUsesSource("fans", sourceId)) renderCardIfChanged("fans", [d.fans, addedSensorData("fans")], function () { updateFans(d); renderAdditionalCardSensors("fans"); });
 if (cardUsesSource("motherboard", sourceId)) renderCardIfChanged("motherboard", [d.motherboard, addedSensorData("motherboard")], function () { updateMotherboard(d); renderAdditionalCardSensors("motherboard"); });
 if (cardUsesSource("system", sourceId)) renderCardIfChanged("system", [d.uptime_seconds, d.boot_time, window.location.hostname, addedSensorData("system")], function () { updateSystem(d); renderAdditionalCardSensors("system"); });
@@ -2683,6 +2684,59 @@ function updateDisks(d) { var b = getBody("disks"); if (!b) return; clearNode(b)
 disks.forEach(function (dk, i) { if (!dk || typeof dk !== "object") return; var k = "disk:" + i + ":" + (dk.mount || "диск"); if (isSensorHidden("disks", k)) return; var u = isNumber(dk.used_gb) ? dk.used_gb.toFixed(1) : "—", t = isNumber(dk.total_gb) ? dk.total_gb.toFixed(1) : "—", p = isNumber(dk.percent) ? dk.percent.toFixed(1) : "—"; b.appendChild(line(getSensorLabel("disks", k, dk.mount || ("Диск " + i)), u + " / " + t + " ГБ (" + p + "%)", percentClass(dk.percent), k)); b.appendChild(progressBar(dk.percent, k)); vc++; });
 var tt = false; st.forEach(function (s, i) { if (!s || typeof s !== "object") return; var k = "disktemp:" + i + ":" + (s.name || "накопитель"); if (isSensorHidden("disks", k)) return; if (!tt) { b.appendChild(el("div", "section-title", "Температура накопителей")); tt = true; } b.appendChild(line(getSensorLabel("disks", k, s.name || ("Накопитель " + i)), fmt(s.temp, 1, "°C"), tempClass(s.temp), k)); vc++; });
 if (vc === 0) b.appendChild(line("Диски", "Нет данных"));
+}
+function updateSmart(d) {
+var body = getBody("smart");
+if (!body) return;
+clearNode(body);
+var smart = Array.isArray(d.smart)
+? { enabled: true, status: d.smart.length ? "ready" : "empty", devices: d.smart }
+: d.smart && typeof d.smart === "object" ? d.smart : {};
+var devices = Array.isArray(smart.devices) ? smart.devices : [];
+if (!smart.enabled) {
+body.appendChild(line("SMART", "Отключён. Включите SYSTEMMONITOR_ENABLE_SMART=True в env.env."));
+return;
+}
+if (smart.status === "unavailable") {
+body.appendChild(line("SMART", "Утилита smartctl не найдена. Установите smartmontools и добавьте smartctl в PATH."));
+return;
+}
+if (!devices.length) {
+var message = smart.status === "scanning"
+? "Поиск SMART-накопителей…"
+: smart.status === "error"
+? "Не удалось выполнить SMART-опрос (" + (smart.reason || "ошибка") + "). Проверьте права доступа и поддержку диска."
+: "SMART-совместимые накопители не обнаружены.";
+body.appendChild(line("SMART", message));
+return;
+}
+devices.forEach(function (disk) {
+if (!disk || typeof disk !== "object") return;
+body.appendChild(el("div", "section-title", (disk.model || disk.device || "Накопитель") + (disk.device ? " · " + disk.device : "")));
+var healthLabel = disk.health === "passed" ? "Исправен" : disk.health === "failed" ? "Есть предупреждение" : "Неизвестно";
+var healthClass = disk.health === "failed" ? "danger" : disk.health === "passed" ? "ok" : "";
+body.appendChild(line("Состояние SMART", healthLabel, healthClass));
+if (isNumber(disk.health_percent)) body.appendChild(line("Техсостояние", fmt(disk.health_percent, 0, "%"), disk.health_percent <= 10 ? "danger" : disk.health_percent <= 30 ? "warning" : "ok"));
+if (disk.firmware_version) body.appendChild(line("Прошивка", disk.firmware_version));
+if (disk.serial_number) body.appendChild(line("Серийный номер", disk.serial_number));
+if (disk.interface) body.appendChild(line("Интерфейс", disk.interface));
+if (disk.transfer_mode) body.appendChild(line("Режим передачи", disk.transfer_mode));
+if (disk.volume) body.appendChild(line("Буква тома", disk.volume));
+if (disk.standard) body.appendChild(line("Стандарт", disk.standard));
+if (Array.isArray(disk.capabilities) && disk.capabilities.length) body.appendChild(line("Возможности", disk.capabilities.join(", ")));
+if (disk.rotation_label) body.appendChild(line("Скорость вращения", disk.rotation_label));
+if (isNumber(disk.temperature)) body.appendChild(line("Температура", fmt(disk.temperature, 0, "°C"), tempClass(disk.temperature)));
+if (isNumber(disk.percentage_used)) body.appendChild(line("Износ", fmt(disk.percentage_used, 0, "%"), disk.percentage_used >= 90 ? "danger" : disk.percentage_used >= 70 ? "warning" : ""));
+if (isNumber(disk.available_spare_percent)) body.appendChild(line("Резерв ресурса", fmt(disk.available_spare_percent, 0, "%")));
+if (isNumber(disk.power_on_hours)) body.appendChild(line("Часы работы", fmtInt(disk.power_on_hours, " ч")));
+if (isNumber(disk.power_cycles)) body.appendChild(line("Включения", fmtInt(disk.power_cycles)));
+if (isNumber(disk.data_units_read)) body.appendChild(line("Всего хост-чтений", fmt(disk.data_units_read * 512000 / 1e9, 0, " GB")));
+if (isNumber(disk.data_units_written)) body.appendChild(line("Всего хост-записей", fmt(disk.data_units_written * 512000 / 1e9, 0, " GB")));
+if (isNumber(disk.reallocated_sectors)) body.appendChild(line("Переназначенные секторы", fmtInt(disk.reallocated_sectors), disk.reallocated_sectors > 0 ? "warning" : ""));
+if (isNumber(disk.pending_sectors)) body.appendChild(line("Ожидающие секторы", fmtInt(disk.pending_sectors), disk.pending_sectors > 0 ? "danger" : ""));
+if (isNumber(disk.uncorrectable_errors)) body.appendChild(line("Неисправимые ошибки", fmtInt(disk.uncorrectable_errors), disk.uncorrectable_errors > 0 ? "danger" : ""));
+if (isNumber(disk.media_errors)) body.appendChild(line("Ошибки носителя", fmtInt(disk.media_errors), disk.media_errors > 0 ? "danger" : ""));
+});
 }
 function updateFans(d) { var b = getBody("fans"); if (!b) return; clearNode(b); var fans = Array.isArray(d.fans) ? d.fans : [], vc = 0;
 fans.forEach(function (f, i) { if (!f || typeof f !== "object") return; var k = "fan:" + i + ":" + (f.name || "вентилятор"); if (isSensorHidden("fans", k)) return; b.appendChild(line(getSensorLabel("fans", k, f.name || ("Вентилятор " + i)), fmtInt(f.rpm, "RPM"), null, k)); vc++; });

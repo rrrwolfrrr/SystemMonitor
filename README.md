@@ -32,6 +32,9 @@ phone, or tablet.
 - Show available sensors in a separate card for each detected GPU; custom
   cards can combine sensors from different adapters.
 - Display temperature history and configure CPU/GPU warning thresholds.
+- Show detailed read-only drive SMART information in a separately configurable
+  card, including health, firmware, serial number, interface, power-on time,
+  power cycles, and NVMe host read/write totals when the drive reports them.
 - Show battery information on supported laptops and GPU memory information
   when Windows and the graphics driver provide it.
 - Track one process at a time with PresentMon and Windows ETW. It can show
@@ -42,6 +45,13 @@ phone, or tablet.
 
 Sensor availability and accuracy depend on the hardware, Windows, and
 installed drivers. Some CPU/MSR/EC readings require the PawnIO driver.
+
+The optional SMART card uses `smartctl` from smartmontools and is disabled by
+default. To enable it, install smartmontools, make `smartctl` available on
+`PATH`, set `SYSTEMMONITOR_ENABLE_SMART=True` in `env.env`, and restart
+SystemMonitor. SMART polling is read-only and does not change drive settings.
+The card can include the drive serial number, which is also present in the
+`/stats` response visible to devices connected to the dashboard.
 
 ### Where it runs and where you can view the data
 
@@ -260,6 +270,9 @@ SystemMonitor — программа для Windows, которая помога
   адаптеров.
 - Позволяет просматривать историю температур и задавать пороги
   предупреждений для CPU и GPU.
+- Показывает подробные сведения SMART о накопителях в отдельной настраиваемой
+  карточке: состояние, прошивку, серийный номер, интерфейс, часы работы,
+  включения и счётчики чтения/записи NVMe, если они доступны.
 - Может показывать сведения о батарее на поддерживаемых ноутбуках и
   использовании видеопамяти, если эти данные доступны от Windows и драйвера.
 - Отслеживает FPS одного процесса за раз с помощью PresentMon и Windows ETW.
