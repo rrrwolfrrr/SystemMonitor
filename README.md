@@ -12,6 +12,9 @@ The program collects data on the Windows PC where it is installed. You can
 view that data locally or open the dashboards in a browser on another computer,
 phone, or tablet.
 
+You can also view this computer's sensor data from other computers or mobile
+devices using a web browser, regardless of the device's operating system.
+
 <p align="center">
   <a href="https://dalink.to/monsterhairy" target="_blank" rel="noopener noreferrer">
     <img src="assets/coffee-donation.gif" width="140" alt="Animated steaming coffee cup - support SystemMonitor">
