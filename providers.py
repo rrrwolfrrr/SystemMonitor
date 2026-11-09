@@ -21,7 +21,12 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Iterable, Optional
 
 logger = logging.getLogger(__name__)
-_SMART_CACHE = {"timestamp": 0.0, "value": [], "status": "idle", "reason": None}
+_SMART_CACHE = {
+    "timestamp": 0.0,
+    "value": [],
+    "status": "idle",
+    "reason": None,
+}
 _SMART_LOCK = threading.Lock()
 _SMART_REFRESH_THREAD = None
 _GPU_MEMORY_CACHE = {"timestamp": 0.0, "value": {}}
@@ -414,6 +419,8 @@ def _parse_smartctl_output(payload, device_path):
     temperature = temperature if isinstance(temperature, dict) else {}
     power_on_time = payload.get("power_on_time")
     power_on_time = power_on_time if isinstance(power_on_time, dict) else {}
+    user_capacity = payload.get("user_capacity")
+    user_capacity = user_capacity if isinstance(user_capacity, dict) else {}
     smart_status = payload.get("smart_status")
     smart_status = smart_status if isinstance(smart_status, dict) else {}
     smart_support = payload.get("smart_support")
@@ -487,6 +494,7 @@ def _parse_smartctl_output(payload, device_path):
     result = {
         "device": device_path,
         "model": str(payload.get("model_name") or payload.get("product") or device_path)[:120],
+        "capacity_bytes": _smart_number(user_capacity.get("bytes")),
         "protocol": protocol,
         "serial_number": str(payload.get("serial_number") or "").strip()[:80] or None,
         "firmware_version": str(payload.get("firmware_version") or "").strip()[:80] or None,

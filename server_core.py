@@ -85,6 +85,10 @@ libre_should_run = True
 shutdown_event = threading.Event()
 
 
+def _remaining_update_wait(cycle_started_at, interval):
+    return max(0.0, interval - (time.monotonic() - cycle_started_at))
+
+
 # --- Рассылка данных ---
 
 def broadcast_data(data):
@@ -180,39 +184,61 @@ def background_updater():
         pass
     try:
         while not shutdown_event.is_set():
+            cycle_started_at = time.monotonic()
+            stage_times = {"LHM": 0.0, "system": 0.0, "cache+WebSocket": 0.0}
             try:
                 if libre_should_run and not libre.is_running():
                     logger.info("LibreHardwareMonitor не инициализирован, пробуем запустить...")
                     libre.start()
                 elif libre.is_running():
                     # Сбор данных из LibreHardwareMonitor
+                    stage_started_at = time.monotonic()
                     try:
                         libre_data = libre.fetch_data()
                         parsed = parse_libre_data(libre_data) if libre_data else {}
                     except Exception as e:
                         logger.error(f"Ошибка сбора данных Libre: {e}")
                         parsed = {}
+                    finally:
+                        stage_times["LHM"] = time.monotonic() - stage_started_at
 
                     # Сбор данных из psutil
+                    stage_started_at = time.monotonic()
                     try:
                         ps_data = get_psutil_data()
                     except Exception as e:
                         logger.error(f"Ошибка сбора данных psutil: {e}")
                         ps_data = {}
+                    finally:
+                        stage_times["system"] = time.monotonic() - stage_started_at
 
                     # Обновление кеша
-                    cache.refresh(parsed, ps_data)
-                    merged_data = cache.get()
-                    merged_data["smart"] = get_smart_status()
-                    merged_data["fps"] = fps_monitor.get_status()
-                    broadcast_data(merged_data)
-                    logger.debug("Кеш обновлён")
+                    stage_started_at = time.monotonic()
+                    try:
+                        cache.refresh(parsed, ps_data)
+                        merged_data = cache.get()
+                        merged_data["smart"] = get_smart_status()
+                        merged_data["fps"] = fps_monitor.get_status()
+                        broadcast_data(merged_data)
+                        logger.debug("Кеш обновлён")
+                    finally:
+                        stage_times["cache+WebSocket"] = time.monotonic() - stage_started_at
                 else:
                     logger.debug("LibreHardwareMonitor не запущен и не должен быть запущен.")
             except Exception as e:
                 logger.error(f"Ошибка в фоновом обновлении: {e}")
 
-            shutdown_event.wait(Config.UPDATE_INTERVAL)
+            cycle_duration = time.monotonic() - cycle_started_at
+            if cycle_duration >= max(2.0, 2 * Config.UPDATE_INTERVAL):
+                logger.warning(
+                    "Медленный цикл обновления: всего %.2f с; LHM=%.2f с, "
+                    "системные метрики=%.2f с, кеш+WebSocket=%.2f с",
+                    cycle_duration,
+                    stage_times["LHM"],
+                    stage_times["system"],
+                    stage_times["cache+WebSocket"],
+                )
+            shutdown_event.wait(_remaining_update_wait(cycle_started_at, Config.UPDATE_INTERVAL))
     finally:
         if pythoncom is not None:
             pythoncom.CoUninitialize()

@@ -1,12 +1,12 @@
 ; ============================================================
 ; SystemMonitor — Инсталлятор с полной деинсталляцией
-; Версия: 2.0.3
+; Версия: 2.0.5
 ; Язык интерфейса: Русский
 ; Платформа: Windows 10/11 (64-bit)
 ; ============================================================
 
 #define MyAppName "SystemMonitor"
-#define MyAppVersion "2.0.3"
+#define MyAppVersion "2.0.5"
 #define MyAppPublisher "SystemMonitor Team"
 #define MyAppExeName "SystemMonitor.exe"
 #define MyAppURL "http://localhost:5000"

@@ -24,6 +24,7 @@ from flask import (
     render_template,
     render_template_string,
     request,
+    url_for,
 )
 from werkzeug.exceptions import HTTPException
 
@@ -640,6 +641,25 @@ loadLogs();
                 save_themes(data['themes'])
                 return jsonify({"status": "ok"})
             return jsonify({"error": "Неверный формат"}), 400
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @app.route('/api/themes/files', methods=['GET'])
+    def api_list_theme_files():
+        try:
+            theme_directory = os.path.join(app.static_folder or "", "css", "themes")
+            if not app.static_folder or not os.path.isdir(theme_directory):
+                return jsonify({"error": "Каталог CSS-тем не найден"}), 404
+            themes = []
+            with os.scandir(theme_directory) as entries:
+                for entry in entries:
+                    if entry.is_file(follow_symlinks=False) and entry.name.lower().endswith(".css"):
+                        themes.append({
+                            "name": entry.name,
+                            "url": url_for("static", filename="css/themes/" + entry.name),
+                        })
+            themes.sort(key=lambda theme: theme["name"].casefold())
+            return jsonify({"themes": themes})
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 

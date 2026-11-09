@@ -56,7 +56,9 @@ def _rule_for(field: str):
         return FIELD_RULES[field]
     if field.startswith("storage[") and field.endswith("].temp"):
         return FIELD_RULES["storage.temp"]
-    short_name = field.rsplit(".", 1)[-1]
+    short_name = field.rsplit(".", 1)[-1].lower()
+    if short_name == "clock":
+        short_name = "frequency"
     return FIELD_RULES.get(short_name)
 
 
