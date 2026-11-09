@@ -19,6 +19,7 @@ def configure_logging(log_file: str, debug: bool = False) -> logging.Logger:
     if getattr(root, "_system_monitor_logging_configured", False):
         return root
     root.setLevel(logging.DEBUG)
+    logging.getLogger("websockets").setLevel(logging.WARNING)
 
     formatter = logging.Formatter(
         "%(asctime)s.%(msecs)03d | %(levelname)-8s | "

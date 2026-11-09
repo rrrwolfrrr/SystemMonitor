@@ -9,6 +9,18 @@ from math import isfinite
 GPU_HARDWARE_TYPES = frozenset({"GpuNvidia", "GpuAmd", "GpuIntel"})
 
 
+def classify_gpu_temperature(name: str) -> str:
+    """Classify a temperature sensor so VRAM readings are not used as GPU core."""
+    name_lower = str(name or "").lower()
+    if any(marker in name_lower for marker in ("memory", "vram")):
+        return "memory"
+    if any(marker in name_lower for marker in ("hotspot", "hot spot", "junction")):
+        return "hotspot"
+    if any(marker in name_lower for marker in ("core", "edge", "die")):
+        return "core"
+    return "other"
+
+
 def build_gpu_devices(raw_sensors: list[dict]) -> list[dict]:
     devices = OrderedDict()
     for sensor in raw_sensors:
@@ -33,6 +45,7 @@ def build_gpu_devices(raw_sensors: list[dict]) -> list[dict]:
                 "power": None,
                 "memory_used": None,
                 "memory_total": None,
+                "_temperature_priority": 0,
             }
             devices[identifier] = device
 
@@ -48,10 +61,21 @@ def build_gpu_devices(raw_sensors: list[dict]) -> list[dict]:
         name = str(sensor.get("name") or "")
         name_lower = name.lower()
         if sensor_type == "Temperature":
-            key = "hotspot_temperature" if any(
-                marker in name_lower for marker in ("hotspot", "hot spot", "junction")
-            ) else "temperature"
-            device[key] = max(device[key], value) if device[key] is not None else value
+            temperature_kind = classify_gpu_temperature(name)
+            if temperature_kind == "hotspot":
+                key = "hotspot_temperature"
+                device[key] = max(device[key], value) if device[key] is not None else value
+            elif temperature_kind != "memory":
+                priority = 2 if temperature_kind == "core" else 1
+                if (
+                    priority > device["_temperature_priority"]
+                    or (
+                        priority == device["_temperature_priority"]
+                        and (device["temperature"] is None or value > device["temperature"])
+                    )
+                ):
+                    device["temperature"] = value
+                    device["_temperature_priority"] = priority
         elif sensor_type == "Load":
             device["load"] = max(device["load"], value) if device["load"] is not None else value
         elif sensor_type == "Clock" and ("core" in name_lower or "gpu" in name_lower):
@@ -66,4 +90,7 @@ def build_gpu_devices(raw_sensors: list[dict]) -> list[dict]:
             elif "total" in name_lower or "dedicated" in name_lower:
                 device["memory_total"] = value
 
-    return list(devices.values())
+    result = list(devices.values())
+    for device in result:
+        device.pop("_temperature_priority", None)
+    return result

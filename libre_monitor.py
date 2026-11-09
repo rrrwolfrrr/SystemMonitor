@@ -14,7 +14,11 @@ from typing import Any, Optional
 from fallback import apply_fallbacks
 from system_detect import log_system_warnings, is_admin, is_memory_integrity_enabled
 from validator import validate_reading, validate_sensor_value, validate_sensor_reading, suspicious_jump
-from gpu_catalog import GPU_HARDWARE_TYPES, build_gpu_devices
+from gpu_catalog import (
+    GPU_HARDWARE_TYPES,
+    build_gpu_devices,
+    classify_gpu_temperature,
+)
 from update_visitor import create_visitor
 
 try:
@@ -105,10 +109,10 @@ def _load_visitor_adapter():
     if clr is None:
         logger.warning("Нативный visitor-адаптер не загружен: pythonnet недоступен")
         return
-    adapter_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "LhmVisitorAdapter.dll",
-    )
+    adapter_dir = os.path.dirname(os.path.abspath(__file__))
+    adapter_path = os.path.join(adapter_dir, "LhmVisitorAdapter.PerDevice.dll")
+    if not os.path.exists(adapter_path):
+        adapter_path = os.path.join(adapter_dir, "LhmVisitorAdapter.dll")
     logger.info("Проверка нативного visitor-адаптера: %s", adapter_path)
     if not os.path.exists(adapter_path):
         logger.warning("Нативный visitor-адаптер не найден: %s", adapter_path)
@@ -182,6 +186,7 @@ class LibreMonitorDirect:
         self._visitor_failed = False
         self._update_mode_logged = False
         self._value_summary_logged = False
+        self._pending_hardware_updates = set()
 
     def _ensure_initialized(self):
         """Инициализирует Computer и открывает доступ к датчикам."""
@@ -309,13 +314,35 @@ class LibreMonitorDirect:
         for child in hardware.SubHardware:
             self._update_recursive(child)
 
+    def _report_update_status(self, statuses):
+        pending = set()
+        for status in statuses or ():
+            status = str(status)
+            if status.startswith("pending:"):
+                pending.add(status[len("pending:"):])
+            elif status.startswith("error:"):
+                logger.warning("Ошибка обновления оборудования LHM: %s", status[len("error:"):])
+        for name in sorted(pending - self._pending_hardware_updates):
+            logger.warning(
+                "Опрос оборудования LHM ещё выполняется; остальные датчики продолжают обновляться: %s",
+                name,
+            )
+        for name in sorted(self._pending_hardware_updates - pending):
+            logger.info("Опрос оборудования LHM завершён: %s", name)
+        self._pending_hardware_updates = pending
+
     def _update_all(self):
-        """Обновляет всё дерево официальным visitor-механизмом."""
+        """Starts hardware updates independently so one slow device cannot block all sensors."""
         if LHM_VISITOR_RUNNER is not None:
             try:
-                LHM_VISITOR_RUNNER.Invoke(None, [self._computer])
+                statuses = LHM_VISITOR_RUNNER.Invoke(None, [self._computer]) or ()
+                self._report_update_status(statuses)
                 if not self._update_mode_logged:
-                    logger.info("Обновление LHM: нативный .NET UpdateVisitor")
+                    logger.info(
+                        "Обновление LHM: независимые фоновые обновления устройств "
+                        "(лимит ожидания %d мс)",
+                        750,
+                    )
                     self._update_mode_logged = True
                 return
             except Exception as exc:
@@ -508,17 +535,33 @@ class LibreMonitorDirect:
                         continue
 
                     if stype == "Temperature":
-                        is_hotspot = any(
-                            marker in name.lower()
-                            for marker in ("hotspot", "hot spot", "junction")
-                        )
+                        temperature_kind = classify_gpu_temperature(name)
+                        if temperature_kind == "memory":
+                            continue
+                        is_hotspot = temperature_kind == "hotspot"
                         field = "gpu.hotspot_temperature" if is_hotspot else "gpu.temperature"
                         val = self._validated(field, val)
                         if val is None:
                             continue
-                        target = "hotspot_temperature" if is_hotspot else "temperature"
-                        if result["gpu"][target] is None or val > result["gpu"][target]:
-                            result["gpu"][target] = round(val, 1)
+                        if is_hotspot:
+                            target = "hotspot_temperature"
+                            if result["gpu"][target] is None or val > result["gpu"][target]:
+                                result["gpu"][target] = round(val, 1)
+                        else:
+                            priority = 2 if temperature_kind == "core" else 1
+                            current_priority = result["gpu"].get("_temperature_priority", 0)
+                            if (
+                                priority > current_priority
+                                or (
+                                    priority == current_priority
+                                    and (
+                                        result["gpu"]["temperature"] is None
+                                        or val > result["gpu"]["temperature"]
+                                    )
+                                )
+                            ):
+                                result["gpu"]["temperature"] = round(val, 1)
+                                result["gpu"]["_temperature_priority"] = priority
 
                     elif stype == "Voltage":
                         val = self._validated("gpu.voltage", val)
@@ -935,6 +978,7 @@ class LibreMonitorDirect:
                 self._collect_other(hw, result["other"], gpu_identifier=gpu_identifier)
                 self._collect_raw(hw, result["raw_sensors"], gpu_identifier=gpu_identifier)
 
+            result["gpu"].pop("_temperature_priority", None)
             result["gpu_devices"] = build_gpu_devices(result["raw_sensors"])
             result["unknown_sensors"] = [
                 sensor for sensor in result["raw_sensors"]

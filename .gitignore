@@ -11,7 +11,12 @@ env/
 # Local editor and assistant configuration
 .vscode/
 .continue/
+/.copilot-backups/
 /AI_MEMORY.md
+/sync_main.bat
+/sync_main.ps1
+/git pull --ff-only origin main.ps1
+/PawnIO_setup.exe
 /homm3/
 /Документация проекта/FULL_CHANGE_REPORT.txt
 /setup.spec.py

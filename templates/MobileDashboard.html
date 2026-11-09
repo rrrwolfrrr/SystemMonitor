@@ -20,13 +20,16 @@
         body.dark-theme .card-title { color: #8ab4f8; border-bottom-color: #555; }
         body.dark-theme .progress-bar { background: #444; }
         body.dark-theme .value { color: #fff; }
+        body.dark-theme .value.ok { color: #51cf66; }
+        body.dark-theme .card-extra-heading { color: #8ab4f8; border-top-color: #555; }
+        body.dark-theme .smart-drive-capacity, body.dark-theme .smart-drive-detail-label, body.dark-theme .smart-drive-summary-label { color: #b7c8dc; }
         body.dark-theme .update-time { background: #2d2d2d; color: #8ab4f8; }
         body.dark-theme .footer { color: #777; }
         body.dark-theme .footer a { color: #8ab4f8; }
         body.dark-theme .settings-panel { background: #2d2d2d; border-color: #555; color: #e0e0e0; }
         body.dark-theme .settings-panel .close-btn { color: #fff; }
 
-        .container { max-width: 1200px; margin: 0 auto; }
+        .container { width: 100%; max-width: none; margin: 0 auto; }
         .header {
             display: flex;
             justify-content: space-between;
@@ -37,25 +40,6 @@
         }
         .header h1 { font-size: 1.5rem; color: #e0e0e0; margin: 0; }
         .header h1 span { font-size: 0.7rem; color: #666; }
-        .header .actions {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-        }
-        .header .actions button {
-            background: none;
-            border: none;
-            color: #ccc;
-            font-size: 1.6rem;
-            cursor: pointer;
-            min-width: 44px;
-            min-height: 44px;
-            padding: 6px;
-            transition: color 0.2s;
-        }
-        .header .actions button:hover { color: #fff; }
-        .header .actions button.locked { color: #ff6b6b; }
-
         .cards-grid {
             display: flex;
             flex-direction: column;
@@ -73,7 +57,7 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             transition: background 0.3s, box-shadow 0.15s, border-color 0.2s;
             cursor: default;
-            touch-action: pan-y;
+            touch-action: pan-x pan-y;
             position: relative;
         }
 
@@ -116,9 +100,41 @@
         .card-row .label { overflow-wrap: anywhere; }
         .card-row .value { font-weight: 600; color: #fff; }
         .card-row .value { text-align: right; overflow-wrap: anywhere; }
+        .card-extra-heading {
+            margin-top: 8px;
+            padding: 6px 0 3px;
+            border-top: 1px solid rgba(255,255,255,0.14);
+            color: #b7c8dc;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
         .value.high { color: #ff6b6b; }
         .value.danger { color: #ff6b6b; }
         .value.warning { color: #feca57; }
+        .value.ok { color: #51cf66; }
+        .smart-drive + .smart-drive { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.16); }
+        .smart-drive-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+        .smart-drive-model { min-width: 0; font-size: 1rem; line-height: 1.35; overflow-wrap: anywhere; }
+        .smart-drive-capacity { flex: 0 0 auto; color: #d3deec; font-size: .88rem; font-weight: 600; }
+        .smart-drive-device { margin-bottom: 8px; color: #aebdd0; font-size: .78rem; overflow-wrap: anywhere; }
+        .smart-drive-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+        .smart-drive-health, .smart-drive-temperature { min-width: 0; padding: 8px 10px; border: 1px solid rgba(255,255,255,.14); border-radius: 8px; background: rgba(255,255,255,.035); }
+        .smart-drive-summary-label { display: block; margin-bottom: 3px; color: #b7c8dc; font-size: .76rem; }
+        .smart-drive-summary-value { display: block; font-size: 1rem; font-weight: 700; overflow-wrap: anywhere; }
+        .smart-drive-health.passed .smart-drive-summary-value { color: #51cf66; }
+        .smart-drive-health.failed .smart-drive-summary-value, .smart-drive-temperature.danger .smart-drive-summary-value { color: #ff6b6b; }
+        .smart-drive-health.warning .smart-drive-summary-value, .smart-drive-temperature.warning .smart-drive-summary-value { color: #feca57; }
+        .smart-drive-meter { height: 4px; margin-top: 7px; overflow: hidden; border-radius: 4px; background: rgba(255,255,255,.12); }
+        .smart-drive-meter-fill { height: 100%; background: #51cf66; }
+        .smart-drive-health.warning .smart-drive-meter-fill { background: #feca57; }
+        .smart-drive-health.failed .smart-drive-meter-fill { background: #ff6b6b; }
+        .smart-drive-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); column-gap: 16px; }
+        .smart-drive-detail { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,.08); font-size: .88rem; }
+        .smart-drive-detail-label { color: #b7c8dc; overflow-wrap: anywhere; }
+        .smart-drive-detail-value { text-align: right; font-weight: 600; overflow-wrap: anywhere; }
+        .smart-drive-detail-value.danger { color: #ff6b6b; }
+        .smart-drive-detail-value.warning { color: #feca57; }
+        .smart-drive-detail-value.ok { color: #51cf66; }
         .progress-bar {
             width: 100%;
             height: 6px;
@@ -137,8 +153,21 @@
         .progress-bar .fill.danger { background: #ff6b6b; }
         .progress-bar .fill.battery-charge { background: linear-gradient(90deg, #22c55e, #86efac); }
         .progress-bar .fill.battery-charge.charging { background: linear-gradient(90deg, #2196f3, #67e8f9); }
-        .mobile-toolbar { display: flex; gap: 8px; margin: 0 0 12px; }
-        .mobile-action { flex: 1; padding: 8px; font-size: .9rem; background: #16213e; }
+        .horizontal-scroll {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 8px;
+            min-width: 0;
+            max-width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            overscroll-behavior-x: contain;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-x pan-y;
+            scrollbar-width: thin;
+        }
+        .horizontal-scroll > * { flex: 0 0 auto; }
+        .mobile-action { min-height: 44px; padding: 8px; font-size: .9rem; background: #16213e; }
         .coffee-action {
             display: block;
             margin: 0 0 12px;
@@ -160,6 +189,8 @@
         .connection-status { margin: 0 0 10px; padding: 8px 10px; border-radius: 8px; color: #a7f3d0; background: rgba(16,120,75,.2); font-size: .85rem; }
         .connection-status.error { color: #fecaca; background: rgba(180,35,35,.24); }
         .fps-panel { margin: 0 0 12px; padding: 12px; border: 1px solid rgba(255,255,255,.18); border-radius: 12px; background: #16213e; }
+        .fps-panel[hidden], .fps-custom-card[hidden] { display: none !important; }
+        .fps-custom-card { margin-bottom: 12px; }
         .fps-panel h2 { margin: 0 0 5px; font-size: 1rem; }
         .fps-status, .fps-target { color: #bdc8d8; font-size: .82rem; }
         .fps-metrics { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 7px; margin: 9px 0; }
@@ -176,15 +207,21 @@
         .sensor-info { min-width: 0; overflow-wrap: anywhere; }
         .sensor-info small { display: block; opacity: .7; }
         .sensor-row .sensor-actions { display: flex; gap: 3px; }
-        .modal-overlay { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; padding: 12px; background: rgba(0,0,0,.65); }
+        .modal-overlay { display: none; position: fixed; inset: 0; z-index: 1000; align-items: flex-start; justify-content: center; overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding: 12px; background: rgba(0,0,0,.65); }
         .modal-overlay.open { display: flex; }
-        .mobile-modal { width: min(620px, 100%); max-height: min(90dvh, 900px); overflow: auto; overscroll-behavior: contain; padding: 16px; border: 1px solid #555; border-radius: 16px; background: #1a1a2e; box-shadow: 0 8px 30px rgba(0,0,0,.7); }
+        .modal-scrollbar { display: none; position: fixed; z-index: 1002; top: 12px; right: 12px; bottom: 12px; width: 8px; touch-action: none; }
+        .modal-scrollbar.visible { display: block; }
+        .modal-scrollbar-thumb { position: absolute; top: 0; left: 2px; right: 2px; min-height: 36px; border-radius: 999px; background: rgba(205, 215, 235, .42); cursor: grab; transition: background-color .15s ease; }
+        .modal-scrollbar:hover .modal-scrollbar-thumb, .modal-scrollbar:focus-visible .modal-scrollbar-thumb, .modal-scrollbar-thumb:active { background: rgba(220, 228, 245, .78); }
+        .modal-scrollbar:focus-visible { outline: 2px solid rgba(205, 215, 235, .6); outline-offset: 3px; border-radius: 999px; }
+        .mobile-modal { width: min(620px, 100%); margin: auto; overflow: visible; touch-action: pan-y; padding: 16px; border: 1px solid #555; border-radius: 16px; background: #1a1a2e; box-shadow: 0 8px 30px rgba(0,0,0,.7); }
         .mobile-modal-header { position: sticky; top: -16px; z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; background: #1a1a2e; }
         .mobile-modal-header h2 { font-size: 1.15rem; }
         .mobile-modal input[type="search"], .mobile-modal input[type="text"], .mobile-modal select { width: 100%; min-height: 44px; margin: 6px 0; padding: 9px 10px; border: 1px solid #555; border-radius: 8px; background: #2d2d44; color: #fff; font: inherit; }
+        .sensor-context-hint { margin: 0 0 8px; font-size: 0.88rem; line-height: 1.4; }
         .mobile-modal button { min-height: 44px; padding: 7px 10px; border: 1px solid #555; border-radius: 8px; background: #16213e; color: #fff; font: inherit; }
         .modal-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-        .sensor-list { max-height: 48dvh; overflow: auto; }
+        .sensor-list { overflow: visible; touch-action: pan-y; }
         .history-chart { display: block; width: 100%; height: 180px; margin: 8px 0 18px; border-radius: 8px; background: rgba(0,0,0,.22); }
         .history-legend { font-size: .9rem; }
         .history-legend span { margin-right: 14px; }
@@ -195,7 +232,6 @@
         .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
         body.dark-theme .mobile-action, body.dark-theme .card-actions button { background: #2d2d2d; }
         body.dark-theme .coffee-action { background: #3a2815; color: #ffe0ad; }
-        body.dark-theme .mobile-toolbar { background: #1a1a1a; }
         body.dark-theme .summary-item { background: #222; }
         body.dark-theme .mobile-modal, body.dark-theme .mobile-modal-header { background: #222; }
         body.terminal-theme .mobile-action, body.terminal-theme .card-actions button { background: #000; color: #33ff33; border-color: #33ff33; }
@@ -206,6 +242,10 @@
         body.high-contrast-theme { background: #000; color: #fff; }
         body.high-contrast-theme .card, body.high-contrast-theme .summary-item, body.high-contrast-theme .mobile-action { background: #000; border: 2px solid #fff; }
         body.high-contrast-theme .card-row .label, body.high-contrast-theme .summary-label { color: #fff; }
+        body.high-contrast-theme .card-extra-heading { color: #fff; border-top-color: #fff; }
+        body.high-contrast-theme .smart-drive-health, body.high-contrast-theme .smart-drive-temperature { border-color: #fff; }
+        body.high-contrast-theme .smart-drive-detail { border-bottom-color: #fff; }
+        body.high-contrast-theme .smart-drive-detail-label, body.high-contrast-theme .smart-drive-summary-label, body.high-contrast-theme .smart-drive-capacity, body.high-contrast-theme .smart-drive-device { color: #fff; }
         .card-actions button:disabled { opacity: .4; cursor: default; }
 
         .cmd-terminal { display: none; }
@@ -220,8 +260,6 @@
         }
         body.cmd-theme .container { width: 100%; max-width: none; min-height: 100vh; padding: 10px 12px; }
         body.cmd-theme .header,
-        body.cmd-theme .mobile-toolbar,
-        body.cmd-theme .coffee-action,
         body.cmd-theme .overview,
         body.cmd-theme .connection-status,
         body.cmd-theme #cardsContainer,
@@ -229,7 +267,6 @@
         body.cmd-theme .footer { display: none !important; }
         body.cmd-theme .cmd-terminal { display: block; }
         body.mobile-compact .header,
-        body.mobile-compact .mobile-toolbar,
         body.mobile-compact > .container > .coffee-action,
         body.mobile-compact .overview,
         body.mobile-compact .connection-status,
@@ -265,13 +302,14 @@
             cursor: pointer;
         }
         .mobile-control-panel {
-            display: grid;
-            align-content: center;
-            gap: 8px;
-            width: 212px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            width: min(276px, calc(100vw - 32px));
             max-width: 0;
             min-width: 0;
             padding: 12px 0;
+            max-height: min(82vh, 640px);
             border: 0 solid rgba(255,255,255,.25);
             border-right: 0;
             border-radius: 12px 0 0 12px;
@@ -279,19 +317,31 @@
             box-shadow: 0 3px 16px rgba(0,0,0,.35);
             opacity: 0;
             overflow: hidden;
+            overscroll-behavior: contain;
             visibility: hidden;
             transition: max-width .2s ease, padding .2s ease, opacity .15s ease, visibility 0s linear .2s;
         }
         .mobile-control-dock.open .mobile-control-panel {
-            max-width: 212px;
+            max-width: min(276px, calc(100vw - 32px));
             padding: 12px;
             border-width: 1px 0 1px 1px;
             opacity: 1;
             visibility: visible;
+            overflow-x: hidden;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             transition: max-width .2s ease, padding .2s ease, opacity .15s ease, visibility 0s;
         }
+        .mobile-control-section-title {
+            padding: 5px 12px 3px;
+            color: #bccbe2;
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+        }
         .mobile-control-panel button {
-            min-height: 42px;
+            min-height: 44px;
             padding: 9px 12px;
             border: 1px solid rgba(255,255,255,.2);
             border-radius: 8px;
@@ -303,6 +353,12 @@
             cursor: pointer;
         }
         .mobile-control-panel button:hover { background: #405780; }
+        .mobile-control-panel button.locked { color: #ffb4b4; }
+        .mobile-control-panel .coffee-action {
+            min-height: 44px;
+            margin: 4px 0 0;
+            padding: 10px 12px;
+        }
         .mobile-control-handle:hover,
         .mobile-control-handle:focus-visible {
             background: rgba(105,105,105,.48);
@@ -409,9 +465,6 @@
             color: #33ff33;
             border-bottom-color: #33ff33;
         }
-        body.terminal-theme .header .actions button {
-            color: #33ff33;
-        }
         body.terminal-theme .card {
             background: transparent !important;
             border: none !important;
@@ -447,6 +500,17 @@
         body.terminal-theme .card-row .value.danger {
             color: #ff4444 !important;
         }
+        body.terminal-theme .card-extra-heading {
+            color: #33ff33;
+            border-top: 1px dashed #33ff33;
+            text-transform: uppercase;
+        }
+        body.terminal-theme .smart-drive + .smart-drive { border-top-color: #33ff33; }
+        body.terminal-theme .smart-drive-capacity, body.terminal-theme .smart-drive-device, body.terminal-theme .smart-drive-summary-label, body.terminal-theme .smart-drive-detail-label { color: #33ff33; }
+        body.terminal-theme .smart-drive-health, body.terminal-theme .smart-drive-temperature { border-color: #33ff33; background: transparent; }
+        body.terminal-theme .smart-drive-meter { background: #222; }
+        body.terminal-theme .smart-drive-meter-fill { background: #33ff33; }
+        body.terminal-theme .smart-drive-health.warning .smart-drive-summary-value, body.terminal-theme .smart-drive-health.failed .smart-drive-summary-value, body.terminal-theme .smart-drive-temperature.warning .smart-drive-summary-value, body.terminal-theme .smart-drive-temperature.danger .smart-drive-summary-value { color: #ff4444; }
         body.terminal-theme .progress-bar {
             display: none !important;
         }
@@ -587,6 +651,11 @@
             border-radius: 6px;
             font-size: 0.95rem;
         }
+        .dashboard-scale-control { display: flex; align-items: center; gap: 8px; }
+        .dashboard-scale-control input { flex: 1; min-width: 100px; min-height: 44px; accent-color: #0f3460; }
+        .dashboard-scale-control output { min-width: 42px; text-align: right; font-weight: 700; }
+        .dashboard-scale-control button { min-height: 44px; padding: 6px 10px; border: 1px solid #555; border-radius: 6px; background: #243454; color: #fff; }
+        .dashboard-scale-hint { display: block; margin-top: 5px; color: #aaa; font-size: .8rem; }
         .settings-group .file-input-wrapper {
             display: flex;
             gap: 8px;
@@ -635,7 +704,6 @@
             .card-row { font-size: 0.8rem; padding: 3px 0; }
             .progress-bar { height: 4px; }
             .header h1 { font-size: 1.25rem; }
-            .mobile-toolbar { position: sticky; top: 0; z-index: 10; padding: 6px 0; background: #1a1a2e; }
         }
     </style>
     <style id="custom-style"></style>
@@ -644,21 +712,11 @@
     <div class="container">
         <div class="header">
             <h1>📊 Монитор <span>(моб.)</span></h1>
-            <div class="actions">
-                <button id="lockToggle" title="Блокировка интерфейса (скролл)">🔓</button>
-                <button id="themeToggle" title="Тёмная тема">🌙</button>
-                <button id="settingsToggle" title="Настройки">⚙️</button>
-            </div>
         </div>
 
-        <div class="mobile-toolbar" aria-label="Быстрые действия">
-            <button class="mobile-action" id="historyToggle" type="button">📈 История</button>
-            <button class="mobile-action" id="presetsToggle" type="button">🗂 Профили</button>
-        </div>
-        <a class="coffee-action" href="https://dalink.to/monsterhairy" target="_blank" rel="noopener noreferrer" title="Поддержать разработчика">☕ Угостить кофе</a>
         <div class="overview" id="favoritesOverview" aria-label="Избранные датчики"></div>
         <div class="connection-status" id="connectionStatus" role="status" aria-live="polite">Подключение к SystemMonitor…</div>
-        <section class="fps-panel" aria-label="Мониторинг FPS">
+        <section class="fps-panel" id="mobileFpsPanel" aria-label="Мониторинг FPS">
             <h2>🎮 FPS игры или приложения</h2>
             <div class="fps-status" id="mobileFpsStatus" role="status" aria-live="polite">Ожидание активного приложения…</div>
             <div class="fps-metrics">
@@ -678,15 +736,28 @@
             </div>
         </section>
         <div id="cardsContainer" class="cards-grid vertical"></div>
+        <section class="card fps-custom-card" id="mobileFpsCard" aria-label="Карточка FPS" hidden>
+            <div class="card-title">
+                <span class="icon" aria-hidden="true">🎮</span>
+                <span class="card-title-text">FPS игры или приложения</span>
+                <span class="card-actions">
+                    <button id="removeFpsCardBtn" type="button" aria-label="Убрать карточку FPS" title="Убрать карточку FPS">×</button>
+                </span>
+            </div>
+            <div class="card-content">
+                <div class="fps-status" id="mobileFpsCardStatus" role="status" aria-live="polite">Ожидание активного приложения…</div>
+                <div class="fps-metrics">
+                    <div class="fps-metric"><strong id="mobileFpsCardCurrent">—</strong><span>Текущий FPS</span></div>
+                    <div class="fps-metric"><strong id="mobileFpsCardAverage">—</strong><span>Средний FPS · 30 сек</span></div>
+                    <div class="fps-metric"><strong id="mobileFpsCardOnePercentLow">—</strong><span>1% low</span></div>
+                    <div class="fps-metric"><strong id="mobileFpsCardFrameTime">—</strong><span>Время кадра</span></div>
+                </div>
+                <div class="fps-target" id="mobileFpsCardTarget">Целевой процесс: не выбран</div>
+            </div>
+        </section>
         <section class="cmd-terminal" id="cmdTerminal" aria-label="CMD: монитор датчиков">
             <div class="cmd-titlebar">
                 <div class="cmd-caption">⌘ SystemMonitor — Монитор датчиков</div>
-                <div class="cmd-actions">
-                    <button id="cmdSensorsToggle" type="button">Датчики</button>
-                    <button id="cmdSettingsToggle" type="button">Настройки</button>
-                    <button id="cmdHistoryToggle" type="button">История</button>
-                    <a class="coffee-action" href="https://dalink.to/monsterhairy" target="_blank" rel="noopener noreferrer" title="Поддержать разработчика">☕ Кофе</a>
-                </div>
             </div>
             <div class="cmd-window-version">Microsoft Windows [Version 10.0]</div>
             <div class="cmd-welcome">(c) Microsoft Corporation. All rights reserved.</div>
@@ -716,6 +787,7 @@
                         <label><input type="checkbox" data-card="ram" checked> Память</label>
                         <label><input type="checkbox" data-card="network" checked> Сеть</label>
                         <label><input type="checkbox" data-card="disks" checked> Диски</label>
+                        <label><input type="checkbox" data-card="smart" checked> SMART накопителей</label>
                         <label><input type="checkbox" data-card="fans" checked> Вентиляторы</label>
                         <label><input type="checkbox" data-card="motherboard" checked> Материнская плата</label>
                         <label><input type="checkbox" data-card="system" checked> Система</label>
@@ -756,6 +828,16 @@
                 </div>
 
                 <div class="settings-group">
+                    <label for="dashboardScale"><strong>Масштаб интерфейса</strong></label>
+                    <div class="dashboard-scale-control">
+                        <input id="dashboardScale" type="range" min="75" max="150" step="5" value="100" aria-describedby="dashboardScaleHint">
+                        <output id="dashboardScaleValue" for="dashboardScale">100%</output>
+                        <button id="dashboardScaleReset" type="button" title="Вернуть масштаб 100%">Сброс</button>
+                    </div>
+                    <small class="dashboard-scale-hint" id="dashboardScaleHint">75–150%, сохраняется для настольной и мобильной панелей.</small>
+                </div>
+
+                <div class="settings-group">
                     <label><strong>Пользовательский CSS</strong></label>
                     <div class="file-input-wrapper">
                         <input type="file" id="cssFileInput" accept=".css">
@@ -778,9 +860,13 @@
                     <button type="button" data-close-modal="sensorOverlay" aria-label="Закрыть">✕</button>
                 </div>
                 <label id="builtInMetricsControl"><input type="checkbox" id="builtInMetricsToggle"> Показывать стандартные показатели карточки</label>
+                <p id="smartSensorHint" class="sensor-context-hint" hidden>Выбранные датчики будут добавлены в SMART-карточку отдельно от стандартных данных.</p>
                 <input type="search" id="sensorSearch" placeholder="Поиск датчиков…" autocomplete="off">
                 <div class="sensor-list" id="sensorList"></div>
                 <div class="modal-actions"><button type="button" data-close-modal="sensorOverlay">Готово</button></div>
+            </div>
+            <div class="modal-scrollbar" id="sensorScrollIndicator" role="scrollbar" tabindex="0" aria-label="Прокрутка списка датчиков" aria-controls="sensorOverlay" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <div class="modal-scrollbar-thumb" id="sensorScrollThumb"></div>
             </div>
         </div>
 
@@ -817,9 +903,19 @@
         </div>
     </div>
     <aside class="mobile-control-dock" id="mobileControlDock">
-        <div class="mobile-control-panel" id="mobileControlPanel" aria-label="Быстрые настройки">
+        <div class="mobile-control-panel" id="mobileControlPanel" aria-label="Действия Dashboard" tabindex="-1">
+            <div class="mobile-control-section-title">Вид и настройки</div>
             <button type="button" id="compactModeToggle" aria-pressed="false">Компактный вид</button>
-            <button type="button" id="mobileSettingsShortcut">Настройки</button>
+            <button type="button" id="settingsToggle" aria-label="Открыть настройки">⚙️ Настройки</button>
+            <button type="button" id="lockToggle" aria-pressed="false" title="Разрешить перемещение карточек">🔓 Карточки разблокированы</button>
+            <button type="button" id="themeToggle" aria-label="Переключить тёмную тему">🌙 Тёмная тема</button>
+            <div class="mobile-control-section-title">Действия</div>
+            <button type="button" id="historyToggle">📈 История</button>
+            <button type="button" id="presetsToggle">🗂 Профили</button>
+            <button type="button" id="cmdSensorsToggle">⌘ Датчики CMD</button>
+            <button type="button" id="fpsPanelToggle" data-fps-panel-toggle aria-controls="mobileFpsPanel" aria-expanded="true">🎮 Скрыть FPS</button>
+            <button type="button" id="addFpsCardBtn" data-fps-card-toggle aria-controls="mobileFpsCard" aria-pressed="false">＋ Карточка FPS</button>
+            <a class="coffee-action" href="https://dalink.to/monsterhairy" target="_blank" rel="noopener noreferrer" title="Поддержать разработчика">☕ Угостить кофе</a>
         </div>
         <button type="button" class="mobile-control-handle" id="mobileControlHandle"
                 aria-label="Открыть быстрые настройки" aria-expanded="false" aria-controls="mobileControlPanel">‹</button>
@@ -833,6 +929,7 @@
         let activeSensorCard = 'cpu';
         let lastSuccessfulUpdate = null;
         let mobileControlDockTimerId = null;
+        let latestFpsStatus = null;
         const cardKeys = ['cpu', 'gpu', 'ram', 'network', 'disks', 'smart', 'fans', 'motherboard', 'system', 'battery'];
 
         // --- Настройки ---
@@ -862,14 +959,47 @@
             sensorLabels: {},
             favorites: [],
             collapsedCards: [],
-            compactMode: false
+            compactMode: false,
+            showFpsPanel: true,
+            showFpsCard: false
         };
+        const DASHBOARD_SCALE_KEY = 'systemMonitorDashboardScale.v1';
+        function normalizeDashboardScale(value) {
+            const scale = Number(value);
+            return Number.isFinite(scale) ? Math.max(75, Math.min(150, Math.round(scale / 5) * 5)) : 100;
+        }
+        function getDashboardScale() {
+            try {
+                const saved = localStorage.getItem(DASHBOARD_SCALE_KEY);
+                return normalizeDashboardScale(saved === null ? 100 : saved);
+            } catch (error) {
+                console.error('Не удалось загрузить масштаб Dashboard:', error);
+                return 100;
+            }
+        }
+        function applyDashboardScale(value, persist) {
+            const scale = normalizeDashboardScale(value);
+            document.documentElement.style.zoom = `${scale}%`;
+            const input = document.getElementById('dashboardScale');
+            const output = document.getElementById('dashboardScaleValue');
+            if (input) input.value = String(scale);
+            if (output) output.value = `${scale}%`;
+            if (persist) {
+                try {
+                    localStorage.setItem(DASHBOARD_SCALE_KEY, String(scale));
+                } catch (error) {
+                    console.error('Не удалось сохранить масштаб Dashboard:', error);
+                }
+            }
+            return scale;
+        }
         const mobileCardMeta = {
             cpu: { title: 'CPU', icon: '🔥' },
             gpu: { title: 'GPU', icon: '🎮' },
             ram: { title: 'Память (RAM)', icon: '🧠' },
             network: { title: 'Сеть', icon: '🌐' },
             disks: { title: 'Диски', icon: '💾' },
+            smart: { title: 'SMART накопителей', icon: '🩺' },
             fans: { title: 'Вентиляторы', icon: '🌀' },
             motherboard: { title: 'Материнская плата', icon: '🔌' },
             system: { title: 'Система', icon: '⚙️' },
@@ -883,6 +1013,8 @@
                     const parsed = JSON.parse(saved);
                     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Invalid mobile settings');
                     const merged = { ...defaultSettings, ...parsed };
+                    merged.showFpsPanel = parsed.showFpsPanel !== false;
+                    merged.showFpsCard = parsed.showFpsCard === true;
                     merged.showCards = { ...defaultSettings.showCards, ...(parsed.showCards || {}) };
                     merged.cardOrder = Array.isArray(parsed.cardOrder)
                         ? [...new Set(parsed.cardOrder.filter(key => typeof key === 'string' && (cardKeys.includes(key) || isGpuDeviceCardKey(key))))]
@@ -928,6 +1060,7 @@
         }
 
         let settings = loadSettings();
+        applyDashboardScale(getDashboardScale(), false);
 
         // --- Тема ---
         function applyCompactMode() {
@@ -958,10 +1091,10 @@
             const darkMode = settings.darkMode || settings.theme === 'dark';
             if (darkMode) {
                 document.body.classList.add('dark-theme');
-                document.getElementById('themeToggle').textContent = '☀️';
+                document.getElementById('themeToggle').textContent = '☀️ Светлая тема';
             } else {
                 document.body.classList.remove('dark-theme');
-                document.getElementById('themeToggle').textContent = '🌙';
+                document.getElementById('themeToggle').textContent = '🌙 Тёмная тема';
             }
             if (settings.theme === 'terminal') {
                 document.body.classList.add('terminal-theme');
@@ -993,16 +1126,18 @@
         function updateLockState() {
             const lockBtn = document.getElementById('lockToggle');
             if (settings.locked) {
-                lockBtn.textContent = '🔒';
+                lockBtn.textContent = '🔒 Карточки заблокированы';
                 lockBtn.classList.add('locked');
                 lockBtn.setAttribute('aria-pressed', 'true');
+                lockBtn.setAttribute('aria-label', 'Разблокировать карточки');
                 lockBtn.title = 'Сортировка карточек заблокирована';
                 document.body.style.touchAction = 'auto';
                 document.body.style.overflow = 'auto';
             } else {
-                lockBtn.textContent = '🔓';
+                lockBtn.textContent = '🔓 Карточки разблокированы';
                 lockBtn.classList.remove('locked');
                 lockBtn.setAttribute('aria-pressed', 'false');
+                lockBtn.setAttribute('aria-label', 'Заблокировать карточки');
                 lockBtn.title = 'Разрешить сортировку карточек';
                 document.body.style.touchAction = 'pan-y';
                 document.body.style.overflow = 'auto';
@@ -1071,6 +1206,22 @@
             settings.cardOrder = [...new Set(baseOrder)];
         }
 
+        function getGpuStandardLines(gpu) {
+            const gpuTemperature = gpu.temperature;
+            const hotspotTemperature = gpu.hotspot_temperature;
+            return [
+                { label: 'Температура GPU', value: formatValue(gpuTemperature, 1, '°C'), cls: gpuTemperature > 80 ? 'danger' : gpuTemperature > 70 ? 'warning' : '' },
+                { label: 'Температура Hotspot', value: formatValue(hotspotTemperature, 1, '°C'), cls: hotspotTemperature > 90 ? 'danger' : hotspotTemperature > 80 ? 'warning' : '' },
+                { label: 'Разница температур', value: Number.isFinite(gpuTemperature) && Number.isFinite(hotspotTemperature) && gpuTemperature !== 0 ? formatValue(((hotspotTemperature - gpuTemperature) / Math.abs(gpuTemperature)) * 100, 1, '%') : '—' },
+                { label: 'Загрузка', value: formatPercent(gpu.load) },
+                { label: 'Частота', value: formatValue(gpu.frequency, 0, 'МГц') },
+                { label: 'Напряжение', value: formatValue(gpu.voltage, 3, ' В') },
+                { label: 'Мощность', value: formatValue(gpu.power, 1, ' Вт') },
+                { label: 'Выделенная память', value: formatSizeMb(gpu.dedicated_memory_used_mb ?? gpu.memory_used) + ' / ' + formatSizeMb(gpu.dedicated_memory_total_mb ?? gpu.memory_total) },
+                { label: 'Общая память', value: formatSizeMb(gpu.shared_memory_used_mb) + ' / ' + formatSizeMb(gpu.shared_memory_total_mb) },
+            ];
+        }
+
         function getCardData(cardKey, data) {
             let result = { title: '', icon: '', lines: [], hasProgress: false, progressValue: null };
             if (isGpuDeviceCardKey(cardKey)) {
@@ -1083,19 +1234,33 @@
                 const device = (Array.isArray(data.gpu_devices) ? data.gpu_devices : [])
                     .find(candidate => candidate && candidate.identifier === identifier);
                 if (!device) return null;
+                const gpuDevices = Array.isArray(data.gpu_devices) ? data.gpu_devices : [];
+                const gpuMetrics = { ...device };
+                if (gpuDevices.length === 1) {
+                    const aggregateGpu = data.gpu || {};
+                    [
+                        'dedicated_memory_used_mb', 'dedicated_memory_total_mb',
+                        'shared_memory_used_mb', 'shared_memory_total_mb',
+                        'memory_used', 'memory_total'
+                    ].forEach(key => {
+                        if (aggregateGpu[key] !== null && aggregateGpu[key] !== undefined) {
+                            gpuMetrics[key] = aggregateGpu[key];
+                        }
+                    });
+                }
+                if ([
+                    gpuMetrics.temperature, gpuMetrics.hotspot_temperature, gpuMetrics.load,
+                    gpuMetrics.frequency, gpuMetrics.voltage, gpuMetrics.power,
+                    gpuMetrics.dedicated_memory_used_mb, gpuMetrics.dedicated_memory_total_mb,
+                    gpuMetrics.shared_memory_used_mb, gpuMetrics.shared_memory_total_mb,
+                    gpuMetrics.memory_used, gpuMetrics.memory_total
+                ].every(value => value === null || value === undefined)) return null;
                 result.title = 'GPU — ' + (device.name || 'Видеокарта') +
-                    (data.gpu_devices.length > 1 ? ' · ' + getGpuAdapterLabel(identifier, device.hardware_type) : '');
+                    (gpuDevices.length > 1 ? ' · ' + getGpuAdapterLabel(identifier, device.hardware_type) : '');
                 result.icon = '🎮';
-                result.lines = (Array.isArray(device.sensors) ? device.sensors : []).map(sensor => ({
-                    label: [sensor.hardware, sensor.name].filter(Boolean).join(' · ') || 'Датчик',
-                    value: formatSensorValue(sensor),
-                    cls: sensor.type === 'Temperature' && Number.isFinite(sensor.value)
-                        ? sensor.value >= 85 ? 'danger' : sensor.value >= 70 ? 'warning' : ''
-                        : ''
-                }));
+                result.lines = getGpuStandardLines(gpuMetrics);
                 result.hasProgress = Number.isFinite(device.load);
                 result.progressValue = result.hasProgress ? device.load : null;
-                if (!result.lines.length) return null;
                 return result;
             }
             switch(cardKey) {
@@ -1125,17 +1290,7 @@
                     ].every(value => value === null || value === undefined)) return null;
                     result.title = 'GPU';
                     result.icon = '🎮';
-                    const gpuTemperature = gpu.hotspot_temperature ?? gpu.temperature;
-                    const hotspotTemperature = gpu.temperature ?? gpu.hotspot_temperature;
-                    result.lines = [
-                        { label: 'Температура GPU', value: formatValue(gpuTemperature, 1, '°C'), cls: gpuTemperature > 80 ? 'danger' : gpuTemperature > 70 ? 'warning' : '' },
-                        { label: 'Hotspot', value: formatValue(hotspotTemperature, 1, '°C'), cls: hotspotTemperature > 90 ? 'danger' : hotspotTemperature > 80 ? 'warning' : '' },
-                        { label: 'Разница температур', value: Number.isFinite(gpuTemperature) && Number.isFinite(hotspotTemperature) && gpuTemperature !== 0 ? formatValue(((hotspotTemperature - gpuTemperature) / Math.abs(gpuTemperature)) * 100, 1, '%') : '—' },
-                        { label: 'Загрузка', value: formatPercent(gpu.load) },
-                        { label: 'Частота', value: formatValue(gpu.frequency, 0, 'МГц') },
-                        { label: 'Выделенная память', value: formatSizeMb(gpu.dedicated_memory_used_mb ?? gpu.memory_used) + ' / ' + formatSizeMb(gpu.dedicated_memory_total_mb ?? gpu.memory_total) },
-                        { label: 'Общая память', value: formatSizeMb(gpu.shared_memory_used_mb) + ' / ' + formatSizeMb(gpu.shared_memory_total_mb) },
-                    ];
+                    result.lines = getGpuStandardLines(gpu);
                     result.hasProgress = true; result.progressValue = gpu.load;
                     break;
                 }
@@ -1203,13 +1358,14 @@
                         break;
                     }
                     result.lines = [];
+                    result.smartDevices = devices.filter(disk => disk && typeof disk === 'object');
                     devices.forEach(disk => {
                         if (!disk || typeof disk !== 'object') return;
                         const label = (disk.model || disk.device || 'Накопитель') + (disk.device ? ' · ' + disk.device : '');
                         result.lines.push({
                             label,
-                            value: disk.health === 'passed' ? 'SMART: исправен' : disk.health === 'failed' ? 'SMART: есть предупреждение' : 'SMART: неизвестно',
-                            cls: disk.health === 'failed' ? 'danger' : ''
+                            value: disk.health === 'passed' ? 'Исправен' : disk.health === 'failed' ? 'Есть предупреждение' : 'Неизвестно',
+                            cls: disk.health === 'failed' ? 'danger' : disk.health === 'passed' ? 'ok' : ''
                         });
                         if (Number.isFinite(disk.health_percent)) result.lines.push({ label: '  Техсостояние', value: formatPercent(disk.health_percent), cls: disk.health_percent <= 10 ? 'danger' : disk.health_percent <= 30 ? 'warning' : 'ok' });
                         if (disk.firmware_version) result.lines.push({ label: '  Прошивка', value: disk.firmware_version });
@@ -1488,7 +1644,7 @@
                 if (cpu.temperature !== null && cpu.temperature !== undefined) addSummary('CPU', formatValue(cpu.temperature, 1, '°C'));
                 const cpuLoad = cpu.load ?? currentData.cpu_percent;
                 if (cpuLoad !== null && cpuLoad !== undefined) addSummary('CPU · загрузка', formatPercent(cpuLoad));
-                const gpuTemp = gpu.hotspot_temperature ?? gpu.temperature;
+                const gpuTemp = gpu.temperature;
                 if (gpuTemp !== null && gpuTemp !== undefined) addSummary('GPU', formatValue(gpuTemp, 1, '°C'));
                 if (currentData.ram_percent !== null && currentData.ram_percent !== undefined) addSummary('RAM', formatPercent(currentData.ram_percent));
             }
@@ -1536,6 +1692,7 @@
             });
             if (!sorted.length) {
                 list.textContent = 'Данные датчиков ещё не получены.';
+                requestAnimationFrame(syncSensorScrollIndicator);
                 return;
             }
             let shown = 0;
@@ -1620,6 +1777,7 @@
                 list.appendChild(row);
             });
             if (!shown) list.textContent = 'По запросу ничего не найдено.';
+            requestAnimationFrame(syncSensorScrollIndicator);
         }
 
         function openSensorSettings(cardKey) {
@@ -1629,6 +1787,7 @@
             document.getElementById('sensorModalTitle').textContent = isCmd ? 'Датчики CMD' : 'Датчики: ' + (cardData ? cardData.title : cardKey.toUpperCase());
             document.getElementById('sensorSearch').value = '';
             document.getElementById('builtInMetricsControl').hidden = isCmd;
+            document.getElementById('smartSensorHint').hidden = cardKey !== 'smart';
             document.getElementById('builtInMetricsToggle').checked = !isCmd && settings.hiddenBuiltIn[cardKey] !== true;
             openModal('sensorOverlay');
             renderSensorList();
@@ -1695,7 +1854,10 @@
             const cardData = getDisplayCardData(cardKey, data);
             if (!cardData) return '';
             const showBuiltIn = settings.hiddenBuiltIn[cardKey] !== true;
-            const linesHTML = (showBuiltIn ? cardData.lines : []).map(line => {
+            const smartDrivesHTML = cardKey === 'smart' && showBuiltIn && Array.isArray(cardData.smartDevices)
+                ? cardData.smartDevices.map(buildSmartDriveHTML).join('')
+                : '';
+            const linesHTML = (showBuiltIn && !smartDrivesHTML ? cardData.lines : []).map(line => {
                 const valueClass = line.cls ? `value ${escapeHtml(line.cls)}` : 'value';
                 return `<div class="card-row"><span class="label">${escapeHtml(line.label)}</span><span class="${valueClass}">${escapeHtml(line.value)}</span></div>`;
             }).join('');
@@ -1711,7 +1873,64 @@
                 progressHTML = `<div class="progress-bar"><div class="${cls}" style="width:${pct}%;"></div></div>`;
             }
             const extraRows = buildAdditionalSensorRows(cardKey);
-            return buildCardShell(cardKey, cardData, linesHTML + extraRows + progressHTML);
+            return buildCardShell(cardKey, cardData, smartDrivesHTML + linesHTML + extraRows + progressHTML);
+        }
+
+        function buildSmartDriveHTML(disk) {
+            const model = disk.model || disk.device || 'Накопитель';
+            const capacity = Number.isFinite(disk.capacity_bytes) && disk.capacity_bytes > 0
+                ? (disk.capacity_bytes / 1e9).toLocaleString('ru-RU', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' ГБ'
+                : '';
+            const healthLabels = { passed: 'Хорошо', failed: 'Есть предупреждение', unknown: 'Неизвестно' };
+            const health = ['passed', 'failed'].includes(disk.health) ? disk.health : 'unknown';
+            const healthPercent = Number.isFinite(disk.health_percent)
+                ? Math.max(0, Math.min(100, disk.health_percent))
+                : null;
+            const healthTone = health === 'failed' ? 'failed' : healthPercent !== null && healthPercent <= 30 ? 'warning' : health === 'passed' ? 'passed' : '';
+            const temperatureTone = Number.isFinite(disk.temperature)
+                ? disk.temperature >= 85 ? 'danger' : disk.temperature >= 70 ? 'warning' : ''
+                : '';
+            const details = [
+                ['Прошивка', disk.firmware_version],
+                ['Серийный номер', disk.serial_number],
+                ['Интерфейс', disk.interface],
+                ['Режим передачи', disk.transfer_mode],
+                ['Буква тома', disk.volume],
+                ['Стандарт', disk.standard],
+                ['Возможности', Array.isArray(disk.capabilities) && disk.capabilities.length ? disk.capabilities.join(', ') : null],
+                ['Скорость вращения', disk.rotation_label],
+                ['Износ', Number.isFinite(disk.percentage_used) ? formatPercent(disk.percentage_used) : null],
+                ['Резерв ресурса', Number.isFinite(disk.available_spare_percent) ? formatPercent(disk.available_spare_percent) : null],
+                ['Часы работы', Number.isFinite(disk.power_on_hours) ? formatValue(disk.power_on_hours, 0, 'ч') : null],
+                ['Включения', Number.isFinite(disk.power_cycles) ? formatValue(disk.power_cycles, 0) : null],
+                ['Всего хост-чтений', Number.isFinite(disk.data_units_read) ? formatValue(disk.data_units_read * 512000 / 1e9, 0, 'ГБ') : null],
+                ['Всего хост-записей', Number.isFinite(disk.data_units_written) ? formatValue(disk.data_units_written * 512000 / 1e9, 0, 'ГБ') : null],
+                ['Переназначенные секторы', Number.isFinite(disk.reallocated_sectors) ? formatValue(disk.reallocated_sectors, 0) : null, disk.reallocated_sectors > 0 ? 'warning' : ''],
+                ['Ожидающие секторы', Number.isFinite(disk.pending_sectors) ? formatValue(disk.pending_sectors, 0) : null, disk.pending_sectors > 0 ? 'danger' : ''],
+                ['Неисправимые ошибки', Number.isFinite(disk.uncorrectable_errors) ? formatValue(disk.uncorrectable_errors, 0) : null, disk.uncorrectable_errors > 0 ? 'danger' : ''],
+                ['Ошибки носителя', Number.isFinite(disk.media_errors) ? formatValue(disk.media_errors, 0) : null, disk.media_errors > 0 ? 'danger' : '']
+            ].filter(([label, value]) => value !== null && value !== undefined && value !== '');
+            const detailsHTML = details.map(([label, value, tone]) =>
+                `<div class="smart-drive-detail"><span class="smart-drive-detail-label">${escapeHtml(label)}</span><span class="smart-drive-detail-value${tone ? ' ' + escapeHtml(tone) : ''}">${escapeHtml(value)}</span></div>`
+            ).join('');
+            const healthValue = healthPercent === null
+                ? healthLabels[health]
+                : healthLabels[health] + ' · ' + formatValue(healthPercent, 0, '%');
+            const meterHTML = healthPercent === null
+                ? ''
+                : `<div class="smart-drive-meter" role="meter" aria-label="Техсостояние ${escapeHtml(model)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${healthPercent}"><div class="smart-drive-meter-fill" style="width:${healthPercent}%"></div></div>`;
+            const temperatureHTML = Number.isFinite(disk.temperature)
+                ? `<div class="smart-drive-temperature${temperatureTone ? ' ' + temperatureTone : ''}"><span class="smart-drive-summary-label">Температура</span><strong class="smart-drive-summary-value">${escapeHtml(formatValue(disk.temperature, 0, '°C'))}</strong></div>`
+                : '';
+            return `<section class="smart-drive">
+                <div class="smart-drive-heading"><h3 class="smart-drive-model">${escapeHtml(model)}</h3>${capacity ? `<span class="smart-drive-capacity">${escapeHtml(capacity)}</span>` : ''}</div>
+                ${disk.device && !disk.volume ? `<div class="smart-drive-device">${escapeHtml(disk.device)}</div>` : ''}
+                <div class="smart-drive-summary">
+                    <div class="smart-drive-health ${healthTone}"><span class="smart-drive-summary-label">Техсостояние</span><strong class="smart-drive-summary-value">${escapeHtml(healthValue)}</strong>${meterHTML}</div>
+                    ${temperatureHTML}
+                </div>
+                ${detailsHTML ? `<div class="smart-drive-details">${detailsHTML}</div>` : ''}
+            </section>`;
         }
 
         // --- Построение HTML для терминальной темы ---
@@ -1728,14 +1947,18 @@
 
         function buildAdditionalSensorRows(cardKey, terminal) {
             const byKey = new Map(getSensorCatalog().map(sensor => [sensorKey(sensor), sensor]));
-            return (settings.cardSensors[cardKey] || []).map(key => {
+            const rows = (settings.cardSensors[cardKey] || []).map(key => {
                 const sensor = byKey.get(key);
                 if (!sensor) return '';
                 const valueClass = sensor.type === 'Temperature' && typeof sensor.value === 'number'
                     ? sensor.value >= 85 ? 'value high' : sensor.value >= 70 ? 'value warning' : 'value'
                     : 'value';
                 return `<div class="card-row"><span class="label">${escapeHtml(sensorLabel(sensor, key))}${terminal ? ':' : ''}</span><span class="${valueClass}">${escapeHtml(formatSensorValue(sensor))}</span></div>`;
-            }).join('');
+            }).filter(Boolean);
+            const heading = cardKey === 'smart' && rows.length
+                ? '<div class="card-extra-heading" role="heading" aria-level="3">Дополнительные датчики</div>'
+                : '';
+            return heading + rows.join('');
         }
 
         function buildCardShell(cardKey, cardData, content) {
@@ -1763,7 +1986,6 @@
             if (settings.theme === 'cmd' && !settings.compactMode) {
                 container.replaceChildren();
                 renderCmdTerminal(data);
-                if (document.getElementById('sensorOverlay').classList.contains('open')) renderSensorList();
                 return;
             }
             container.className = 'cards-grid ' + settings.layout;
@@ -1793,11 +2015,28 @@
             });
             container.innerHTML = html;
             renderFavorites();
-            if (document.getElementById('sensorOverlay').classList.contains('open')) renderSensorList();
+        }
+
+        function setFpsStatusMessage(message) {
+            document.getElementById('mobileFpsStatus').textContent = message;
+            document.getElementById('mobileFpsCardStatus').textContent = message;
+        }
+
+        function syncFpsControls() {
+            document.querySelectorAll('[data-fps-panel-toggle]').forEach(button => {
+                button.textContent = settings.showFpsPanel ? '🎮 Скрыть FPS' : '🎮 Показать FPS';
+                button.setAttribute('aria-expanded', String(settings.showFpsPanel));
+                button.setAttribute('aria-label', settings.showFpsPanel ? 'Скрыть панель FPS' : 'Показать панель FPS');
+            });
+            document.querySelectorAll('[data-fps-card-toggle]').forEach(button => {
+                button.textContent = settings.showFpsCard ? '× Убрать карточку FPS' : '＋ Карточка FPS';
+                button.setAttribute('aria-pressed', String(settings.showFpsCard));
+            });
         }
 
         function renderFpsStatus(data) {
             const fps = data && typeof data === 'object' ? data : {};
+            latestFpsStatus = fps;
             const messages = {
                 waiting_for_application: 'Ожидание активного графического приложения',
                 waiting_for_frames: 'Процесс выбран, ожидание кадров',
@@ -1808,16 +2047,42 @@
                 capture_error: fps.error || 'Ошибка захвата FPS',
                 unavailable: fps.error || 'Мониторинг FPS недоступен'
             };
-            document.getElementById('mobileFpsStatus').textContent = messages[fps.status] || 'Ожидание данных FPS';
-            document.getElementById('mobileFpsCurrent').textContent = fps.fps == null ? '—' : fps.fps + ' FPS';
-            document.getElementById('mobileFpsAverage').textContent = fps.average_fps == null ? '—' : fps.average_fps + ' FPS';
-            document.getElementById('mobileFpsOnePercentLow').textContent = fps.one_percent_low_fps == null ? '—' : fps.one_percent_low_fps + ' FPS';
-            document.getElementById('mobileFpsFrameTime').textContent = fps.frame_time_ms == null ? '—' : fps.frame_time_ms + ' мс';
+            const status = messages[fps.status] || 'Ожидание данных FPS';
+            setFpsStatusMessage(status);
+            [
+                ['mobileFpsCurrent', 'mobileFpsCardCurrent', fps.fps == null ? '—' : fps.fps + ' FPS'],
+                ['mobileFpsAverage', 'mobileFpsCardAverage', fps.average_fps == null ? '—' : fps.average_fps + ' FPS'],
+                ['mobileFpsOnePercentLow', 'mobileFpsCardOnePercentLow', fps.one_percent_low_fps == null ? '—' : fps.one_percent_low_fps + ' FPS'],
+                ['mobileFpsFrameTime', 'mobileFpsCardFrameTime', fps.frame_time_ms == null ? '—' : fps.frame_time_ms + ' мс']
+            ].forEach(([panelId, cardId, value]) => {
+                document.getElementById(panelId).textContent = value;
+                document.getElementById(cardId).textContent = value;
+            });
             const target = fps.target;
-            document.getElementById('mobileFpsTarget').textContent = 'Целевой процесс: ' +
+            const targetText = 'Целевой процесс: ' +
                 (target ? target.name + ' (PID ' + target.pid + ')' : 'не выбран') +
                 ' · режим: ' + (fps.mode === 'manual' ? 'ручной' : 'активное окно');
+            document.getElementById('mobileFpsTarget').textContent = targetText;
+            document.getElementById('mobileFpsCardTarget').textContent = targetText;
         }
+
+        function setFpsPanelVisible(visible, persist) {
+            settings.showFpsPanel = !!visible;
+            const panel = document.getElementById('mobileFpsPanel');
+            panel.hidden = !settings.showFpsPanel;
+            syncFpsControls();
+            if (persist) saveSettings(settings);
+        }
+
+        function setFpsCardVisible(visible, persist) {
+            settings.showFpsCard = !!visible;
+            document.getElementById('mobileFpsCard').hidden = !settings.showFpsCard;
+            syncFpsControls();
+            if (settings.showFpsCard && latestFpsStatus) renderFpsStatus(latestFpsStatus);
+            if (persist) saveSettings(settings);
+        }
+        setFpsPanelVisible(settings.showFpsPanel, false);
+        setFpsCardVisible(settings.showFpsCard, false);
 
         async function refreshFpsStatus() {
             if (document.hidden) return;
@@ -1827,7 +2092,7 @@
                 if (!response.ok) throw new Error(data.error || ('HTTP ' + response.status));
                 renderFpsStatus(data);
             } catch (error) {
-                document.getElementById('mobileFpsStatus').textContent = 'Не удалось получить FPS: ' + error.message;
+                setFpsStatusMessage('Не удалось получить FPS: ' + error.message);
             }
         }
 
@@ -1872,7 +2137,7 @@
                 if (!response.ok) throw new Error(data.error || ('HTTP ' + response.status));
                 renderFpsStatus(data);
             } catch (error) {
-                document.getElementById('mobileFpsStatus').textContent = 'Не удалось изменить процесс: ' + error.message;
+                setFpsStatusMessage('Не удалось изменить процесс: ' + error.message);
             }
         }
 
@@ -1916,14 +2181,112 @@
         function openModal(id) {
             document.getElementById(id).classList.add('open');
             document.body.style.overflow = 'hidden';
+            if (id === 'sensorOverlay') requestAnimationFrame(syncSensorScrollIndicator);
             const firstControl = document.querySelector('#' + id + ' button, #' + id + ' input, #' + id + ' select');
             if (firstControl) firstControl.focus();
         }
 
         function closeModal(id) {
             document.getElementById(id).classList.remove('open');
+            if (id === 'sensorOverlay') syncSensorScrollIndicator();
             if (!document.querySelector('.modal-overlay.open, .settings-overlay.open')) document.body.style.overflow = '';
         }
+
+        function syncSensorScrollIndicator() {
+            const overlay = document.getElementById('sensorOverlay');
+            const rail = document.getElementById('sensorScrollIndicator');
+            const thumb = document.getElementById('sensorScrollThumb');
+            const modal = overlay && overlay.querySelector('.mobile-modal');
+            if (!overlay || !rail || !thumb || !modal) return;
+            const modalRight = modal.getBoundingClientRect().right;
+            rail.style.right = `${Math.max(0, window.innerWidth - modalRight + 6)}px`;
+            const maxScroll = overlay.scrollHeight - overlay.clientHeight;
+            if (!overlay.classList.contains('open') || maxScroll <= 1) {
+                rail.classList.remove('visible');
+                return;
+            }
+            rail.classList.add('visible');
+            const trackHeight = rail.clientHeight;
+            const thumbHeight = Math.min(trackHeight, Math.max(36, trackHeight * overlay.clientHeight / overlay.scrollHeight));
+            const maxThumbTop = trackHeight - thumbHeight;
+            const thumbTop = maxScroll > 0 ? overlay.scrollTop / maxScroll * maxThumbTop : 0;
+            thumb.style.height = `${thumbHeight}px`;
+            thumb.style.transform = `translateY(${thumbTop}px)`;
+            rail.setAttribute('aria-valuemax', String(maxScroll));
+            rail.setAttribute('aria-valuenow', String(Math.round(overlay.scrollTop)));
+        }
+
+        function setSensorScrollFromThumbPointer(clientY, dragState) {
+            const overlay = document.getElementById('sensorOverlay');
+            const rail = document.getElementById('sensorScrollIndicator');
+            const thumb = document.getElementById('sensorScrollThumb');
+            if (!overlay || !rail || !thumb) return;
+            const maxScroll = overlay.scrollHeight - overlay.clientHeight;
+            const maxThumbTop = rail.clientHeight - thumb.offsetHeight;
+            if (maxScroll <= 0 || maxThumbTop <= 0) return;
+            const thumbTop = Math.max(0, Math.min(maxThumbTop, clientY - rail.getBoundingClientRect().top - dragState.grabOffset));
+            overlay.scrollTop = thumbTop / maxThumbTop * maxScroll;
+        }
+
+        const sensorScrollIndicator = document.getElementById('sensorScrollIndicator');
+        let sensorScrollDrag = null;
+        document.getElementById('sensorOverlay').addEventListener('scroll', syncSensorScrollIndicator, { passive: true });
+        window.addEventListener('resize', syncSensorScrollIndicator);
+        sensorScrollIndicator.addEventListener('pointerdown', function(event) {
+            if (event.target === document.getElementById('sensorScrollThumb')) {
+                sensorScrollDrag = {
+                    pointerId: event.pointerId,
+                    startY: event.clientY,
+                    startScroll: document.getElementById('sensorOverlay').scrollTop,
+                    grabOffset: event.clientY - event.target.getBoundingClientRect().top
+                };
+                this.setPointerCapture(event.pointerId);
+            } else {
+                const thumb = document.getElementById('sensorScrollThumb');
+                const grabOffset = thumb.offsetHeight / 2;
+                sensorScrollDrag = { pointerId: event.pointerId, grabOffset: grabOffset };
+                setSensorScrollFromThumbPointer(event.clientY, sensorScrollDrag);
+                this.setPointerCapture(event.pointerId);
+            }
+            event.preventDefault();
+        });
+        sensorScrollIndicator.addEventListener('pointermove', function(event) {
+            if (!sensorScrollDrag || sensorScrollDrag.pointerId !== event.pointerId) return;
+            if (sensorScrollDrag.startY !== undefined) {
+                const overlay = document.getElementById('sensorOverlay');
+                const rail = document.getElementById('sensorScrollIndicator');
+                const thumb = document.getElementById('sensorScrollThumb');
+                const maxScroll = overlay.scrollHeight - overlay.clientHeight;
+                const maxThumbTop = rail.clientHeight - thumb.offsetHeight;
+                if (maxScroll > 0 && maxThumbTop > 0) {
+                    overlay.scrollTop = sensorScrollDrag.startScroll
+                        + (event.clientY - sensorScrollDrag.startY) / maxThumbTop * maxScroll;
+                }
+            } else {
+                setSensorScrollFromThumbPointer(event.clientY, sensorScrollDrag);
+            }
+        });
+        function finishSensorScrollDrag(event) {
+            if (!sensorScrollDrag || sensorScrollDrag.pointerId !== event.pointerId) return;
+            if (sensorScrollIndicator.hasPointerCapture(event.pointerId)) {
+                sensorScrollIndicator.releasePointerCapture(event.pointerId);
+            }
+            sensorScrollDrag = null;
+        }
+        sensorScrollIndicator.addEventListener('pointerup', finishSensorScrollDrag);
+        sensorScrollIndicator.addEventListener('pointercancel', finishSensorScrollDrag);
+        sensorScrollIndicator.addEventListener('keydown', function(event) {
+            const overlay = document.getElementById('sensorOverlay');
+            const page = overlay.clientHeight * 0.8;
+            if (event.key === 'ArrowDown') overlay.scrollTop += 40;
+            else if (event.key === 'ArrowUp') overlay.scrollTop -= 40;
+            else if (event.key === 'PageDown') overlay.scrollTop += page;
+            else if (event.key === 'PageUp') overlay.scrollTop -= page;
+            else if (event.key === 'Home') overlay.scrollTop = 0;
+            else if (event.key === 'End') overlay.scrollTop = overlay.scrollHeight;
+            else return;
+            event.preventDefault();
+        });
 
         async function loadHistory() {
             const message = document.getElementById('historyMessage');
@@ -2023,6 +2386,8 @@
                     saveSettings(settings);
                     applyTheme();
                     updateLockState();
+                    setFpsPanelVisible(settings.showFpsPanel, false);
+                    setFpsCardVisible(settings.showFpsCard, false);
                     startAutoUpdate(settings.refreshInterval);
                     if (currentData) renderCards(currentData);
                     closeModal('presetsOverlay');
@@ -2049,6 +2414,8 @@
         function loadSettingsFromObject(source) {
             const defaults = JSON.parse(JSON.stringify(defaultSettings));
             const merged = { ...defaults, ...source };
+            merged.showFpsPanel = source.showFpsPanel !== false;
+            merged.showFpsCard = source.showFpsCard === true;
             merged.showCards = { ...defaults.showCards, ...(source.showCards || {}) };
             merged.cardOrder = Array.isArray(source.cardOrder)
                 ? [...new Set(source.cardOrder.filter(key => typeof key === 'string' && (cardKeys.includes(key) || isGpuDeviceCardKey(key))))]
@@ -2106,10 +2473,19 @@
         const settingsSave = document.getElementById('settingsSave');
         const lockToggle = document.getElementById('lockToggle');
         document.getElementById('mobileFpsRefreshProcesses').addEventListener('click', refreshFpsProcesses);
+        document.querySelectorAll('[data-fps-panel-toggle]').forEach(button => {
+            button.addEventListener('click', () => setFpsPanelVisible(!settings.showFpsPanel, true));
+        });
+        document.querySelectorAll('[data-fps-card-toggle]').forEach(button => {
+            button.addEventListener('click', () => setFpsCardVisible(!settings.showFpsCard, true));
+        });
+        document.getElementById('removeFpsCardBtn').addEventListener('click', function() {
+            setFpsCardVisible(false, true);
+        });
         document.getElementById('mobileFpsSelectProcess').addEventListener('click', function() {
             const pid = Number(document.getElementById('mobileFpsProcessSelect').value);
             if (!Number.isSafeInteger(pid) || pid <= 0) {
-                document.getElementById('mobileFpsStatus').textContent = 'Сначала выберите запущенный процесс';
+                setFpsStatusMessage('Сначала выберите запущенный процесс');
                 return;
             }
             setFpsTarget({ mode: 'manual', pid: pid });
@@ -2124,6 +2500,7 @@
             document.getElementById('layoutSelect').value = settings.layout;
             document.getElementById('themeSelect').value = settings.theme;
             document.getElementById('intervalSelect').value = String(Math.max(1000, settings.refreshInterval));
+            applyDashboardScale(getDashboardScale(), false);
             openModal('settingsOverlay');
         }
 
@@ -2132,6 +2509,15 @@
         }
 
         settingsToggle.addEventListener('click', openSettings);
+        document.getElementById('dashboardScale').addEventListener('input', function() {
+            applyDashboardScale(this.value, true);
+        });
+        document.getElementById('dashboardScaleReset').addEventListener('click', function() {
+            applyDashboardScale(100, true);
+        });
+        window.addEventListener('storage', function(event) {
+            if (event.key === DASHBOARD_SCALE_KEY) applyDashboardScale(event.newValue, false);
+        });
         settingsClose.addEventListener('click', closeSettings);
         settingsCancel.addEventListener('click', closeSettings);
         settingsOverlay.addEventListener('click', function(e) {
@@ -2183,10 +2569,6 @@
         document.getElementById('mobileControlDock').addEventListener('pointermove', function() {
             if (this.classList.contains('open')) setMobileControlDockOpen(true);
         });
-        document.getElementById('mobileSettingsShortcut').addEventListener('click', function() {
-            setMobileControlDockOpen(false);
-            openSettings();
-        });
         document.addEventListener('click', function(event) {
             const dock = document.getElementById('mobileControlDock');
             if (dock.classList.contains('open') && !dock.contains(event.target)) setMobileControlDockOpen(false);
@@ -2229,11 +2611,6 @@
         });
         document.getElementById('historyRange').addEventListener('change', loadHistory);
         document.getElementById('cmdSensorsToggle').addEventListener('click', () => openSensorSettings('cmd'));
-        document.getElementById('cmdSettingsToggle').addEventListener('click', openSettings);
-        document.getElementById('cmdHistoryToggle').addEventListener('click', () => {
-            openModal('historyOverlay');
-            loadHistory();
-        });
         document.getElementById('presetsToggle').addEventListener('click', function() {
             renderPresets();
             openModal('presetsOverlay');

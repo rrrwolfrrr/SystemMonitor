@@ -5,10 +5,10 @@ from libre_monitor import LibreMonitorDirect
 
 
 class FakeSensor:
-    def __init__(self, identifier, name, value):
+    def __init__(self, identifier, name, value, sensor_type="Temperature"):
         self.Identifier = identifier
         self.Name = name
-        self.SensorType = "Temperature"
+        self.SensorType = sensor_type
         self.Value = value
 
 
@@ -22,6 +22,83 @@ class FakeHardware:
 
 
 class GpuCatalogTests(unittest.TestCase):
+    def test_prefers_gpu_core_and_excludes_gpu_memory_temperature(self):
+        readings = [
+            ("GPU Memory", 54.0),
+            ("GPU Hot Spot", 32.0),
+            ("GPU Core", 31.0),
+        ]
+        raw_sensors = [
+            {
+                "gpu_identifier": "/gpu-amd/0",
+                "gpu_name": "AMD Radeon RX 9070 XT",
+                "gpu_hardware_type": "GpuAmd",
+                "hardware": "AMD Radeon RX 9070 XT",
+                "name": name,
+                "type": "Temperature",
+                "value": value,
+                "valid": True,
+            }
+            for name, value in readings
+        ]
+
+        device = build_gpu_devices(raw_sensors)[0]
+
+        self.assertEqual(device["temperature"], 31.0)
+        self.assertEqual(device["hotspot_temperature"], 32.0)
+        self.assertEqual(len(device["sensors"]), 3)
+        self.assertNotIn("_temperature_priority", device)
+
+    def test_explicit_core_temperature_wins_over_generic_temperature(self):
+        device = build_gpu_devices([
+            {
+                "gpu_identifier": "/gpu-amd/0",
+                "name": "Temperature",
+                "type": "Temperature",
+                "value": 54.0,
+                "valid": True,
+            },
+            {
+                "gpu_identifier": "/gpu-amd/0",
+                "name": "GPU Core",
+                "type": "Temperature",
+                "value": 31.0,
+                "valid": True,
+            },
+        ])[0]
+
+        self.assertEqual(device["temperature"], 31.0)
+
+    def test_gpu_parser_does_not_use_memory_temperature_as_gpu_temperature(self):
+        monitor = LibreMonitorDirect.__new__(LibreMonitorDirect)
+        hardware = FakeHardware(
+            "AMD Radeon RX 9070 XT",
+            "GpuAmd",
+            sensors=[
+                FakeSensor("/gpu-amd/0/temperature/1", "GPU Memory", 54.0),
+                FakeSensor("/gpu-amd/0/temperature/7", "GPU Hot Spot", 32.0),
+                FakeSensor("/gpu-amd/0/temperature/0", "GPU Core", 31.0),
+            ],
+        )
+        result = {
+            "gpu": {
+                "temperature": None,
+                "hotspot_temperature": None,
+                "voltage": None,
+                "power": None,
+                "frequency": None,
+                "load": None,
+                "memory_used": None,
+                "memory_total": None,
+            }
+        }
+
+        monitor._parse_gpu(hardware, result)
+
+        self.assertEqual(result["gpu"]["temperature"], 31.0)
+        self.assertEqual(result["gpu"]["hotspot_temperature"], 32.0)
+        self.assertNotIn("GPU Memory", result["gpu"])
+
     def test_builds_separate_devices_with_duplicate_sensor_names(self):
         sensors = [
             {

@@ -242,6 +242,10 @@ background: var(--card-bg);
 .fps-card-status, .fps-card-target { margin-top: 8px; overflow-wrap: anywhere; }
 @media (max-width: 640px) { .fps-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .hidden { display: none !important; }
+body.analog-gauge-mode #addCustomBtn,
+body.analog-gauge-mode #addFpsCardBtn,
+body.analog-gauge-mode #fpsPanelCompactBtn,
+body.analog-gauge-mode #fpsPanel { display: none !important; }
 .board {
 position: relative;
 flex: 1;
@@ -253,6 +257,162 @@ overflow: auto;
 min-height: 200px;
 }
 body.dark .board { background: rgba(255, 255, 255, 0.02); }
+body.analog-gauge-mode .board.analog-gauge-board {
+display: block;
+overflow: auto;
+min-height: min(60vh, 560px);
+background: #10191d;
+border: 1px solid #34454a;
+padding: clamp(12px, 2vw, 24px);
+}
+.analog-gauge {
+position: absolute;
+width: var(--analog-gauge-width, 360px);
+max-width: 100%;
+min-width: 0;
+padding: 0;
+border: 0;
+background: transparent;
+color: #e2f0ef;
+cursor: grab;
+touch-action: none;
+user-select: none;
+}
+.analog-gauge.dragging { cursor: grabbing; }
+.analog-gauge.locked { cursor: default; }
+.analog-gauge-face {
+position: relative;
+padding: 3px 9px 8px;
+border: 1px solid #294044;
+border-radius: 4px;
+background: linear-gradient(180deg, #030809 0%, #0c171a 100%);
+box-shadow: inset 0 0 0 1px #152629, inset 0 3px 10px rgba(0, 0, 0, .8);
+color: #ddf8f2;
+}
+.analog-gauge-settings {
+position: absolute;
+top: 8px;
+right: 8px;
+z-index: 1;
+display: grid;
+place-items: center;
+width: 30px;
+height: 30px;
+padding: 0;
+border: 1px solid rgba(198, 219, 217, .2);
+border-radius: 50%;
+background: rgba(221, 240, 238, .08);
+color: rgba(221, 240, 238, .48);
+opacity: .68;
+font: 16px/1 "Segoe UI Symbol", "Segoe UI", sans-serif;
+}
+.analog-gauge-settings:hover { border-color: rgba(221, 240, 238, .42); background: rgba(221, 240, 238, .14); color: rgba(245, 255, 253, .9); opacity: 1; }
+.analog-gauge-settings:focus-visible { opacity: 1; }
+.analog-gauge button:focus-visible,
+.analog-gauge-panel button:focus-visible,
+.analog-gauge-panel select:focus-visible,
+.analog-gauge-panel input:focus-visible { outline: 3px solid #007f87; outline-offset: 2px; }
+.analog-gauge-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.analog-gauge-arc { fill: none; stroke: #43d5d0; stroke-width: 2.2; filter: drop-shadow(0 0 2px rgba(67, 213, 208, .72)); }
+.analog-gauge-tick { stroke: #54d9d2; stroke-linecap: square; filter: drop-shadow(0 0 1.5px rgba(84, 217, 210, .65)); }
+.analog-gauge-label { fill: #b4f4eb; font: 11px "Segoe UI", Tahoma, Arial, sans-serif; text-anchor: middle; filter: drop-shadow(0 0 2px rgba(84, 217, 210, .45)); }
+.analog-gauge-needle-group { transition: transform .28s ease-out; }
+.analog-gauge-needle { stroke: #f04e4e; stroke-width: 3; stroke-linecap: round; filter: drop-shadow(0 0 2px rgba(240, 78, 78, .65)); }
+.analog-gauge-hub { fill: #e85a53; stroke: #ffd1c9; stroke-width: 1.5; }
+.analog-gauge-readout {
+display: block;
+margin-top: -1px;
+color: #edfffa;
+font: 700 clamp(23px, 3vw, 31px)/1.15 "Segoe UI", Tahoma, Arial, sans-serif;
+font-variant-numeric: tabular-nums;
+text-align: center;
+overflow-wrap: anywhere;
+}
+.analog-gauge-status {
+min-height: 0;
+margin-top: 0;
+color: #9ccbc5;
+font-size: 11px;
+text-align: center;
+}
+.analog-gauge-name {
+margin-top: 3px;
+color: #9ccbc5;
+font-size: 13px;
+text-align: center;
+overflow-wrap: anywhere;
+}
+.analog-gauge-status.is-warning,
+.analog-gauge-status.is-unavailable { min-height: 17px; margin-top: 3px; }
+.analog-gauge-status.is-warning { color: #ffd17a; }
+.analog-gauge-status.is-unavailable { color: #ffaaa1; }
+.analog-gauge-range {
+display: flex;
+justify-content: space-between;
+gap: 8px;
+margin-top: 6px;
+color: #a7ccc6;
+font-size: 10px;
+font-variant-numeric: tabular-nums;
+}
+.analog-gauge-empty {
+grid-column: 1 / -1;
+display: grid;
+justify-items: center;
+gap: 10px;
+padding: clamp(32px, 8vh, 80px) 20px;
+border: 1px dashed #5e8586;
+color: #d8f3ed;
+text-align: center;
+}
+.analog-gauge-empty h2 { margin: 0; font-size: clamp(20px, 3vw, 28px); }
+.analog-gauge-empty p { max-width: 48ch; margin: 0; color: #a9ccc6; line-height: 1.5; }
+.analog-gauge-empty button { padding: 9px 14px; border: 1px solid #70d7cf; background: #12363a; color: #e6fffa; }
+.analog-gauge-meter {
+position: absolute;
+width: 1px;
+height: 1px;
+padding: 0;
+margin: -1px;
+overflow: hidden;
+clip: rect(0, 0, 0, 0);
+clip-path: inset(50%);
+white-space: nowrap;
+}
+.analog-gauge-range-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.analog-gauge-range-fields label { display: block; min-width: 0; color: var(--muted); font-size: 13px; }
+.analog-gauge-range-fields input { display: block; width: 100%; margin-top: 4px; }
+.analog-gauge-size-label { display: block; margin-top: 12px; color: var(--muted); font-size: 13px; }
+.analog-gauge-size-control { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+.analog-gauge-size-control input { flex: 1; min-width: 0; }
+.analog-gauge-size-control output { min-width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
+.analog-gauge-panel {
+display: flex;
+flex-direction: column;
+box-sizing: border-box;
+width: min(820px, calc(100vw - 24px));
+height: min(840px, calc(100vh - 32px));
+min-width: min(420px, calc(100vw - 24px));
+min-height: min(480px, calc(100vh - 32px));
+max-width: calc(100vw - 24px);
+resize: both;
+overflow: auto;
+}
+.analog-gauge-panel #analogGaugeSensor { flex: 1 1 240px; min-height: 180px; }
+.analog-gauge-resize-hint { margin: -6px 0 8px; font-size: 12px; }
+@media (max-width: 600px) {
+  .analog-gauge-panel {
+    width: calc(100vw - 24px);
+    height: min(840px, calc(100vh - 24px));
+    min-width: 0;
+    min-height: min(420px, calc(100vh - 24px));
+    resize: none;
+  }
+  .analog-gauge-resize-hint { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .analog-gauge *, .analog-gauge *::before, .analog-gauge *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
 body.terminal-mode {
 height: 100vh;
 padding: 0;
@@ -617,6 +777,11 @@ align-items: center;
 gap: 7px;
 cursor: pointer;
 }
+.dashboard-scale { margin: 12px 0; }
+.dashboard-scale label { display: block; margin-bottom: 6px; font-weight: 700; }
+.dashboard-scale-control { display: flex; align-items: center; gap: 8px; }
+.dashboard-scale-control input { flex: 1; min-width: 100px; }
+.dashboard-scale-control output { min-width: 42px; text-align: right; font-weight: 700; }
 .modal-actions {
 display: flex;
 flex-wrap: wrap;
@@ -1017,6 +1182,8 @@ body { padding: 8px; }
 </select>
 <button id="refreshBtn" type="button">🔄 Обновить</button>
 <button id="fullscreenBtn" type="button" title="Развернуть Dashboard на весь экран" aria-label="Развернуть Dashboard на весь экран" aria-pressed="false">⛶ На весь экран</button>
+<button id="dashboardDisplayModeBtn" type="button" aria-pressed="false" title="Переключить между карточками и стрелочными приборами">◴ Стрелочная тема</button>
+<button id="addAnalogGaugeBtn" class="hidden" type="button">＋ Прибор</button>
 <button id="addCustomBtn" type="button">➕ Карточка</button>
 <button id="addFpsCardBtn" type="button" title="Добавить отдельную карточку с показателями FPS">🎮 Карточка FPS</button>
 <button id="addDashboardTabBtn" type="button">＋ Вкладка</button>
@@ -1146,6 +1313,7 @@ body { padding: 8px; }
 <label><input type="checkbox" class="card-toggle" data-card="ram"> Память</label>
 <label><input type="checkbox" class="card-toggle" data-card="network"> Сеть</label>
 <label><input type="checkbox" class="card-toggle" data-card="disks"> Диски</label>
+<label><input type="checkbox" class="card-toggle" data-card="smart"> SMART накопителей</label>
 <label><input type="checkbox" class="card-toggle" data-card="fans"> Вентиляторы</label>
 <label><input type="checkbox" class="card-toggle" data-card="motherboard"> Материнская плата</label>
 <label><input type="checkbox" class="card-toggle" data-card="system"> Система</label>
@@ -1155,6 +1323,15 @@ body { padding: 8px; }
 <label><input type="checkbox" class="card-toggle" data-card="other"> Прочие датчики</label>
 </div>
 <label><input type="checkbox" id="darkToggle"> Тёмная тема</label>
+<div class="dashboard-scale">
+<label for="dashboardScale">Масштаб интерфейса</label>
+<div class="dashboard-scale-control">
+<input id="dashboardScale" type="range" min="75" max="150" step="5" value="100" aria-describedby="dashboardScaleHint">
+<output id="dashboardScaleValue" for="dashboardScale">100%</output>
+<button id="dashboardScaleReset" type="button" title="Вернуть масштаб 100%">Сброс</button>
+</div>
+<small id="dashboardScaleHint" class="muted">75–150%, сохраняется для настольной и мобильной панелей.</small>
+</div>
 <div class="modal-actions">
 <button id="settingsResetBtn" type="button">🔄 Сбросить</button>
 <button id="settingsSaveBtn" type="button">Сохранить</button>
@@ -1212,6 +1389,37 @@ body { padding: 8px; }
 <div class="modal-actions">
 <button id="customCreateBtn" type="button">Создать</button>
 <button id="customCancelBtn" type="button">Отмена</button>
+</div>
+</div>
+<div id="analogGaugeOverlay" class="overlay hidden"></div>
+<div id="analogGaugePanel" class="modal analog-gauge-panel hidden" role="dialog" aria-modal="true" aria-labelledby="analogGaugeDialogTitle">
+<h2 id="analogGaugeDialogTitle">＋ Новый стрелочный индикатор</h2>
+<small class="muted analog-gauge-resize-hint">Потяните за нижний правый угол окна, чтобы увеличить список датчиков.</small>
+<label class="muted" for="analogGaugeSource">Источник данных</label>
+<select id="analogGaugeSource" class="custom-input"></select>
+<label class="muted" for="analogGaugeTypeFilter">Тип датчика</label>
+<select id="analogGaugeTypeFilter" class="custom-input" aria-label="Тип датчика"></select>
+<label class="muted" for="analogGaugeSearch">Поиск по датчикам</label>
+<input id="analogGaugeSearch" class="custom-input" type="search" placeholder="Устройство, датчик или тип">
+<label class="muted" for="analogGaugeSensor">Датчик — выберите один</label>
+<select id="analogGaugeSensor" class="custom-input" size="7" aria-describedby="analogGaugeSensorHint"></select>
+<small id="analogGaugeSensorHint" class="muted">Каждый прибор показывает ровно один датчик.</small>
+<label class="muted" for="analogGaugeName">Название прибора</label>
+<input id="analogGaugeName" class="custom-input" type="text" maxlength="80" placeholder="Например, Температура CPU">
+<div class="analog-gauge-range-fields">
+<label for="analogGaugeMin">Минимум<input id="analogGaugeMin" class="custom-input" type="number" step="any"></label>
+<label for="analogGaugeMax">Максимум<input id="analogGaugeMax" class="custom-input" type="number" step="any"></label>
+</div>
+<label class="analog-gauge-size-label" for="analogGaugeSize">Ширина индикатора</label>
+<div class="analog-gauge-size-control">
+<input id="analogGaugeSize" type="range" min="240" max="640" step="20" value="360" aria-describedby="analogGaugeSizeValue">
+<output id="analogGaugeSizeValue" for="analogGaugeSize">360 px</output>
+</div>
+<small class="muted">Диапазон шкалы настраиваемый; показание вне него не обрезается в цифровом значении.</small>
+<div class="modal-actions">
+<button id="analogGaugeSaveBtn" type="button">Создать прибор</button>
+<button id="analogGaugeDeleteBtn" class="hidden" type="button">Удалить прибор</button>
+<button id="analogGaugeCancelBtn" type="button">Отмена</button>
 </div>
 </div>
 <div id="cardSettingsOverlay" class="overlay hidden"></div>
@@ -1303,13 +1511,25 @@ body { padding: 8px; }
 <div id="themesPanel" class="modal hidden">
 <h2>🎨 Темы оформления</h2>
 <div class="custom-toolbar">
-<button id="importThemeBtn" type="button">📥 Импорт темы</button>
+<button id="importThemeBtn" type="button">📥 Импорт CSS / JSON</button>
 <button id="exportThemeBtn" type="button">📤 Экспорт текущей</button>
 <button id="openThemeEditorBtn" type="button">🛠 Редактор тем</button>
 <button id="exportThemesPresetsBtn" type="button">📦 Экспорт тем + пресетов</button>
 <button id="importThemesPresetsBtn" type="button">📦 Импорт тем + пресетов</button>
-<input type="file" id="themeFileInput" accept=".json,application/json" style="display:none;">
+<input type="file" id="themeFileInput" accept=".css,.json,text/css,application/json" style="display:none;">
+<input type="file" id="themeFolderInput" accept=".css,text/css" webkitdirectory directory multiple style="display:none;">
 <input type="file" id="themesPresetsFileInput" accept=".json,application/json" style="display:none;">
+</div>
+<div class="theme-import-tools">
+<p class="muted">CSS из папки проекта или с компьютера сохраняется в пользовательские темы браузера. Выберите тему ниже, чтобы импортировать её из папки static\css\themes.</p>
+<div class="custom-toolbar">
+<select id="projectThemeFileSelect" class="custom-input" aria-label="CSS-тема из папки проекта">
+<option value="">Загрузка тем проекта…</option>
+</select>
+<button id="importProjectThemeBtn" type="button" disabled>Импортировать тему проекта</button>
+<button id="importThemeFolderBtn" type="button">📂 Импортировать из папки</button>
+</div>
+<div id="themeImportStatus" class="muted" role="status" aria-live="polite"></div>
 </div>
 <div id="themesList" class="sensor-list"></div>
 <div class="modal-actions">
@@ -1372,12 +1592,17 @@ var ALERTS_KEY = "systemMonitorTemperatureAlerts.v1";
 var WINDOW_SIZE_KEY = "systemMonitorWindowSize.v2";
 var LEGACY_WINDOW_SIZE_KEY = "systemMonitorWindowSize.v1";
 var COMPACT_VIEW_KEY = "systemMonitorDashboardCompact.v1";
+var DASHBOARD_SCALE_KEY = "systemMonitorDashboardScale.v1";
+function normalizeDashboardScale(value) { var scale = Number(value); if (!Number.isFinite(scale)) return 100; return Math.max(75, Math.min(150, Math.round(scale / 5) * 5)); }
+function getDashboardScale() { try { var saved = localStorage.getItem(DASHBOARD_SCALE_KEY); return normalizeDashboardScale(saved === null ? 100 : saved); } catch (e) { console.error("Не удалось загрузить масштаб Dashboard:", e); return 100; } }
+function applyDashboardScale(value, persist) { var scale = normalizeDashboardScale(value), input = document.getElementById("dashboardScale"), output = document.getElementById("dashboardScaleValue"); document.documentElement.style.zoom = scale + "%"; if (input) input.value = String(scale); if (output) output.value = scale + "%"; if (persist) { try { localStorage.setItem(DASHBOARD_SCALE_KEY, String(scale)); } catch (e) { console.error("Не удалось сохранить масштаб Dashboard:", e); } } return scale; }
 var CARD_META = {
 cpu: { title: "CPU", icon: "💻" },
 gpu: { title: "GPU", icon: "🎮" },
 ram: { title: "Память", icon: "🧠" },
 network: { title: "Сеть", icon: "🌐" },
 disks: { title: "Диски", icon: "💾" },
+smart: { title: "SMART накопителей", icon: "🩺" },
 fans: { title: "Вентиляторы", icon: "🌀" },
 motherboard: { title: "Материнская плата", icon: "🔌" },
 system: { title: "Система", icon: "⚙️" },
@@ -1413,6 +1638,7 @@ var activeRenderBody = null;
 var latestFpsStatus = null;
 var customSelection = new Set();
 var currentCardSettingsId = null;
+var currentAnalogGaugeId = null;
 var ws = null;
 var reconnectTimer = null;
 var pollingTimer = null;
@@ -1436,7 +1662,7 @@ var alignGridBtn = document.getElementById("alignGridBtn");
 function defaultState() {
 var cards = {};
 CARD_TYPES.forEach(function (type) { cards[type] = type !== "other" && type !== "fps"; });
-return { interval: 2000, dark: false, cards: cards, customCards: [], cardConfig: {}, terminalSensors: [], fpsPanelCollapsed: false, snap: { enabled: true, size: 20 } };
+return { interval: 2000, dark: false, displayMode: "cards", analogGauges: [], cards: cards, customCards: [], cardConfig: {}, terminalSensors: [], fpsPanelCollapsed: false, snap: { enabled: true, size: 20 } };
 }
 function loadDashboardTabs() {
 try {
@@ -1842,8 +2068,9 @@ remove.addEventListener("click", function () {
 dataSources = dataSources.filter(function (item) { return item.id !== source.id; });
 delete sourceData[source.id]; delete sourceErrors[source.id];
 delete activeTemperatureAlerts[source.id]; delete temperatureAlertSettings[source.id];
-dashboardTabs.forEach(function (tab) { if (tab.state && tab.state.cardConfig) Object.keys(tab.state.cardConfig).forEach(function (key) { if (tab.state.cardConfig[key].sourceId === source.id) tab.state.cardConfig[key].sourceId = "local"; }); });
+dashboardTabs.forEach(function (tab) { if (tab.state && tab.state.cardConfig) Object.keys(tab.state.cardConfig).forEach(function (key) { if (tab.state.cardConfig[key].sourceId === source.id) tab.state.cardConfig[key].sourceId = "local"; }); if (tab.state && Array.isArray(tab.state.analogGauges)) tab.state.analogGauges.forEach(function (gauge) { if (gauge && gauge.sourceId === source.id) gauge.sourceId = "local"; }); });
 Object.keys(state.cardConfig || {}).forEach(function (key) { if (state.cardConfig[key].sourceId === source.id) state.cardConfig[key].sourceId = "local"; });
+state.analogGauges.forEach(function (gauge) { if (gauge && gauge.sourceId === source.id) gauge.sourceId = "local"; });
 saveDataSources(); saveTemperatureAlertSettings(); renderSourcesList(); renderTemperatureAlertSettings(); renderDashboardTabs(); saveState(); restartRemotePolling(); createCards(); renderCachedSources(); renderTemperatureAlertBanner();
 });
 row.appendChild(remove);
@@ -1853,6 +2080,34 @@ list.appendChild(row);
 }
 function openSourcesPanel() { renderSourcesList(); openModal("sourcesPanel", "sourcesOverlay"); }
 function closeSourcesPanel() { closeModal("sourcesPanel", "sourcesOverlay"); }
+function normalizeAnalogGaugeSettings(items) {
+if (!Array.isArray(items)) return [];
+var seen = new Set();
+return items.filter(function (item) {
+if (!item || typeof item !== "object" || typeof item.id !== "string" || !/^[A-Za-z0-9_-]{1,100}$/.test(item.id) || seen.has(item.id) || typeof item.sensorKey !== "string" || !item.sensorKey || item.sensorKey.length > 1200) return false;
+seen.add(item.id);
+return true;
+}).slice(0, 60).map(function (item) {
+var minimum = Number(item.min), maximum = Number(item.max);
+if (item.min === null || item.min === undefined || !Number.isFinite(minimum)) minimum = 0;
+if (item.max === null || item.max === undefined || !Number.isFinite(maximum)) maximum = 100;
+if (minimum >= maximum) { minimum = 0; maximum = 100; }
+var sourceId = typeof item.sourceId === "string" && item.sourceId ? item.sourceId : "local";
+if (!dataSources.some(function (source) { return source.id === sourceId; })) sourceId = "local";
+var size = Number(item.size);
+if (!Number.isFinite(size)) size = 360;
+size = Math.max(240, Math.min(640, Math.round(size / 20) * 20));
+return {
+id: item.id,
+name: typeof item.name === "string" && item.name.trim() ? item.name.trim().slice(0, 80) : "Стрелочный индикатор",
+sourceId: sourceId,
+sensorKey: item.sensorKey,
+min: minimum,
+max: maximum,
+size: size
+};
+});
+}
 function loadState(rawOverride) {
 var result = defaultState();
 try {
@@ -1866,6 +2121,8 @@ var parsed = JSON.parse(raw);
 if (!parsed || typeof parsed !== "object") return result;
 if (Number.isFinite(Number(parsed.interval))) result.interval = Number(parsed.interval);
 if (typeof parsed.dark === "boolean") result.dark = parsed.dark;
+if (parsed.displayMode === "analog-gauges" || parsed.displayMode === "cards") result.displayMode = parsed.displayMode;
+if (Array.isArray(parsed.analogGauges)) result.analogGauges = normalizeAnalogGaugeSettings(parsed.analogGauges);
 if (parsed.cards && typeof parsed.cards === "object") {
 CARD_TYPES.forEach(function (type) { if (typeof parsed.cards[type] === "boolean") result.cards[type] = parsed.cards[type]; });
 }
@@ -1891,12 +2148,18 @@ function restoreCompactDashboard() { try { setCompactDashboard(localStorage.getI
 function loadLayout(rawOverride) { try { var raw = rawOverride; if (raw === undefined) { var tab = dashboardTabs.find(function (item) { return item.id === activeTabId; }); raw = tab && tab.layout ? JSON.stringify(tab.layout) : localStorage.getItem(LAYOUT_KEY); } if (!raw) return {}; var p = JSON.parse(raw); return (p && typeof p === "object") ? p : {}; } catch (e) { console.error("Не удалось загрузить макет Dashboard:", e); return {}; } }
 function saveLayout() {
 var nl = Object.assign({}, layout);
-board.querySelectorAll(".card").forEach(function (card) { nl[card.dataset.type] = { left: Math.round(card.offsetLeft), top: Math.round(card.offsetTop), width: Math.round(card.offsetWidth), height: Math.round(card.offsetHeight), z: parseInt(card.style.zIndex || "1", 10) }; });
+board.querySelectorAll(".card, .analog-gauge").forEach(function (card) { var key = card.dataset.gaugeId || card.dataset.type; nl[key] = { left: Math.round(card.offsetLeft), top: Math.round(card.offsetTop), width: Math.round(card.offsetWidth), height: Math.round(card.offsetHeight), z: parseInt(card.style.zIndex || "1", 10) }; });
 layout = nl;
 try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout)); } catch (e) { console.error("Не удалось сохранить макет Dashboard:", e); }
 saveCurrentDashboardTab();
 }
-function resetLayout() { layout = {}; zCounter = 10; try { localStorage.removeItem(LAYOUT_KEY); } catch (e) { console.error("Не удалось сбросить макет:", e); } saveCurrentDashboardTab(); createCards(); renderCachedSources(); showToast("Макет сброшен", "success"); }
+function resetLayout() {
+if (state.displayMode === "analog-gauges") state.analogGauges.forEach(function (gauge) { delete layout[gauge.id]; });
+else layout = {};
+zCounter = 10;
+try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout)); } catch (e) { console.error("Не удалось сбросить макет:", e); }
+saveCurrentDashboardTab(); createCards(); renderCachedSources(); showToast("Макет сброшен", "success");
+}
 function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined && text !== null) n.textContent = text; return n; }
 function clearNode(n) { while (n.firstChild) n.removeChild(n.firstChild); }
 function isNumber(v) { return typeof v === "number" && Number.isFinite(v); }
@@ -2043,8 +2306,9 @@ function gpuAdapterLabel(identifier, hardwareType) { var match = String(identifi
 function sensorDeviceLabel(sensor) { var labels = []; if (sensor && sensor.gpu_name) labels.push(sensor.gpu_name + " · " + gpuAdapterLabel(sensor.gpu_identifier, sensor.gpu_hardware_type)); if (sensor && sensor.hardware) labels.push(sensor.hardware); return labels.join(" · "); }
 function defaultLabelForSensorKey(k) { var p = parseSensorKey(k); if (p.hardware && p.name) return p.hardware + " · " + p.name; if (p.name) return p.name; if (p.hardware) return p.hardware; return "Датчик"; }
 function selectableSensorEntries(data) {
-var entries = [], seen = new Set(), others = data && Array.isArray(data.other) ? data.other : [], raw = data && Array.isArray(data.raw_sensors) ? data.raw_sensors : [];
-others.forEach(function (sensor) { if (!sensor || typeof sensor !== "object") return; var key = sensorKey(sensor); if (seen.has(key)) return; seen.add(key); entries.push({ key: key, sensor: sensor }); });
+var entries = [], seen = new Set(), others = data && Array.isArray(data.other) ? data.other : [], raw = data && Array.isArray(data.raw_sensors) ? data.raw_sensors : [], rawByIdentifier = new Map(), rawByKey = new Map();
+raw.forEach(function (sensor) { if (!sensor || typeof sensor !== "object") return; var key = sensorKey(sensor); if (!rawByKey.has(key)) rawByKey.set(key, sensor); if (typeof sensor.identifier === "string" && sensor.identifier) { var identifierKey = (sensor.gpu_identifier || "") + "||" + sensor.identifier; if (!rawByIdentifier.has(identifierKey)) rawByIdentifier.set(identifierKey, sensor); } });
+others.forEach(function (sensor) { if (!sensor || typeof sensor !== "object") return; var key = sensorKey(sensor); if (seen.has(key)) return; seen.add(key); var rawSensor = rawByKey.get(key) || (typeof sensor.identifier === "string" && sensor.identifier ? rawByIdentifier.get((sensor.gpu_identifier || "") + "||" + sensor.identifier) : null); var entrySensor = rawSensor ? Object.assign({}, sensor, rawSensor) : sensor; entries.push({ key: key, sensor: entrySensor }); });
 raw.forEach(function (sensor) { if (!sensor || typeof sensor !== "object") return; var baseKey = sensorKey(sensor); if (seen.has(baseKey)) return; var key = "raw:" + (typeof sensor.identifier === "string" && sensor.identifier ? sensor.identifier : JSON.stringify([sensor.hardware || "", sensor.subhardware || "", sensor.name || "", sensor.type || ""])); if (seen.has(key)) return; seen.add(key); entries.push({ key: key, sensor: sensor }); });
 return entries;
 }
@@ -2078,7 +2342,15 @@ function snapValue(v) { if (!state.snap.enabled) return Math.round(v); var s = M
 function alignValueToGrid(v) { var s = Math.max(1, Number(state.snap.size) || 20); return Math.round(v / s) * s; }
 function updateSnapUI() { if (snapBtn) snapBtn.textContent = state.snap.enabled ? "🧲 Snap: вкл" : "🧲 Snap: выкл"; if (gridSizeSelect) gridSizeSelect.value = String(state.snap.size); applyBoardGrid(); }
 function applyBoardGrid() { if (!board) return; if (state.snap.enabled) { board.style.backgroundImage = "linear-gradient(to right, var(--line) 1px, transparent 1px), linear-gradient(to bottom, var(--line) 1px, transparent 1px)"; board.style.backgroundSize = state.snap.size + "px " + state.snap.size + "px"; } else { board.style.backgroundImage = "none"; board.style.backgroundSize = "auto"; } }
-function alignAllToGrid() { board.querySelectorAll(".card").forEach(function (c) { c.style.left = alignValueToGrid(c.offsetLeft) + "px"; c.style.top = alignValueToGrid(c.offsetTop) + "px"; c.style.width = alignValueToGrid(c.offsetWidth) + "px"; c.style.height = alignValueToGrid(c.offsetHeight) + "px"; }); adjustBoardHeight(); saveLayout(); showToast("Карточки выровнены по сетке", "success"); }
+function alignAllToGrid() {
+var analogMode = state.displayMode === "analog-gauges", selector = analogMode ? ".analog-gauge" : ".card";
+board.querySelectorAll(selector).forEach(function (item) {
+item.style.left = alignValueToGrid(item.offsetLeft) + "px";
+item.style.top = alignValueToGrid(item.offsetTop) + "px";
+if (!analogMode) { item.style.width = alignValueToGrid(item.offsetWidth) + "px"; item.style.height = alignValueToGrid(item.offsetHeight) + "px"; }
+});
+adjustBoardHeight(); saveLayout(); showToast(analogMode ? "Индикаторы выровнены по сетке" : "Карточки выровнены по сетке", "success");
+}
 function getDefaultPosition(i) { var c = i % 4, r = Math.floor(i / 4); return { left: 12 + c * 370, top: 12 + r * 285, width: 350, height: 250, z: i + 1 }; }
 function createCardSettingsButton(id) { var b = el("button", "card-settings", "⚙️"); b.type = "button"; b.title = "Настройка датчиков"; b.addEventListener("click", function (e) { e.stopPropagation(); openCardSettings(id); }); return b; }
 function sourceName(id) { var source = dataSources.find(function (item) { return item.id === (id || "local"); }); return source ? source.name : "Этот ПК"; }
@@ -2193,9 +2465,354 @@ if (locked) card.classList.add("locked");
 makeDraggable(card, header); makeResizable(card);
 return card;
 }
+var ANALOG_GAUGE_SENTINELS = new Set([-999, -9999, -2147483648]);
+function applyDashboardDisplayMode() {
+var enabled = state.displayMode === "analog-gauges", button = document.getElementById("dashboardDisplayModeBtn"), addButton = document.getElementById("addAnalogGaugeBtn");
+document.body.classList.toggle("analog-gauge-mode", enabled);
+if (board) board.classList.toggle("analog-gauge-board", enabled);
+if (button) { button.textContent = enabled ? "▦ Карточная тема" : "◴ Стрелочная тема"; button.setAttribute("aria-pressed", enabled ? "true" : "false"); button.title = enabled ? "Вернуться к стандартным карточкам" : "Показать датчики как стрелочные приборы"; }
+if (addButton) addButton.classList.toggle("hidden", !enabled);
+}
+function isValidAnalogGaugeReading(value) { return typeof value === "number" && Number.isFinite(value) && !ANALOG_GAUGE_SENTINELS.has(value); }
+function analogGaugeHasValidReading(sensor) { return !!sensor && sensor.valid !== false && isValidAnalogGaugeReading(sensor.value); }
+function analogGaugeUnavailableStatus(sensor) {
+if (sensor && sensor.hardware_type === "Cpu" && sensor.reason === "zero") return "CPU-сенсор вернул 0; попробуйте запустить SystemMonitor от имени администратора";
+if (sensor && sensor.reason === "zero") return "Источник вернул 0 — проверьте доступность датчика";
+if (sensor && sensor.reason === "missing") return "Источник не предоставил значение";
+return sensor ? "Нет показаний" : "Датчик недоступен";
+}
+function analogGaugeSensorForEntry(data, sensor) {
+if (analogGaugeHasValidReading(sensor)) return sensor;
+var name = String(sensor && sensor.name || ""), cpu = data && data.cpu, frequency = cpu && cpu.frequency;
+if (!sensor || sensor.hardware_type !== "Cpu" || sensor.type !== "Clock" || !/^Cores \(Average(?: Effective)?\)$/i.test(name) || !isValidAnalogGaugeReading(frequency) || frequency <= 0) return sensor;
+var metadata = data.metadata && data.metadata["cpu.frequency"];
+return Object.assign({}, sensor, { value: frequency, unit: sensor.unit || "MHz", valid: true, reason: null, fallbackSource: metadata && metadata.source || "резервный источник" });
+}
+function analogGaugeSensor(gauge) {
+var data = sourceData[gauge.sourceId];
+if (!data) return null;
+var entry = selectableSensorEntries(data).find(function (item) { return item.key === gauge.sensorKey; });
+return entry ? analogGaugeSensorForEntry(data, entry.sensor) : null;
+}
+function analogGaugeSensorLabel(sensor, sensorKey) {
+if (!sensor) return defaultLabelForSensorKey(sensorKey);
+return [sensorDeviceLabel(sensor), sensor.name || "Датчик"].filter(Boolean).join(" · ");
+}
+function analogGaugeDefaultRange(sensor) {
+var type = String(sensor && sensor.type || "").toLowerCase(), value = analogGaugeHasValidReading(sensor) ? sensor.value : 0;
+if (type === "temperature") return { min: -20, max: 120 };
+if (type === "load" || type === "level") return { min: 0, max: 100 };
+if (type === "voltage") return { min: 0, max: 5 };
+if (type === "power") return { min: 0, max: 500 };
+if (type === "clock" || type === "frequency") return { min: 0, max: 10000 };
+if (type === "fan") return { min: 0, max: 10000 };
+if (type === "current") return { min: -10, max: 10 };
+if (value < 0) return { min: Math.floor(value * 1.25), max: 0 };
+return { min: 0, max: Math.max(1, Math.ceil(value * 1.25)) };
+}
+function formatAnalogGaugeTick(value) {
+var absolute = Math.abs(value), scaled = value, suffix = "";
+if (absolute >= 1000000) { scaled = value / 1000000; suffix = "M"; }
+else if (absolute >= 1000) { scaled = value / 1000; suffix = "k"; }
+var text = Number.isInteger(scaled) ? String(scaled) : scaled.toFixed(Math.abs(scaled) < 10 ? 1 : 0);
+return text + suffix;
+}
+function createAnalogGaugeSvg(gauge) {
+var namespace = "http://www.w3.org/2000/svg", svg = document.createElementNS(namespace, "svg");
+svg.setAttribute("class", "analog-gauge-svg");
+svg.setAttribute("viewBox", "0 0 480 176");
+svg.setAttribute("aria-hidden", "true");
+var arc = document.createElementNS(namespace, "path");
+arc.setAttribute("class", "analog-gauge-arc");
+arc.setAttribute("d", "M 40 100 Q 240 8 440 100");
+svg.appendChild(arc);
+for (var index = 0; index <= 40; index++) {
+var position = index / 40, x1 = 40 + 400 * position, y1 = 100 - 184 * position * (1 - position);
+var slope = .46 * (2 * position - 1), normalLength = Math.sqrt(1 + slope * slope);
+var tickLength = index % 10 === 0 ? 12 : index % 5 === 0 ? 8 : 4;
+var tick = document.createElementNS(namespace, "line");
+tick.setAttribute("class", "analog-gauge-tick");
+tick.setAttribute("x1", x1.toFixed(2)); tick.setAttribute("y1", y1.toFixed(2));
+tick.setAttribute("x2", (x1 - slope * tickLength / normalLength).toFixed(2));
+tick.setAttribute("y2", (y1 + tickLength / normalLength).toFixed(2));
+tick.setAttribute("stroke-width", index % 10 === 0 ? "2" : index % 5 === 0 ? "1.5" : "1");
+svg.appendChild(tick);
+if (index % 10 === 0) {
+var label = document.createElementNS(namespace, "text");
+label.setAttribute("class", "analog-gauge-label");
+label.setAttribute("x", x1.toFixed(2));
+label.setAttribute("y", (y1 - 11).toFixed(2));
+label.textContent = formatAnalogGaugeTick(gauge.min + ((gauge.max - gauge.min) * index / 40));
+svg.appendChild(label);
+}
+}
+var needleGroup = document.createElementNS(namespace, "g");
+needleGroup.setAttribute("class", "analog-gauge-needle-group");
+needleGroup.setAttribute("data-gauge-needle", "");
+var needle = document.createElementNS(namespace, "line");
+needle.setAttribute("class", "analog-gauge-needle");
+needle.setAttribute("x1", "240"); needle.setAttribute("y1", "160");
+needle.setAttribute("x2", "240"); needle.setAttribute("y2", "80");
+needleGroup.appendChild(needle); svg.appendChild(needleGroup);
+var hub = document.createElementNS(namespace, "circle");
+hub.setAttribute("class", "analog-gauge-hub");
+hub.setAttribute("cx", "240"); hub.setAttribute("cy", "160"); hub.setAttribute("r", "6");
+hub.setAttribute("data-gauge-hub", "");
+svg.appendChild(hub);
+return svg;
+}
+function createAnalogGaugeControl(label, title, action, disabled) {
+var button = el("button", "", label);
+button.type = "button"; button.title = title; button.setAttribute("aria-label", title); button.disabled = !!disabled;
+button.addEventListener("click", action);
+return button;
+}
+function analogGaugeLayoutSize(gauge) { return Math.min(gauge.size, Math.max(1, board.clientWidth - 24)); }
+function analogGaugeLayoutHeight(gauge) { return Math.ceil(analogGaugeLayoutSize(gauge) * .4 + 110); }
+function getAnalogGaugePositions() {
+var positions = {}, occupied = [], gauges = state.analogGauges, step = Math.max(1, Number(state.snap.size) || 20);
+gauges.forEach(function (gauge) {
+var saved = layout && layout[gauge.id];
+if (!saved || !Number.isFinite(Number(saved.left)) || !Number.isFinite(Number(saved.top))) return;
+occupied.push({ left: Math.max(0, Number(saved.left)), top: Math.max(0, Number(saved.top)), width: analogGaugeLayoutSize(gauge), height: analogGaugeLayoutHeight(gauge) });
+});
+gauges.forEach(function (gauge, index) {
+var saved = layout && layout[gauge.id], position;
+if (saved && Number.isFinite(Number(saved.left)) && Number.isFinite(Number(saved.top))) {
+position = { left: Math.max(0, Math.round(Number(saved.left))), top: Math.max(0, Math.round(Number(saved.top))), z: Math.min(4000, Math.max(1, Number(saved.z) || index + 1)) };
+} else {
+var width = analogGaugeLayoutSize(gauge), height = analogGaugeLayoutHeight(gauge);
+var start = Math.max(0, alignValueToGrid(12)), maxLeft = Math.max(start, board.clientWidth - width - start), left = start, top = start, found = false;
+for (var candidateTop = start; candidateTop <= 50000 && !found; candidateTop += step) {
+for (var candidateLeft = start; candidateLeft <= maxLeft; candidateLeft += step) {
+var collision = occupied.some(function (item) { return candidateLeft < item.left + item.width + 16 && candidateLeft + width + 16 > item.left && candidateTop < item.top + item.height + 16 && candidateTop + height + 16 > item.top; });
+if (!collision) { left = candidateLeft; top = candidateTop; found = true; break; }
+}
+}
+position = { left: left, top: top, z: index + 1 };
+occupied.push({ left: position.left, top: position.top, width: width, height: height });
+}
+positions[gauge.id] = position;
+zCounter = Math.min(4000, Math.max(zCounter, position.z));
+});
+return positions;
+}
+function createAnalogGaugeElement(gauge, position) {
+var card = el("section", "analog-gauge");
+card.dataset.gaugeId = gauge.id;
+card.style.setProperty("--analog-gauge-width", gauge.size + "px");
+card.style.left = position.left + "px"; card.style.top = position.top + "px"; card.style.zIndex = String(position.z);
+card.setAttribute("role", "group");
+card.setAttribute("aria-label", gauge.name);
+var face = el("div", "analog-gauge-face"), svg = createAnalogGaugeSvg(gauge);
+face.appendChild(svg);
+var settingsButton = createAnalogGaugeControl("⚙", "Настроить: " + gauge.name, function () { openAnalogGaugeEditor(gauge.id); }, false);
+settingsButton.className = "analog-gauge-settings";
+face.appendChild(settingsButton);
+var readout = el("output", "analog-gauge-readout", "—");
+readout.dataset.gaugeReadout = "";
+readout.setAttribute("aria-label", gauge.name + " — текущее значение");
+face.appendChild(readout);
+var gaugeName = el("div", "analog-gauge-name", gauge.name);
+gaugeName.dataset.gaugeName = "";
+face.appendChild(gaugeName);
+var status = el("div", "analog-gauge-status", "Ожидание данных");
+status.dataset.gaugeStatus = ""; status.setAttribute("aria-live", "off");
+face.appendChild(status);
+var minLabel = el("span", "", fmt(gauge.min, 1, ""));
+var maxLabel = el("span", "", fmt(gauge.max, 1, ""));
+var range = el("div", "analog-gauge-range");
+range.setAttribute("aria-label", "Диапазон шкалы");
+range.appendChild(minLabel); range.appendChild(el("span", "", "шкала")); range.appendChild(maxLabel);
+range.dataset.gaugeRange = "";
+face.appendChild(range); card.appendChild(face);
+var meter = el("meter", "analog-gauge-meter");
+meter.min = gauge.min; meter.max = gauge.max; meter.value = gauge.min;
+meter.setAttribute("aria-label", gauge.name + " — текущее значение");
+meter.dataset.gaugeMeter = "";
+card.appendChild(meter);
+if (locked) card.classList.add("locked");
+makeDraggable(card, face);
+return card;
+}
+function updateAnalogGaugeReading(gauge, card) {
+if (!card) return;
+var sensor = analogGaugeSensor(gauge), sourceError = sourceErrors[gauge.sourceId], valid = !sourceError && analogGaugeHasValidReading(sensor);
+var readout = card.querySelector("[data-gauge-readout]"), status = card.querySelector("[data-gauge-status]"), needle = card.querySelector("[data-gauge-needle]"), hub = card.querySelector("[data-gauge-hub]"), meter = card.querySelector("[data-gauge-meter]");
+var range = card.querySelector("[data-gauge-range]");
+if (range) { range.firstElementChild.textContent = fmt(gauge.min, 1, sensor && sensor.unit || ""); range.lastElementChild.textContent = fmt(gauge.max, 1, sensor && sensor.unit || ""); }
+if (meter) { meter.min = gauge.min; meter.max = gauge.max; meter.setAttribute("aria-label", gauge.name + " — " + (valid ? fmt(sensor.value, 1, sensor.unit || "") : "нет показаний") + "; шкала от " + fmt(gauge.min, 1, sensor && sensor.unit || "") + " до " + fmt(gauge.max, 1, sensor && sensor.unit || "")); }
+if (!valid) {
+if (readout) readout.textContent = "—";
+if (readout) readout.setAttribute("aria-label", gauge.name + " — нет показаний; диапазон от " + fmt(gauge.min, 1, sensor && sensor.unit || "") + " до " + fmt(gauge.max, 1, sensor && sensor.unit || ""));
+if (status) { status.textContent = sourceError ? "Нет связи с источником" : analogGaugeUnavailableStatus(sensor); status.className = "analog-gauge-status is-unavailable"; }
+if (needle) needle.setAttribute("visibility", "hidden");
+if (hub) hub.setAttribute("visibility", "hidden");
+if (meter) { meter.setAttribute("aria-valuetext", "Нет показаний"); meter.hidden = true; }
+return;
+}
+var value = sensor.value, ratio = Math.max(0, Math.min(1, (value - gauge.min) / (gauge.max - gauge.min)));
+var angle = (ratio - .5) * 44, formattedValue = fmt(value, 1, sensor.unit || "");
+if (readout) { readout.textContent = formattedValue; readout.setAttribute("aria-label", gauge.name + " — текущее значение " + formattedValue + "; диапазон от " + fmt(gauge.min, 1, sensor.unit || "") + " до " + fmt(gauge.max, 1, sensor.unit || "")); }
+if (status) { var rangeWarning = value < gauge.min ? "Ниже диапазона" : value > gauge.max ? "Выше диапазона" : ""; status.textContent = (sensor.fallbackSource ? "Резервный источник: " + sensor.fallbackSource + (rangeWarning ? " · " : "") : "") + rangeWarning; status.className = "analog-gauge-status" + (rangeWarning ? " is-warning" : ""); }
+if (needle) { needle.setAttribute("transform", "rotate(" + angle.toFixed(2) + " 240 160)"); needle.removeAttribute("visibility"); }
+if (hub) hub.removeAttribute("visibility");
+if (meter) { meter.value = Math.max(gauge.min, Math.min(gauge.max, value)); meter.setAttribute("aria-valuetext", formattedValue); meter.hidden = false; }
+}
+function updateAnalogGauges(sourceId) {
+if (state.displayMode !== "analog-gauges" || !board) return;
+state.analogGauges.forEach(function (gauge) {
+if (sourceId && gauge.sourceId !== sourceId) return;
+updateAnalogGaugeReading(gauge, board.querySelector('[data-gauge-id="' + gauge.id + '"]'));
+});
+}
+function removeAnalogGauge(id) {
+var gauge = state.analogGauges.find(function (item) { return item.id === id; });
+if (!gauge || !window.confirm("Удалить прибор «" + gauge.name + "»?")) return false;
+state.analogGauges = state.analogGauges.filter(function (item) { return item.id !== id; });
+delete layout[id];
+saveState(); createCards(); saveLayout(); showToast("Стрелочный индикатор удалён", "success");
+return true;
+}
+function deleteCurrentAnalogGauge() {
+if (currentAnalogGaugeId && removeAnalogGauge(currentAnalogGaugeId)) closeAnalogGaugeEditor();
+}
+function renderAnalogGaugeBoard() {
+clearNode(board);
+var win = document.querySelector(".window");
+board.style.minHeight = win && win.classList.contains("window-resizable") ? "0" : "520px";
+if (!state.analogGauges.length) {
+var empty = el("div", "analog-gauge-empty");
+empty.appendChild(el("h2", "", "Пока нет приборов"));
+empty.appendChild(el("p", "", "Создайте первый стрелочный индикатор и выберите один датчик из каталога. Исходные карточки останутся сохранены и вернутся при переключении темы."));
+var button = el("button", "", "＋ Создать первый прибор");
+button.type = "button"; button.addEventListener("click", function () { openAnalogGaugeEditor(); });
+empty.appendChild(button); board.appendChild(empty); return;
+}
+var positions = getAnalogGaugePositions();
+state.analogGauges.forEach(function (gauge) { board.appendChild(createAnalogGaugeElement(gauge, positions[gauge.id])); });
+applyBoardGrid(); adjustBoardHeight(); updateAnalogGauges();
+}
+function renderAnalogGaugeSensorOptions(preferredKey) {
+var list = document.getElementById("analogGaugeSensor"), sourceSelect = document.getElementById("analogGaugeSource"), search = document.getElementById("analogGaugeSearch"), typeFilter = document.getElementById("analogGaugeTypeFilter");
+if (!list || !sourceSelect) return;
+var sourceId = sourceSelect.value || "local", term = search ? search.value.trim().toLowerCase() : "", selectedType = typeFilter ? typeFilter.value : "";
+var entries = selectableSensorEntries(sourceData[sourceId]), selectedKey = preferredKey !== undefined ? preferredKey : list.value;
+clearNode(list);
+var placeholder = document.createElement("option");
+placeholder.value = ""; placeholder.textContent = entries.length ? "— Выберите один датчик —" : "Нет доступных датчиков";
+placeholder.disabled = true; list.appendChild(placeholder);
+var matchedSelection = false, selectedSensorAvailable = entries.some(function (entry) { return entry.key === selectedKey; });
+var typeLabels = new Map(), typeOrder = new Map(), groups = new Map();
+if (typeFilter) Array.prototype.forEach.call(typeFilter.options, function (option, index) {
+if (option.value) { typeLabels.set(option.value, option.textContent.trim()); typeOrder.set(option.value, index); }
+});
+entries.forEach(function (entry) {
+var sensor = analogGaugeSensorForEntry(sourceData[sourceId], entry.sensor), label = [sensorDeviceLabel(sensor), sensor.hardware || "", sensor.name || "Датчик"].filter(Boolean).join(" · ");
+var searchable = (label + " " + (sensor.type || "") + " " + (sensor.unit || "")).toLowerCase();
+if ((selectedType && sensor.type !== selectedType) || (term && searchable.indexOf(term) === -1)) return;
+var option = document.createElement("option");
+option.value = entry.key;
+option.textContent = label + " [" + (sensor.type || "Датчик") + "]" + (sensor.valid === false ? (sensor.reason === "zero" ? " · источник вернул 0" : " · нет показаний") : "") + (sensor.value === null || sensor.value === undefined ? " = —" : " = " + fmt(sensor.value, 1, sensor.unit));
+option.dataset.type = sensor.type || "";
+var groupKey = sensor.type || "";
+if (!groups.has(groupKey)) groups.set(groupKey, document.createElement("optgroup"));
+groups.get(groupKey).appendChild(option);
+if (entry.key === selectedKey) matchedSelection = true;
+});
+Array.from(groups.keys()).sort(function (a, b) {
+var ai = typeOrder.has(a) ? typeOrder.get(a) : Number.MAX_SAFE_INTEGER;
+var bi = typeOrder.has(b) ? typeOrder.get(b) : Number.MAX_SAFE_INTEGER;
+return ai === bi ? a.localeCompare(b) : ai - bi;
+}).forEach(function (type) {
+var group = groups.get(type);
+group.label = typeLabels.get(type) || (type || "Без типа");
+list.appendChild(group);
+});
+if (!matchedSelection && currentAnalogGaugeId) {
+var current = state.analogGauges.find(function (gauge) { return gauge.id === currentAnalogGaugeId; });
+if (current && current.sourceId === sourceId && current.sensorKey === selectedKey) {
+var missing = document.createElement("option");
+missing.value = current.sensorKey;
+missing.textContent = defaultLabelForSensorKey(current.sensorKey) + (selectedSensorAvailable ? " [скрыт фильтром]" : " [датчик сейчас недоступен]");
+list.appendChild(missing);
+matchedSelection = true;
+}
+}
+list.value = matchedSelection ? selectedKey : "";
+var saveButton = document.getElementById("analogGaugeSaveBtn");
+if (saveButton) saveButton.disabled = list.value === "";
+}
+function setAnalogGaugeDefaultRange() {
+var sourceSelect = document.getElementById("analogGaugeSource"), sensorSelect = document.getElementById("analogGaugeSensor");
+var saveButton = document.getElementById("analogGaugeSaveBtn");
+if (saveButton && sensorSelect) saveButton.disabled = !sensorSelect.value;
+if (!sourceSelect || !sensorSelect || !sensorSelect.value) return;
+var data = sourceData[sourceSelect.value], entry = selectableSensorEntries(data).find(function (item) { return item.key === sensorSelect.value; });
+var range = analogGaugeDefaultRange(entry && analogGaugeSensorForEntry(data, entry.sensor)), min = document.getElementById("analogGaugeMin"), max = document.getElementById("analogGaugeMax"), name = document.getElementById("analogGaugeName");
+if (min) min.value = String(range.min);
+if (max) max.value = String(range.max);
+if (name && entry) name.value = analogGaugeSensorLabel(analogGaugeSensorForEntry(data, entry.sensor), entry.key).slice(0, 80);
+}
+function openAnalogGaugeEditor(gaugeId) {
+currentAnalogGaugeId = gaugeId || null;
+var sourceSelect = document.getElementById("analogGaugeSource"), title = document.getElementById("analogGaugeDialogTitle");
+var name = document.getElementById("analogGaugeName"), min = document.getElementById("analogGaugeMin"), max = document.getElementById("analogGaugeMax");
+var size = document.getElementById("analogGaugeSize"), sizeValue = document.getElementById("analogGaugeSizeValue");
+var search = document.getElementById("analogGaugeSearch"), typeFilter = document.getElementById("analogGaugeTypeFilter"), save = document.getElementById("analogGaugeSaveBtn"), deleteButton = document.getElementById("analogGaugeDeleteBtn");
+var existing = currentAnalogGaugeId && state.analogGauges.find(function (gauge) { return gauge.id === currentAnalogGaugeId; });
+if (!sourceSelect || !name || !min || !max || !size || !search || !typeFilter || !save) return;
+clearNode(sourceSelect);
+dataSources.forEach(function (source) {
+var option = document.createElement("option"); option.value = source.id; option.textContent = source.name; sourceSelect.appendChild(option);
+});
+sourceSelect.value = existing ? existing.sourceId : "local";
+name.value = existing ? existing.name : "";
+search.value = "";
+typeFilter.value = "";
+if (title) title.textContent = existing ? "⚙ Настроить стрелочный индикатор" : "＋ Новый стрелочный индикатор";
+save.textContent = existing ? "Сохранить прибор" : "Создать прибор";
+if (deleteButton) deleteButton.classList.toggle("hidden", !existing);
+if (existing) { min.value = String(existing.min); max.value = String(existing.max); }
+else { min.value = ""; max.value = ""; }
+size.value = String(existing ? existing.size : 360);
+if (sizeValue) sizeValue.value = size.value + " px";
+renderAnalogGaugeSensorOptions(existing ? existing.sensorKey : "");
+if (!existing && document.getElementById("analogGaugeSensor").value) setAnalogGaugeDefaultRange();
+openModal("analogGaugePanel", "analogGaugeOverlay");
+document.getElementById("analogGaugeSensor").focus();
+}
+function closeAnalogGaugeEditor() {
+currentAnalogGaugeId = null;
+closeModal("analogGaugePanel", "analogGaugeOverlay");
+}
+function saveAnalogGaugeFromForm() {
+var sourceSelect = document.getElementById("analogGaugeSource"), sensorSelect = document.getElementById("analogGaugeSensor");
+var nameInput = document.getElementById("analogGaugeName"), minInput = document.getElementById("analogGaugeMin"), maxInput = document.getElementById("analogGaugeMax");
+var sizeInput = document.getElementById("analogGaugeSize");
+var sourceId = sourceSelect ? sourceSelect.value : "", sensorKey = sensorSelect ? sensorSelect.value : "";
+var minimum = minInput && minInput.value.trim() !== "" ? Number(minInput.value) : NaN;
+var maximum = maxInput && maxInput.value.trim() !== "" ? Number(maxInput.value) : NaN;
+var size = sizeInput ? Number(sizeInput.value) : 360;
+if (!dataSources.some(function (source) { return source.id === sourceId; }) || !sensorKey) { showToast("Выберите один доступный датчик", "warning"); return; }
+if (!Number.isFinite(minimum) || !Number.isFinite(maximum) || minimum >= maximum) { showToast("Минимум должен быть меньше максимума", "warning"); return; }
+if (!Number.isFinite(size) || size < 240 || size > 640) { showToast("Выберите ширину прибора от 240 до 640 px", "warning"); return; }
+var name = nameInput && nameInput.value.trim() ? nameInput.value.trim().slice(0, 80) : analogGaugeSensorLabel(analogGaugeSensor({ sourceId: sourceId, sensorKey: sensorKey }), sensorKey).slice(0, 80);
+var gauge = currentAnalogGaugeId && state.analogGauges.find(function (item) { return item.id === currentAnalogGaugeId; });
+if (gauge) {
+gauge.name = name; gauge.sourceId = sourceId; gauge.sensorKey = sensorKey; gauge.min = minimum; gauge.max = maximum; gauge.size = size;
+} else {
+if (state.analogGauges.length >= 60) { showToast("Достигнут предел: 60 приборов на вкладку", "warning"); return; }
+state.analogGauges.push({ id: "gauge-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8), name: name, sourceId: sourceId, sensorKey: sensorKey, min: minimum, max: maximum, size: size });
+}
+saveState(); closeAnalogGaugeEditor(); createCards(); renderCachedSources();
+showToast(gauge ? "Настройки прибора сохранены" : "Стрелочный индикатор создан", "success");
+}
 function createCards() {
 renderedCardSignatures = Object.create(null);
 clearNode(board); var idx = 0;
+applyDashboardDisplayMode();
+if (state.displayMode === "analog-gauges") { renderAnalogGaugeBoard(); return; }
 var localData = sourceData.local, gpuSourceData = sourceData[cardSourceId("gpu")] || localData, hasPerGpuData = !!(gpuSourceData && Array.isArray(gpuSourceData.gpu_devices) && gpuSourceData.gpu_devices.length);
 CARD_TYPES.forEach(function (t) { if (state.cards[t] && t !== "coffee" && !(t === "gpu" && hasPerGpuData)) { board.appendChild(createStandardCard(t, idx)); idx++; } });
 state.customCards.forEach(function (d) { if (d.autoGpu) { if (!state.cards.gpu) return; var data = sourceData[cardSourceId(d.id)], devices = data && Array.isArray(data.gpu_devices) ? data.gpu_devices : []; if (!devices.some(function (device) { return device && device.identifier === d.gpuDeviceId; })) return; } board.appendChild(createCustomCard(d, idx)); idx++; });
@@ -2203,7 +2820,7 @@ adjustBoardHeight(); applyBoardGrid();
 if (latestFpsStatus) renderFpsCard(latestFpsStatus);
 }
 function bringToFront(c) { zCounter = Math.min(4000, zCounter + 1); c.style.zIndex = zCounter; }
-function adjustBoardHeight() { var win = document.querySelector(".window"); if (win && win.classList.contains("window-resizable")) { board.style.minHeight = "0"; return; } var mb = 0; board.querySelectorAll(".card").forEach(function (c) { var b = c.offsetTop + c.offsetHeight; if (b > mb) mb = b; }); board.style.minHeight = Math.max(520, mb + 45) + "px"; }
+function adjustBoardHeight() { var win = document.querySelector(".window"); if (win && win.classList.contains("window-resizable")) { board.style.minHeight = "0"; return; } var mb = 0; board.querySelectorAll(".card, .analog-gauge").forEach(function (c) { var b = c.offsetTop + c.offsetHeight; if (b > mb) mb = b; }); board.style.minHeight = Math.max(520, mb + 45) + "px"; }
 function makeDraggable(card, handle) {
 handle.addEventListener("pointerdown", function (ev) {
 if (locked) return; if (ev.button === 2) return; if (ev.target.closest("button, input, select, textarea, a")) return;
@@ -2671,7 +3288,28 @@ var cardStatus = document.getElementById("fpsCardStatus");
 if (cardStatus) cardStatus.textContent = message;
 }
 }
-function onData(d, sourceId) { if (!d || typeof d !== "object") return; sourceId = sourceId || "local"; var hadData = !!sourceData[sourceId]; sourceData[sourceId] = d; latestData = d; var source = dataSources.find(function (item) { return item.id === sourceId; }); var renderData = Object.assign({}, d, { _sourceName: source ? source.name : sourceId }); updateAll(renderData, sourceId); renderTemperatureAlertBanner(); var settingsPanel = document.getElementById("cardSettingsPanel"); if (!hadData && currentCardSettingsId && STANDARD_SENSOR_CARD_IDS.includes(currentCardSettingsId) && settingsPanel && !settingsPanel.classList.contains("hidden") && cardSourceId(currentCardSettingsId) === sourceId) renderCardSettingsList(); var terminalPanel = document.getElementById("terminalSensorsPanel"); if (sourceId === "local" && !hadData && terminalPanel && !terminalPanel.classList.contains("hidden")) renderTerminalSensorList(); delete sourceErrors[sourceId]; renderDashboardTabs(); var sourcesPanel = document.getElementById("sourcesPanel"); if (sourcesPanel && !sourcesPanel.classList.contains("hidden")) renderSourcesList(); if (sourceId === "local") { if (d.fps) renderFpsStatus(d.fps); hideError(); lastUpdate.textContent = new Date().toLocaleTimeString(); } }
+function onData(d, sourceId) {
+if (!d || typeof d !== "object") return;
+sourceId = sourceId || "local";
+var hadData = !!sourceData[sourceId];
+sourceData[sourceId] = d;
+delete sourceErrors[sourceId];
+latestData = d;
+var source = dataSources.find(function (item) { return item.id === sourceId; });
+var renderData = Object.assign({}, d, { _sourceName: source ? source.name : sourceId });
+updateAll(renderData, sourceId);
+renderTemperatureAlertBanner();
+var settingsPanel = document.getElementById("cardSettingsPanel");
+if (!hadData && currentCardSettingsId && STANDARD_SENSOR_CARD_IDS.includes(currentCardSettingsId) && settingsPanel && !settingsPanel.classList.contains("hidden") && cardSourceId(currentCardSettingsId) === sourceId) renderCardSettingsList();
+var terminalPanel = document.getElementById("terminalSensorsPanel");
+if (sourceId === "local" && !hadData && terminalPanel && !terminalPanel.classList.contains("hidden")) renderTerminalSensorList();
+var gaugePanel = document.getElementById("analogGaugePanel"), gaugeSource = document.getElementById("analogGaugeSource");
+if (!hadData && gaugePanel && !gaugePanel.classList.contains("hidden") && gaugeSource && gaugeSource.value === sourceId) renderAnalogGaugeSensorOptions();
+renderDashboardTabs();
+var sourcesPanel = document.getElementById("sourcesPanel");
+if (sourcesPanel && !sourcesPanel.classList.contains("hidden")) renderSourcesList();
+if (sourceId === "local") { if (d.fps) renderFpsStatus(d.fps); hideError(); lastUpdate.textContent = new Date().toLocaleTimeString(); }
+}
 function renderCachedSources() { dataSources.forEach(function (source) { if (sourceData[source.id]) onData(sourceData[source.id], source.id); }); }
 function cardSourceId(id) { return normalizeCardConfig(id).sourceId || "local"; }
 function cardUsesSource(id, sourceId) { return cardSourceId(id) === (sourceId || "local"); }
@@ -2693,12 +3331,12 @@ state.customCards.push({ id: id, name: name, sensors: sensors, autoGpu: true, gp
 normalizeCardConfig(id).sourceId = sourceId || "local";
 added = true;
 });
-var visibilityChanged = state.customCards.some(function (card) {
+var visibilityChanged = state.displayMode !== "analog-gauges" && state.customCards.some(function (card) {
 if (!card.autoGpu) return false;
 var cardData = sourceData[cardSourceId(card.id)], cardDevices = cardData && Array.isArray(cardData.gpu_devices) ? cardData.gpu_devices : [];
 return !!document.getElementById(card.id) !== cardDevices.some(function (device) { return device && device.identifier === card.gpuDeviceId; });
 });
-if (added || visibilityChanged) { if (added) saveState(); createCards(); }
+if (added || visibilityChanged) { if (added) saveState(); if (state.displayMode !== "analog-gauges") createCards(); }
 return added;
 }
 function findCustomSensor(key) {
@@ -2727,6 +3365,7 @@ if (cardUsesSource("battery", sourceId)) updateBatteryCard(d);
 if (sourceId === "local") updateWithSources(d);
 if (cardUsesSource("other", sourceId)) renderOther();
 updateCustomCards(sourceId);
+updateAnalogGauges(sourceId);
 }
 function updateCpu(d) { var b = getBody("cpu"); if (!b) return; clearNode(b); var c = d.cpu || {}, ld = c.load !== null && c.load !== undefined ? c.load : d.cpu_percent;
 if (!isSensorHidden("cpu", "temperature")) b.appendChild(line(getSensorLabel("cpu", "temperature", "Температура"), fmt(c.temperature, 1, "°C"), tempClass(c.temperature), "temperature"));
@@ -2737,7 +3376,7 @@ if (!isSensorHidden("cpu", "voltage")) b.appendChild(line(getSensorLabel("cpu", 
 if (!isSensorHidden("cpu", "power")) b.appendChild(line(getSensorLabel("cpu", "power", "Мощность"), fmt(c.power, 1, "Вт"), null, "power"));
 }
 function updateGpu(d) { var b = getBody("gpu"); if (!b) return; clearNode(b); var g = d.gpu || {};
-var gpuTemp = g.hotspot_temperature, hotspotTemp = g.temperature;
+var gpuTemp = g.temperature, hotspotTemp = g.hotspot_temperature;
 if (!isSensorHidden("gpu", "temperature")) b.appendChild(line(getSensorLabel("gpu", "temperature", "Температура GPU"), fmt(gpuTemp, 1, "°C"), tempClass(gpuTemp), "temperature"));
 if (!isSensorHidden("gpu", "hotspot_temperature")) b.appendChild(line(getSensorLabel("gpu", "hotspot_temperature", "Температура Hotspot"), fmt(hotspotTemp, 1, "°C"), tempClass(hotspotTemp), "hotspot_temperature"));
 if (!isSensorHidden("gpu", "temperature_difference_percent")) { var differencePercent = isNumber(gpuTemp) && isNumber(hotspotTemp) && gpuTemp !== 0 ? ((hotspotTemp - gpuTemp) / Math.abs(gpuTemp)) * 100 : null; b.appendChild(line(getSensorLabel("gpu", "temperature_difference_percent", "Разница температур"), fmt(differencePercent, 1, "%"), null, "temperature_difference_percent")); }
@@ -2982,6 +3621,7 @@ await Promise.all(dataSources.map(async function (source) {
 try { onData(await fetchSource(source), source.id); }
 catch (error) {
 sourceErrors[source.id] = error.message || String(error);
+updateAnalogGauges(source.id);
 console.error("Ошибка получения данных с источника " + source.name + ":", error);
 renderDashboardTabs();
 var sourcesPanel = document.getElementById("sourcesPanel");
@@ -2997,7 +3637,7 @@ remotePollingActive = true;
 try {
 await Promise.all(dataSources.filter(function (source) { return !source.local; }).map(async function (source) {
 try { onData(await fetchSource(source), source.id); }
-catch (error) { sourceErrors[source.id] = error.message || String(error); console.error("Ошибка получения данных с источника " + source.name + ":", error); renderDashboardTabs(); var sourcesPanel = document.getElementById("sourcesPanel"); if (sourcesPanel && !sourcesPanel.classList.contains("hidden")) renderSourcesList(); }
+catch (error) { sourceErrors[source.id] = error.message || String(error); updateAnalogGauges(source.id); console.error("Ошибка получения данных с источника " + source.name + ":", error); renderDashboardTabs(); var sourcesPanel = document.getElementById("sourcesPanel"); if (sourcesPanel && !sourcesPanel.classList.contains("hidden")) renderSourcesList(); }
 }));
 } finally { remotePollingActive = false; }
 }
@@ -3008,7 +3648,20 @@ function stopPolling() { pollingActive = false; if (pollingTimer) clearInterval(
 function restartPollingIfActive() { if (!pollingActive) return; stopPolling(); startPolling(); }
 function scheduleReconnect() { if (reconnectTimer) clearTimeout(reconnectTimer); reconnectTimer = setTimeout(connectWebSocket, 5000); }
 function flushWebSocketData() { websocketUpdateTimer = null; if (!pendingWebSocketData) return; var data = pendingWebSocketData; pendingWebSocketData = null; lastWebSocketRenderAt = Date.now(); onData(data); }
-function scheduleWebSocketData(data) { pendingWebSocketData = data; var remaining = state.interval - (Date.now() - lastWebSocketRenderAt); if (remaining <= 0) { if (websocketUpdateTimer) clearTimeout(websocketUpdateTimer); flushWebSocketData(); return; } if (!websocketUpdateTimer) websocketUpdateTimer = setTimeout(flushWebSocketData, remaining); }
+function scheduleWebSocketData(data) {
+if (state.displayMode === "analog-gauges") {
+if (websocketUpdateTimer) clearTimeout(websocketUpdateTimer);
+websocketUpdateTimer = null;
+pendingWebSocketData = null;
+lastWebSocketRenderAt = Date.now();
+onData(data);
+return;
+}
+pendingWebSocketData = data;
+var remaining = state.interval - (Date.now() - lastWebSocketRenderAt);
+if (remaining <= 0) { if (websocketUpdateTimer) clearTimeout(websocketUpdateTimer); flushWebSocketData(); return; }
+if (!websocketUpdateTimer) websocketUpdateTimer = setTimeout(flushWebSocketData, remaining);
+}
 function rescheduleWebSocketData() { if (!websocketUpdateTimer || !pendingWebSocketData) return; clearTimeout(websocketUpdateTimer); websocketUpdateTimer = null; scheduleWebSocketData(pendingWebSocketData); }
 function fallbackToPolling(error) {
 console.error("Ошибка обновления данных через WebSocket:", error);
@@ -3054,7 +3707,7 @@ function toggleCoffeeButton(visible) {
 }
 
 function updateLockButton() { if (!lockBtn) return; lockBtn.textContent = locked ? "🔒 Разблокировать" : "🔓 Блокировать"; }
-function toggleLock() { locked = !locked; board.querySelectorAll(".card").forEach(function (c) { c.classList.toggle("locked", locked); }); updateLockButton(); }
+function toggleLock() { locked = !locked; board.querySelectorAll(".card, .analog-gauge").forEach(function (c) { c.classList.toggle("locked", locked); }); updateLockButton(); }
 function openModal(p, o) { document.getElementById(p).classList.remove("hidden"); document.getElementById(o).classList.remove("hidden"); }
 function closeModal(p, o) { document.getElementById(p).classList.add("hidden"); document.getElementById(o).classList.add("hidden"); }
 async function openMobileDashboardQr() {
@@ -3194,9 +3847,9 @@ var BUILTIN_THEMES = [
 { id: "builtin-terminal", name: "Терминал (CMD)", builtin: true, dark: true, mode: "terminal", description: "Полноэкранный текстовый вывод датчиков без карточек", variables: { "--bg": "#0c0c0c", "--window-bg": "#0c0c0c", "--card-bg": "#0c0c0c", "--text": "#cccccc", "--muted": "#75c985", "--border-light": "#245c37", "--border-dark": "#0c0c0c", "--accent": "#00ff66", "--danger": "#ff6b6b", "--warning": "#feca57", "--ok": "#00ff66", "--line": "#18271b" }, customCss: "" }
 ];
 function sanitizeCssValue(v) { return String(v).replace(/[;{}<>]/g, "").slice(0, 200); }
-function sanitizeCustomCss(c) { return String(c).replace(/<\/style/gi, "").slice(0, 20000); }
+function sanitizeCustomCss(c) { return String(c).replace(/<\/style/gi, "").slice(0, 524288); }
 function loadStoredThemes() { try { var r = localStorage.getItem(THEMES_STORAGE_KEY); if (!r) return {}; var p = JSON.parse(r); return (p && typeof p === "object") ? p : {}; } catch (e) { return {}; } }
-function saveStoredThemes(t) { try { localStorage.setItem(THEMES_STORAGE_KEY, JSON.stringify(t)); } catch (e) {} }
+function saveStoredThemes(t) { try { localStorage.setItem(THEMES_STORAGE_KEY, JSON.stringify(t)); return true; } catch (e) { console.error("Не удалось сохранить пользовательские темы:", e); return false; } }
 function getAllThemes() { return BUILTIN_THEMES.concat(Object.values(loadStoredThemes())); }
 function normalizeThemeObject(raw) { if (!raw || typeof raw !== "object") return null; var hv = raw.variables && typeof raw.variables === "object" && Object.keys(raw.variables).length > 0, hc = typeof raw.customCss === "string" && raw.customCss.trim(); if (!hv && !hc) return null; var vars = {}; if (hv) Object.keys(raw.variables).forEach(function (k) { var v = raw.variables[k]; if (typeof v !== "string" && typeof v !== "number") return; var ck = String(k).trim(); if (ck.indexOf("--") !== 0) ck = "--" + ck; vars[ck] = sanitizeCssValue(v); }); return { id: typeof raw.id === "string" && /^[A-Za-z0-9_-]+$/.test(raw.id) ? raw.id : "theme-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8), name: String(raw.name || "Тема").slice(0, 80), author: typeof raw.author === "string" ? raw.author.slice(0, 80) : "", description: typeof raw.description === "string" ? raw.description.slice(0, 200) : "", dark: typeof raw.dark === "boolean" ? raw.dark : false, mode: raw.mode === "terminal" ? "terminal" : "", variables: vars, customCss: typeof raw.customCss === "string" ? sanitizeCustomCss(raw.customCss) : "" }; }
 function applyThemeObject(theme) { var se = document.getElementById("appliedThemeStyle"); if (!se) { se = document.createElement("style"); se.id = "appliedThemeStyle"; document.head.appendChild(se); } if (!theme || theme.id === "builtin-classic") { se.textContent = ""; } else { var css = ":root, body, body.dark {\n"; Object.keys(theme.variables || {}).forEach(function (k) { css += "  " + k + ": " + theme.variables[k] + ";\n"; }); css += "}\n"; if (theme.customCss) css += theme.customCss + "\n"; se.textContent = css; } document.body.classList.toggle("terminal-mode", !!(theme && theme.mode === "terminal")); state.dark = !!(theme && theme.dark); saveState(); applyTheme(); syncSettings(); if (latestData) renderTerminalOutput(latestData); }
@@ -3205,11 +3858,130 @@ function applyThemeByIdSilent(id) { var t = getAllThemes().find(function (i) { r
 function restoreActiveTheme() { var id = null; try { id = localStorage.getItem(ACTIVE_THEME_KEY); } catch (e) { return; } if (!id || id === "builtin-classic") return; var t = getAllThemes().find(function (i) { return i.id === id; }); if (t) applyThemeObject(t); }
 function deleteTheme(id) { var themes = loadStoredThemes(); if (!themes[id]) { showToast("Встроенные темы удалить нельзя", "warning"); return; } if (!confirm("Удалить тему \"" + themes[id].name + "\"?")) return; delete themes[id]; saveStoredThemes(themes); var aid = null; try { aid = localStorage.getItem(ACTIVE_THEME_KEY); } catch (e) {} if (aid === id) applyThemeById("builtin-classic"); renderThemesList(); showToast("Тема удалена", "success"); }
 function presetsDownloadJson(data, fn) { var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }), url = URL.createObjectURL(blob), a = document.createElement("a"); a.href = url; a.download = fn; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 1000); }
-function exportThemeObject(theme, fn) { presetsDownloadJson({ schemaVersion: 1, type: "systemmonitor-theme", name: theme.name, author: theme.author || "", description: theme.description || "", dark: !!theme.dark, mode: theme.mode === "terminal" ? "terminal" : "", variables: theme.variables || {}, customCss: theme.customCss || "" }, fn); }
-function exportCurrentTheme() { var cs = getComputedStyle(document.body), vars = {}; THEME_VAR_NAMES.forEach(function (n) { var v = cs.getPropertyValue(n).trim(); if (v) vars[n] = v; }); var name = prompt("Имя темы для экспорта:", "Моя тема") || "Моя тема", activeTheme = getAllThemes().find(function (theme) { return theme.id === getActiveThemeId(); }); exportThemeObject({ name: name.slice(0, 80), dark: !!state.dark, mode: activeTheme && activeTheme.mode === "terminal" ? "terminal" : "", variables: vars, customCss: activeTheme ? activeTheme.customCss || "" : "" }, "theme-" + String(name).replace(/[\\/:*?"<>|]+/g, "_").slice(0, 60) + ".json"); showToast("Тема экспортирована", "success"); }
+function exportThemeObject(theme, fn) {
+var data = { schemaVersion: 1, type: "systemmonitor-theme", name: theme.name, author: theme.author || "", description: theme.description || "", dark: !!theme.dark, mode: theme.mode === "terminal" ? "terminal" : "", variables: theme.variables || {}, customCss: theme.customCss || "" };
+var filename = String(fn || "theme.json").replace(/[\\/:*?"<>|]+/g, "_").replace(/[. ]+$/g, "").trim();
+if (!filename) filename = "theme";
+if (!/\.json$/i.test(filename)) filename += ".json";
+var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+if (typeof window.showSaveFilePicker !== "function") {
+presetsDownloadJson(data, filename);
+showToast("Экспорт начат. Чтобы выбирать папку, включите запрос места сохранения в настройках браузера.", "info");
+return Promise.resolve(true);
+}
+return window.showSaveFilePicker({
+suggestedName: filename,
+types: [{ description: "Тема SystemMonitor (JSON)", accept: { "application/json": [".json"] } }]
+}).then(async function (handle) {
+var writable = await handle.createWritable();
+try {
+await writable.write(blob);
+await writable.close();
+} catch (error) {
+try { await writable.abort(); } catch (abortError) { console.error("Не удалось отменить незавершённое сохранение темы:", abortError); }
+throw error;
+}
+showToast("Тема сохранена: " + handle.name, "success");
+return true;
+}).catch(function (error) {
+if (error && error.name === "AbortError") return false;
+console.error("Не удалось сохранить тему:", error);
+showToast("Не удалось сохранить тему: " + (error && error.message ? error.message : "ошибка доступа к файлу"), "error");
+return false;
+});
+}
+async function exportCurrentTheme() { var cs = getComputedStyle(document.body), vars = {}; THEME_VAR_NAMES.forEach(function (n) { var v = cs.getPropertyValue(n).trim(); if (v) vars[n] = v; }); var name = prompt("Имя темы для экспорта:", "Моя тема") || "Моя тема", activeTheme = getAllThemes().find(function (theme) { return theme.id === getActiveThemeId(); }); await exportThemeObject({ name: name.slice(0, 80), dark: !!state.dark, mode: activeTheme && activeTheme.mode === "terminal" ? "terminal" : "", variables: vars, customCss: activeTheme ? activeTheme.customCss || "" : "" }, "theme-" + String(name).replace(/[\\/:*?"<>|]+/g, "_").slice(0, 60) + ".json"); }
 function importThemesFromFile(file) { if (!file) return; var reader = new FileReader(); reader.onload = function (ev) { try { var parsed = JSON.parse(ev.target.result), items = []; if (Array.isArray(parsed)) items = parsed; else if (parsed && typeof parsed === "object") { if (Array.isArray(parsed.themes)) items = parsed.themes; else items = [parsed]; } if (items.length === 0) throw new Error("В файле нет тем"); var themes = loadStoredThemes(), count = 0; items.forEach(function (rt) { var nt = normalizeThemeObject(rt); if (!nt) return; if (themes[nt.id]) nt.id = "theme-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8); themes[nt.id] = nt; count++; }); saveStoredThemes(themes); renderThemesList(); showToast("Импортировано тем: " + count, "success"); } catch (e) { showToast("Ошибка импорта темы", "error"); } }; reader.onerror = function () { showToast("Не удалось прочитать файл темы", "error"); }; reader.readAsText(file); }
+var MAX_IMPORTED_THEME_CSS_BYTES = 524288, MAX_IMPORTED_THEME_CSS_TOTAL_BYTES = 2097152, MAX_IMPORTED_THEME_CSS_FILES = 100;
+function persistCssThemeImports(items) {
+var themes = loadStoredThemes(), imported = [];
+items.forEach(function (item) {
+if (typeof item.css !== "string" || !item.css.trim()) throw new Error("Файл " + item.name + " пустой");
+if (item.css.length > MAX_IMPORTED_THEME_CSS_BYTES) throw new Error("Файл " + item.name + " превышает ограничение 512 КБ");
+var name = String(item.name || "Тема").replace(/\.css$/i, "").replace(/[_-]+/g, " ").trim().slice(0, 80) || "CSS-тема";
+var theme = normalizeThemeObject({ name: name, description: "Импортировано из CSS", customCss: item.css });
+if (!theme) throw new Error("В файле " + item.name + " нет CSS-стилей");
+theme.id = generateBackupThemeId();
+theme.createdAt = new Date().toISOString();
+theme.updatedAt = theme.createdAt;
+themes[theme.id] = theme;
+imported.push(theme);
+});
+if (!imported.length) throw new Error("CSS-файлы для импорта не найдены");
+if (!saveStoredThemes(themes)) throw new Error("Не удалось сохранить темы. Освободите место в хранилище браузера.");
+renderThemesList();
+return imported;
+}
+async function importCssThemeFiles(fileList) {
+var files = Array.prototype.slice.call(fileList || []).filter(function (file) { return /\.css$/i.test(file.name); });
+if (!files.length) { showToast("Выберите CSS-файл или папку с CSS-темами", "warning"); return; }
+if (files.length > MAX_IMPORTED_THEME_CSS_FILES) { showToast("Можно импортировать не более 100 CSS-файлов за раз", "warning"); return; }
+var totalBytes = files.reduce(function (total, file) { return total + file.size; }, 0);
+if (files.some(function (file) { return file.size > MAX_IMPORTED_THEME_CSS_BYTES; }) || totalBytes > MAX_IMPORTED_THEME_CSS_TOTAL_BYTES) {
+showToast("Размер CSS-тем превышает лимит (512 КБ на файл, 2 МБ за раз)", "warning");
+return;
+}
+var status = document.getElementById("themeImportStatus");
+if (status) status.textContent = "Читаем CSS-файлы…";
+try {
+var contents = await Promise.all(files.map(async function (file) { return { name: file.name, css: await file.text() }; }));
+var imported = persistCssThemeImports(contents);
+if (status) status.textContent = "Импортировано тем: " + imported.length;
+showToast("Импортировано CSS-тем: " + imported.length, "success");
+} catch (error) {
+console.error("Не удалось импортировать CSS-темы:", error);
+if (status) status.textContent = error.message || "Не удалось импортировать CSS-темы";
+showToast(error.message || "Не удалось импортировать CSS-темы", "error");
+}
+}
+async function loadProjectThemeFiles() {
+var select = document.getElementById("projectThemeFileSelect"), button = document.getElementById("importProjectThemeBtn"), status = document.getElementById("themeImportStatus");
+if (!select || !button) return;
+select.disabled = true; button.disabled = true;
+select.replaceChildren(new Option("Загрузка тем проекта…", ""));
+try {
+var response = await fetch("/api/themes/files");
+var data = await response.json();
+if (!response.ok) throw new Error(data.error || ("HTTP " + response.status));
+var themes = Array.isArray(data.themes) ? data.themes : [];
+select.replaceChildren(new Option(themes.length ? "— Выберите CSS-тему —" : "В папке проекта нет CSS-тем", ""));
+themes.forEach(function (theme) {
+if (!theme || typeof theme.name !== "string" || typeof theme.url !== "string") return;
+var option = new Option(theme.name, theme.url);
+option.dataset.name = theme.name;
+select.appendChild(option);
+});
+if (status) status.textContent = themes.length ? "Найдено тем проекта: " + themes.length : "Проверьте папку static\\css\\themes.";
+} catch (error) {
+console.error("Не удалось загрузить список CSS-тем проекта:", error);
+select.replaceChildren(new Option("Не удалось загрузить список тем", ""));
+if (status) status.textContent = error.message || "Не удалось загрузить список CSS-тем проекта";
+}
+select.disabled = false;
+button.disabled = !select.value;
+}
+async function importSelectedProjectTheme() {
+var select = document.getElementById("projectThemeFileSelect"), option = select && select.selectedOptions[0], status = document.getElementById("themeImportStatus");
+if (!option || !option.value) { showToast("Сначала выберите CSS-тему проекта", "warning"); return; }
+var button = document.getElementById("importProjectThemeBtn");
+button.disabled = true;
+if (status) status.textContent = "Загружаем " + option.textContent + "…";
+try {
+var response = await fetch(option.value);
+if (!response.ok) throw new Error("Не удалось загрузить CSS-тему (HTTP " + response.status + ")");
+var imported = persistCssThemeImports([{ name: option.dataset.name || option.textContent, css: await response.text() }]);
+if (status) status.textContent = "Импортирована тема: " + imported[0].name;
+showToast("Импортирована CSS-тема: " + imported[0].name, "success");
+} catch (error) {
+console.error("Не удалось импортировать CSS-тему проекта:", error);
+if (status) status.textContent = error.message || "Не удалось импортировать тему";
+showToast(error.message || "Не удалось импортировать CSS-тему", "error");
+} finally {
+button.disabled = !select.value;
+}
+}
 function renderThemesList() { var lst = document.getElementById("themesList"); if (!lst) return; clearNode(lst); var aid = null; try { aid = localStorage.getItem(ACTIVE_THEME_KEY); } catch (e) {} getAllThemes().forEach(function (t) { var item = el("div", "preset-item"), info = el("div", "preset-info"), title = t.name; if (t.id === aid) title += " ✓"; var nm = el("div", "preset-name", title), meta = t.builtin ? "Встроенная тема" : "Пользовательская тема"; if (t.author) meta += " · " + t.author; if (t.description) meta += " · " + t.description; var metaEl = el("div", "preset-meta", meta); info.appendChild(nm); info.appendChild(metaEl); var actions = el("div", "preset-actions"); var ab = el("button", "", "Применить"); ab.type = "button"; ab.addEventListener("click", function () { applyThemeById(t.id); }); var eb = el("button", "", "📤"); eb.type = "button"; eb.title = "Экспортировать тему"; eb.addEventListener("click", function () { exportThemeObject(t, "theme-" + String(t.name).replace(/[\\/:*?"<>|]+/g, "_").slice(0, 60) + ".json"); }); actions.appendChild(ab); actions.appendChild(eb); if (!t.builtin) { var db = el("button", "", "🗑"); db.type = "button"; db.title = "Удалить тему"; db.addEventListener("click", function () { deleteTheme(t.id); }); actions.appendChild(db); } item.appendChild(info); item.appendChild(actions); lst.appendChild(item); }); }
-function openThemesPanel() { renderThemesList(); openModal("themesPanel", "themesOverlay"); }
+function openThemesPanel() { renderThemesList(); openModal("themesPanel", "themesOverlay"); loadProjectThemeFiles(); }
 function closeThemesPanel() { closeModal("themesPanel", "themesOverlay"); }
 var BASE_LIGHT_VARS = { "--bg": "#008080", "--window-bg": "#c0c0c0", "--card-bg": "#d4d0c8", "--text": "#000000", "--muted": "#444444", "--border-light": "#ffffff", "--border-dark": "#808080", "--accent": "#000080", "--danger": "#cc0000", "--warning": "#cc7700", "--ok": "#007700", "--line": "rgba(0,0,0,0.12)" };
 var BASE_DARK_VARS = { "--bg": "#101418", "--window-bg": "#1d232b", "--card-bg": "#232b36", "--text": "#e8eef5", "--muted": "#9fb0c0", "--border-light": "#3a4654", "--border-dark": "#10151b", "--accent": "#4da3ff", "--danger": "#ff6b6b", "--warning": "#feca57", "--ok": "#59d17e", "--line": "rgba(255,255,255,0.08)" };
@@ -3253,6 +4025,8 @@ function savePresets(p) { try { localStorage.setItem(PRESETS_STORAGE_KEY, JSON.s
 function normalizePresetStateBase(raw) { var r = defaultState(); if (!raw || typeof raw !== "object") return r; var ai = [1000, 2000, 5000, 10000, 30000, 60000], iv = Number(raw.interval); if (ai.includes(iv)) r.interval = iv; if (typeof raw.dark === "boolean") r.dark = raw.dark; if (raw.cards && typeof raw.cards === "object") CARD_TYPES.forEach(function (t) { if (typeof raw.cards[t] === "boolean") r.cards[t] = raw.cards[t]; }); if (Array.isArray(raw.customCards)) r.customCards = raw.customCards.filter(function (c) { return c && typeof c.id === "string" && /^[A-Za-z0-9_-]+$/.test(c.id) && typeof c.name === "string" && Array.isArray(c.sensors); }).map(function (c) { return { id: c.id, name: String(c.name).slice(0, 80), sensors: c.sensors.filter(function (k) { return typeof k === "string"; }) }; }); if (raw.cardConfig && typeof raw.cardConfig === "object") { var cfg = {}; Object.keys(raw.cardConfig).forEach(function (cid) { var item = raw.cardConfig[cid]; if (!item || typeof item !== "object") return; var h = Array.isArray(item.hidden) ? item.hidden.filter(function (k) { return typeof k === "string"; }) : [], l = {}, a = Array.isArray(item.addedSensors) ? item.addedSensors.filter(function (k) { return typeof k === "string"; }) : [], o = Array.isArray(item.sensorOrder) ? item.sensorOrder.filter(function (k) { return typeof k === "string"; }) : []; if (item.labels && typeof item.labels === "object") Object.keys(item.labels).forEach(function (k) { var v = item.labels[k]; if (typeof k === "string" && typeof v === "string" && v.trim()) l[k] = v.trim().slice(0, 120); }); cfg[cid] = { hidden: h, labels: l, addedSensors: a, sensorOrder: o }; }); r.cardConfig = cfg; } if (raw.snap && typeof raw.snap === "object") { if (typeof raw.snap.enabled === "boolean") r.snap.enabled = raw.snap.enabled; var sz = Number(raw.snap.size); if (GRID_SIZES.includes(sz)) r.snap.size = sz; } return r; }
 function normalizePresetState(raw) {
 var result = normalizePresetStateBase(raw);
+if (raw && (raw.displayMode === "analog-gauges" || raw.displayMode === "cards")) result.displayMode = raw.displayMode;
+if (raw && Array.isArray(raw.analogGauges)) result.analogGauges = normalizeAnalogGaugeSettings(raw.analogGauges);
 if (raw && Array.isArray(raw.customCards)) result.customCards.forEach(function (card) { var saved = raw.customCards.find(function (item) { return item && item.id === card.id; }); if (!saved) return; card.autoGpu = saved.autoGpu === true; card.gpuDeviceId = typeof saved.gpuDeviceId === "string" ? saved.gpuDeviceId : null; });
 if (raw && Array.isArray(raw.terminalSensors)) result.terminalSensors = raw.terminalSensors.filter(function (key, index, values) { return typeof key === "string" && values.indexOf(key) === index; });
 if (raw && raw.cardConfig && typeof raw.cardConfig === "object") Object.keys(raw.cardConfig).forEach(function (id) {
@@ -3425,8 +4199,8 @@ showToast("Все вкладки и их источники импортиров
 reader.onerror = function () { showToast("Не удалось прочитать архив вкладок", "error"); };
 reader.readAsText(file);
 }
-function exportDashboardProfile() { saveState(); saveLayout(); downloadJson({ schemaVersion: 2, type: "systemmonitor-dashboard-profile", exportedAt: new Date().toISOString(), state: { interval: state.interval, dark: state.dark, cards: state.cards, customCards: state.customCards, cardConfig: state.cardConfig, snap: state.snap, terminalSensors: state.terminalSensors }, layout: layout }, "systemmonitor-dashboard-profile.json"); showToast("Макет экспортирован", "success"); }
-function importDashboardProfile(file) { if (!file) return; var reader = new FileReader(); reader.onload = function (ev) { try { var parsed = JSON.parse(ev.target.result); if (!parsed || typeof parsed !== "object") throw new Error("Некорректный JSON"); if (!confirm("Импортировать макет?\nТекущий макет, пользовательские карточки и настройки карточек будут заменены.")) return; if (parsed.state || parsed.layout) { state = normalizePresetState(parsed.state); layout = normalizePresetLayout(parsed.layout); } else { layout = normalizeImportedLayout(parsed); } var terminalSensors = parsed.terminalSensors || (parsed.state && parsed.state.terminalSensors); if (Array.isArray(terminalSensors)) state.terminalSensors = terminalSensors.filter(function (key, index, values) { return typeof key === "string" && values.indexOf(key) === index; }); saveState(); try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout)); } catch (e) { console.error("Не удалось сохранить импортированный макет:", e); } applyTheme(); syncSettings(); updateSnapUI(); createCards(); renderCachedSources(); showToast("Макет импортирован", "success"); } catch (e) { showToast("Ошибка импорта макета", "error"); } }; reader.onerror = function () { showToast("Не удалось прочитать файл", "error"); }; reader.readAsText(file); }
+function exportDashboardProfile() { saveState(); saveLayout(); downloadJson({ schemaVersion: 2, type: "systemmonitor-dashboard-profile", exportedAt: new Date().toISOString(), state: { interval: state.interval, dark: state.dark, displayMode: state.displayMode, analogGauges: state.analogGauges, cards: state.cards, customCards: state.customCards, cardConfig: state.cardConfig, snap: state.snap, terminalSensors: state.terminalSensors }, layout: layout }, "systemmonitor-dashboard-profile.json"); showToast("Макет экспортирован", "success"); }
+function importDashboardProfile(file) { if (!file) return; var reader = new FileReader(); reader.onload = function (ev) { try { var parsed = JSON.parse(ev.target.result); if (!parsed || typeof parsed !== "object") throw new Error("Некорректный JSON"); if (!confirm("Импортировать макет?\nТекущий макет, пользовательские карточки, стрелочные приборы и настройки карточек будут заменены.")) return; if (parsed.state || parsed.layout) { state = normalizePresetState(parsed.state); layout = normalizePresetLayout(parsed.layout); } else { layout = normalizeImportedLayout(parsed); } var terminalSensors = parsed.terminalSensors || (parsed.state && parsed.state.terminalSensors); if (Array.isArray(terminalSensors)) state.terminalSensors = terminalSensors.filter(function (key, index, values) { return typeof key === "string" && values.indexOf(key) === index; }); saveState(); try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout)); } catch (e) { console.error("Не удалось сохранить импортированный макет:", e); } applyTheme(); syncSettings(); updateSnapUI(); createCards(); renderCachedSources(); showToast("Макет импортирован", "success"); } catch (e) { showToast("Ошибка импорта макета", "error"); } }; reader.onerror = function () { showToast("Не удалось прочитать файл", "error"); }; reader.readAsText(file); }
 function themesPresetsDownloadJson(d, fn) { presetsDownloadJson(d, fn); }
 function generateBackupThemeId() { return "theme-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8); }
 function generateBackupPresetId() { return "preset-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8); }
@@ -3445,6 +4219,9 @@ restartRemotePolling();
 refresh();
 }
 function bindEvents() {
+document.getElementById("dashboardScale").addEventListener("input", function () { applyDashboardScale(this.value, true); });
+document.getElementById("dashboardScaleReset").addEventListener("click", function () { applyDashboardScale(100, true); });
+window.addEventListener("storage", function (event) { if (event.key === DASHBOARD_SCALE_KEY) applyDashboardScale(event.newValue, false); });
 document.getElementById("addDashboardTabBtn").addEventListener("click", addDashboardTab);
 document.getElementById("manageSourcesBtn").addEventListener("click", openSourcesPanel);
 document.getElementById("sourcesCloseBtn").addEventListener("click", closeSourcesPanel);
@@ -3518,6 +4295,8 @@ setFpsTarget({ mode: "auto" });
 });
 intervalSelect.addEventListener("change", function () { state.interval = Math.max(1000, Number(this.value) || 2000); saveState(); restartPollingIfActive(); restartRemotePolling(); rescheduleWebSocketData(); });
 document.getElementById("addCustomBtn").addEventListener("click", openCustomPanel);
+document.getElementById("dashboardDisplayModeBtn").addEventListener("click", function () { state.displayMode = state.displayMode === "analog-gauges" ? "cards" : "analog-gauges"; saveState(); createCards(); renderCachedSources(); });
+document.getElementById("addAnalogGaugeBtn").addEventListener("click", function () { openAnalogGaugeEditor(); });
 document.getElementById("addFpsCardBtn").addEventListener("click", addFpsCard);
 lockBtn.addEventListener("click", toggleLock);
 document.getElementById("resetLayoutBtn").addEventListener("click", function () { resetLayout(); });
@@ -3544,12 +4323,24 @@ document.getElementById("logsOverlay").addEventListener("click", function () { c
 document.getElementById("customCreateBtn").addEventListener("click", createCustomCardFromSelection);
 document.getElementById("customCancelBtn").addEventListener("click", closeCustomPanel);
 document.getElementById("customOverlay").addEventListener("click", closeCustomPanel);
+document.getElementById("analogGaugeSaveBtn").addEventListener("click", saveAnalogGaugeFromForm);
+document.getElementById("analogGaugeDeleteBtn").addEventListener("click", deleteCurrentAnalogGauge);
+document.getElementById("analogGaugeCancelBtn").addEventListener("click", closeAnalogGaugeEditor);
+document.getElementById("analogGaugeOverlay").addEventListener("click", closeAnalogGaugeEditor);
+document.getElementById("analogGaugeSource").addEventListener("change", function () { renderAnalogGaugeSensorOptions(""); });
+document.getElementById("analogGaugeTypeFilter").addEventListener("change", function () { renderAnalogGaugeSensorOptions(); });
+document.getElementById("analogGaugeSearch").addEventListener("input", function () { renderAnalogGaugeSensorOptions(); });
+document.getElementById("analogGaugeSensor").addEventListener("change", setAnalogGaugeDefaultRange);
+document.getElementById("analogGaugeSize").addEventListener("input", function () { document.getElementById("analogGaugeSizeValue").value = this.value + " px"; });
+document.getElementById("analogGaugePanel").addEventListener("keydown", function (event) { if (event.key === "Escape") { event.preventDefault(); closeAnalogGaugeEditor(); } });
 document.getElementById("customSearch").addEventListener("input", renderCustomSensorList);
 document.getElementById("customTypeFilter").addEventListener("change", renderCustomSensorList);
 document.getElementById("customDeviceFilter").addEventListener("change", renderCustomSensorList);
+var analogGaugeTypeFilter = document.getElementById("analogGaugeTypeFilter");
+var customTypeFilter = document.getElementById("customTypeFilter");
+if (analogGaugeTypeFilter && customTypeFilter) Array.prototype.forEach.call(customTypeFilter.options, function (option) { analogGaugeTypeFilter.appendChild(option.cloneNode(true)); });
 var cardSettingsTypeFilter = document.getElementById("cardSettingsTypeFilter");
 if (cardSettingsTypeFilter) {
-var customTypeFilter = document.getElementById("customTypeFilter");
 if (customTypeFilter) Array.prototype.forEach.call(customTypeFilter.options, function (option) { cardSettingsTypeFilter.appendChild(option.cloneNode(true)); });
 cardSettingsTypeFilter.addEventListener("change", renderCardSettingsList);
 }
@@ -3577,7 +4368,11 @@ if (pcb) pcb.addEventListener("click", closePresetsPanel);
 if (po) po.addEventListener("click", closePresetsPanel);
 document.getElementById("themesBtn").addEventListener("click", openThemesPanel);
 document.getElementById("importThemeBtn").addEventListener("click", function () { document.getElementById("themeFileInput").click(); });
-document.getElementById("themeFileInput").addEventListener("change", function () { var f = this.files && this.files[0]; if (f) importThemesFromFile(f); this.value = ""; });
+document.getElementById("themeFileInput").addEventListener("change", function () { var f = this.files && this.files[0]; if (f) { if (/\.css$/i.test(f.name)) importCssThemeFiles([f]); else importThemesFromFile(f); } this.value = ""; });
+document.getElementById("importThemeFolderBtn").addEventListener("click", function () { document.getElementById("themeFolderInput").click(); });
+document.getElementById("themeFolderInput").addEventListener("change", function () { if (this.files && this.files.length) importCssThemeFiles(this.files); this.value = ""; });
+document.getElementById("projectThemeFileSelect").addEventListener("change", function () { document.getElementById("importProjectThemeBtn").disabled = !this.value; });
+document.getElementById("importProjectThemeBtn").addEventListener("click", importSelectedProjectTheme);
 document.getElementById("exportThemeBtn").addEventListener("click", exportCurrentTheme);
 document.getElementById("themesCloseBtn").addEventListener("click", closeThemesPanel);
 document.getElementById("themesOverlay").addEventListener("click", closeThemesPanel);
@@ -3612,6 +4407,7 @@ function init() {
 ensureDashboardTabs();
 try { localStorage.setItem(ACTIVE_TAB_KEY, activeTabId); } catch (e) { console.error("Не удалось сохранить активную вкладку:", e); }
 hostnameEl.textContent = window.location.hostname || "localhost";
+applyDashboardScale(getDashboardScale(), false);
 applyTheme();
 restoreActiveTheme();
 syncSettings();

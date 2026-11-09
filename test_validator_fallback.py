@@ -16,7 +16,7 @@ from providers import (
     get_gpu_memory_metrics,
 )
 from sensor_resolver import SensorResolver, StaleValueCache
-from validator import is_valid_reading, validate_reading
+from validator import is_valid_reading, validate_reading, validate_sensor_reading
 
 
 class ValidatorTests(unittest.TestCase):
@@ -45,6 +45,27 @@ class ValidatorTests(unittest.TestCase):
         for name, field, value, expected in cases:
             with self.subTest(name=name):
                 self.assertEqual(is_valid_reading(field, value), expected)
+
+    def test_raw_sensor_types_reject_zero_frequency_but_keep_idle_loads(self):
+        cases = (
+            ("Temperature", "°C", "cpu.temperature", False),
+            ("Clock", "MHz", "cpu.clock", False),
+            ("Clock", "MHz", "gpu.clock", False),
+            ("Frequency", "MHz", "cpu.frequency", False),
+            ("Power", "W", "cpu.power", False),
+            ("Voltage", "V", "gpu.voltage", False),
+            ("Load", "%", "cpu.load", True),
+            ("Fan", "RPM", "gpu.fan", True),
+            ("Control", "%", "gpu.control", True),
+        )
+        for sensor_type, unit, field, expected in cases:
+            with self.subTest(sensor_type=sensor_type, field=field):
+                result = validate_sensor_reading(
+                    0.0, sensor_type, unit, "Hardware", "Sensor", field,
+                )
+                self.assertEqual(result.valid, expected)
+                if not expected:
+                    self.assertEqual(result.reason, "zero")
 
 
 class FallbackTests(unittest.TestCase):
@@ -322,6 +343,7 @@ class SmartDataTests(unittest.TestCase):
         disk = _parse_smartctl_output({
             "device": {"protocol": "NVMe"},
             "model_name": "Example NVMe",
+            "user_capacity": {"bytes": 500107862016},
             "serial_number": "EXAMPLE-SERIAL",
             "firmware_version": "1.23",
             "nvme_version": {"string": "NVMe 1.4"},
@@ -345,6 +367,7 @@ class SmartDataTests(unittest.TestCase):
         }, r"\\.\PhysicalDrive0")
 
         self.assertEqual(disk["model"], "Example NVMe")
+        self.assertEqual(disk["capacity_bytes"], 500107862016)
         self.assertEqual(disk["protocol"], "NVMe")
         self.assertEqual(disk["interface"], "NVMe Express")
         self.assertEqual(disk["standard"], "NVMe 1.4")
