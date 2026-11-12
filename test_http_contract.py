@@ -86,25 +86,26 @@ class HttpContractTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["status"], "ok")
 
-    def test_theme_files_api_lists_css_files_from_project_theme_directory(self):
+    def test_theme_files_api_lists_css_and_javascript_files_from_project_theme_directory(self):
         response = self.client.get("/api/themes/files")
         self.assertEqual(response.status_code, 200)
         themes = response.get_json()["themes"]
         self.assertTrue(themes)
         self.assertIn("style-dos.css", [theme["name"] for theme in themes])
+        self.assertIn("analog-gauge-theme.js", [theme["name"] for theme in themes])
         for theme in themes:
-            self.assertTrue(theme["name"].lower().endswith(".css"))
+            self.assertTrue(theme["name"].lower().endswith((".css", ".js")))
             self.assertTrue(theme["url"].startswith("/static/css/themes/"))
 
-    def test_dashboard_theme_panel_exposes_css_import_sources(self):
+    def test_dashboard_theme_panel_exposes_css_and_javascript_import_sources(self):
         response = self.client.get("/dashboard")
         self.assertEqual(response.status_code, 200)
         html = response.get_data(as_text=True)
         self.assertIn('id="projectThemeFileSelect"', html)
         self.assertIn('id="importProjectThemeBtn"', html)
         self.assertIn('id="importThemeFolderBtn"', html)
-        self.assertIn('id="themeFolderInput" accept=".css,text/css" webkitdirectory directory multiple', html)
-        self.assertIn('id="themeFileInput" accept=".css,.json,text/css,application/json"', html)
+        self.assertIn('id="themeFolderInput" accept=".css,.js,text/css,text/javascript" webkitdirectory directory multiple', html)
+        self.assertIn('id="themeFileInput" accept=".css,.js,.json,text/css,text/javascript,application/json"', html)
         self.assertIn('function importCssThemeFiles(fileList)', html)
         self.assertIn('function importSelectedProjectTheme()', html)
         self.assertIn("function exportThemeObject(theme, fn)", html)
@@ -348,12 +349,130 @@ class HttpContractTests(unittest.TestCase):
                         'id="fpsProcessSelect"',
                         'id="fpsAutoProcess"',
                         'data-card="fps"',
+                        'id="importThemeBtn"',
                         'id="mobileQrBtn"',
                         'id="mobileQrPanel"',
                         'id="mobileQrImage"',
                     ):
                         self.assertIn(control, response.get_data(as_text=True))
                     html = response.get_data(as_text=True)
+                    self.assertIn(
+                        'renderCardIfChanged("smart", [d.smart, addedSensorData("smart")], function () { updateSmart(d); renderAdditionalCardSensors("smart"); });',
+                        html,
+                    )
+                    for smart_display in (
+                        'if (isNumber(disk.capacity_bytes) && disk.capacity_bytes > 0)',
+                        'title += " · " + (disk.capacity_bytes / 1e9).toLocaleString("ru-RU"',
+                        'line("Прошивка", disk.firmware_version || "—")',
+                        'line("Серийный номер", disk.serial_number || "—")',
+                        'line("Интерфейс", disk.interface || "—")',
+                        'line("Режим передачи", disk.transfer_mode || "—")',
+                        'line("Буква тома", disk.volume || "—")',
+                        'line("Стандарт", disk.standard || "—")',
+                        'Array.isArray(disk.capabilities) && disk.capabilities.length ? disk.capabilities.join(", ") : "—"',
+                        'isNumber(disk.temperature) ? fmt(disk.temperature, 0, "°C") : "—"',
+                        'isNumber(disk.power_on_hours) ? fmtInt(disk.power_on_hours, " ч") : "—"',
+                        'isNumber(disk.power_cycles) ? fmtInt(disk.power_cycles) : "—"',
+                        'line("Всего хост-чтений"',
+                        'line("Всего хост-записей"',
+                        'line("Скорость вращения", disk.rotation_label || "—")',
+                        'line("Всего хост-записей", isNumber(disk.data_units_written)',
+                    ):
+                        self.assertIn(smart_display, html)
+                    self.assertIn(
+                        "startScrollTop = board.scrollTop;",
+                        html,
+                    )
+                    self.assertIn(
+                        "board.scrollTop += scrollStep; setDragPosition(e);",
+                        html,
+                    )
+                    self.assertIn(
+                        ".board::after { content: \"\"; display: block; height: var(--board-content-height, 0); pointer-events: none; }",
+                        html,
+                    )
+                    self.assertIn(
+                        'board.style.setProperty("--board-content-height", contentHeight + "px");',
+                        html,
+                    )
+                    self.assertIn(
+                        "else if (cardBottom > visibleBottom) board.scrollTop = cardBottom - board.clientHeight;",
+                        html,
+                    )
+                    self.assertIn(
+                        "html.embedded-dashboard .board { scrollbar-gutter: stable; }",
+                        html,
+                    )
+                    self.assertNotIn("scaleCardsToBoardSize", html)
+                    self.assertNotIn("layoutEmbeddedCards", html)
+                    self.assertIn(
+                        "return { rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height } };",
+                        html,
+                    )
+                    self.assertIn(
+                        "if (!embeddedMode) {\nsetWindowRect(fullscreenSnapshot.rect.left, fullscreenSnapshot.rect.top, fullscreenSnapshot.rect.width, fullscreenSnapshot.rect.height);\n}",
+                        html,
+                    )
+                    menu_start = html.index('<details id="appearanceMenu"')
+                    menu_end = html.index("</details>", menu_start) + len("</details>")
+                    appearance_menu = html[menu_start:menu_end]
+                    self.assertIn(
+                        '<summary aria-controls="appearanceMenuPanel">🎨 Внешний вид',
+                        appearance_menu,
+                    )
+                    self.assertIn("clip-path: inset(0 0 100% 0);", html)
+                    self.assertIn("prefers-reduced-motion: reduce", html)
+                    self.assertIn(".tools-menu > .tools-menu-panel { left: auto; right: 0; }", html)
+                    self.assertIn(".titlebar { justify-content: flex-start; }", html)
+                    self.assertIn(".titlebar { padding-right: 72px; }", html)
+                    for control in (
+                        'id="themeBtn"',
+                        'id="themesBtn"',
+                        'id="settingsBtn"',
+                        'id="snapBtn"',
+                        'id="gridSizeSelect"',
+                        'id="alignGridBtn"',
+                        'id="lockBtn"',
+                        'id="resetLayoutBtn"',
+                        'id="exportLayoutBtn"',
+                        'id="importLayoutBtn"',
+                        'id="presetsBtn"',
+                        'id="exportAllDashboardsBtn"',
+                        'id="importAllDashboardsBtn"',
+                        'id="terminalSensorsBtn"',
+                    ):
+                        self.assertIn(control, appearance_menu)
+                    tools_start = html.index('<details id="toolsMenu"')
+                    tools_end = html.index("</details>", tools_start) + len("</details>")
+                    tools_menu = html[tools_start:tools_end]
+                    self.assertIn(
+                        '<summary aria-controls="toolsMenuPanel">🧰 Инструменты',
+                        tools_menu,
+                    )
+                    for control in (
+                        'id="intervalSelect"',
+                        'id="refreshBtn"',
+                        'id="fullscreenBtn"',
+                        'id="addCustomBtn"',
+                        'id="addFpsCardBtn"',
+                        'id="addDashboardTabBtn"',
+                        'id="manageSourcesBtn"',
+                        'id="mobileQrBtn"',
+                        'id="logsBtn"',
+                        'id="csvBtn"',
+                        'id="historyCsvBtn"',
+                        'id="sourceHistoryBtn"',
+                        'id="temperatureAlertsBtn"',
+                        'href="/all-sensors"',
+                        'id="dashboardExtensionTools"',
+                    ):
+                        self.assertIn(control, tools_menu)
+                    self.assertIn('toolbarGroup: document.getElementById("dashboardExtensionToolsGroup")', html)
+                    self.assertIn('id="toastContainer" role="status" aria-live="polite"', html)
+                    self.assertIn('downloadCsv("/export/csv", this', html)
+                    self.assertIn('downloadCsv("/export/history-csv", this', html)
+                    self.assertIn('Проверьте папку загрузок.', html)
+                    self.assertIn('Нет данных для экспорта. Дождитесь обновления показаний.', html)
                     self.assertIn(".fps-panel-hidden { display: none !important; }", html)
                     self.assertIn(".dashboard-compact .fps-panel-heading {\npadding-right: 64px;", html)
                     self.assertIn(".dashboard-compact .dashboard-tabs {\npadding-right: 72px;", html)
@@ -372,102 +491,47 @@ class HttpContractTests(unittest.TestCase):
                         html,
                     )
 
-    def test_desktop_analog_gauge_theme_exposes_sensor_picker_and_saved_gauge_controls(self):
-        response = self.client.get("/dashboard")
-        self.assertEqual(response.status_code, 200)
-        html = response.get_data(as_text=True)
-        for control in (
-            'id="dashboardDisplayModeBtn"',
-            'id="addAnalogGaugeBtn"',
-            'id="analogGaugePanel"',
-            "analog-gauge-resize-hint",
-            'id="analogGaugeSource"',
-            'id="analogGaugeTypeFilter"',
-            'id="analogGaugeSensor"',
-            'id="analogGaugeName"',
-            'id="analogGaugeMin"',
-            'id="analogGaugeMax"',
-            'id="analogGaugeSize"',
-            'id="analogGaugeSizeValue"',
-            'id="analogGaugeSaveBtn"',
-            'id="analogGaugeDeleteBtn"',
-        ):
-            with self.subTest(control=control):
-                self.assertIn(control, html)
-        self.assertIn('type="range" min="240" max="640" step="20" value="360"', html)
-        self.assertIn('displayMode: "cards", analogGauges: []', html)
-        self.assertIn("normalizeAnalogGaugeSettings", html)
-        self.assertIn("selectableSensorEntries(sourceData[sourceId])", html)
-        self.assertIn("rawByIdentifier = new Map(), rawByKey = new Map()", html)
-        self.assertIn('var identifierKey = (sensor.gpu_identifier || "") + "||" + sensor.identifier', html)
-        self.assertIn('rawByKey.get(key) || (typeof sensor.identifier === "string" && sensor.identifier ? rawByIdentifier.get((sensor.gpu_identifier || "") + "||" + sensor.identifier) : null)', html)
-        self.assertIn("Object.assign({}, sensor, rawSensor)", html)
-        self.assertIn("sensor.valid !== false && isValidAnalogGaugeReading(sensor.value)", html)
-        self.assertIn("function analogGaugeUnavailableStatus(sensor)", html)
-        self.assertIn('sensor.reason === "zero") return "CPU-сенсор вернул 0;', html)
-        self.assertIn('sensor.reason === "zero" ? " · источник вернул 0"', html)
-        self.assertIn('sensor.hardware_type !== "Cpu" || sensor.type !== "Clock"', html)
-        self.assertIn('metadata["cpu.frequency"]', html)
-        self.assertIn('"Резервный источник: " + sensor.fallbackSource', html)
-        self.assertIn('<option value="Temperature">🌡️ Температура</option>', html)
-        self.assertIn("analogGaugeTypeFilter.appendChild(option.cloneNode(true))", html)
-        self.assertIn('groups.get(groupKey).appendChild(option)', html)
-        self.assertIn('group.label = typeLabels.get(type) || (type || "Без типа")', html)
-        self.assertIn('document.getElementById("analogGaugeTypeFilter").addEventListener("change"', html)
-        self.assertIn("if (name && entry) name.value = analogGaugeSensorLabel", html)
-        self.assertNotIn("if (name && !name.value.trim() && entry)", html)
-        self.assertIn("body.analog-gauge-mode #addCustomBtn", html)
-        self.assertNotIn("body.analog-gauge-mode #snapBtn", html)
-        self.assertNotIn("body.analog-gauge-mode #gridSizeSelect", html)
-        self.assertNotIn("body.analog-gauge-mode #alignGridBtn", html)
-        self.assertIn('var analogMode = state.displayMode === "analog-gauges"', html)
-        self.assertIn('selector = analogMode ? ".analog-gauge" : ".card"', html)
-        scheduler_start = html.index("function scheduleWebSocketData(data)")
-        scheduler_end = html.index("function rescheduleWebSocketData()", scheduler_start)
-        scheduler = html[scheduler_start:scheduler_end]
-        self.assertIn('if (state.displayMode === "analog-gauges") {', scheduler)
-        self.assertIn("lastWebSocketRenderAt = Date.now();\nonData(data);\nreturn;", scheduler)
-        self.assertIn("var remaining = state.interval - (Date.now() - lastWebSocketRenderAt);", scheduler)
-        self.assertIn("function getAnalogGaugePositions()", html)
-        self.assertIn('var visibilityChanged = state.displayMode !== "analog-gauges" && state.customCards.some(function (card)', html)
-        self.assertIn('if (added || visibilityChanged) { if (added) saveState(); if (state.displayMode !== "analog-gauges") createCards(); }', html)
-        self.assertIn("function makeDraggable(card, handle)", html)
-        self.assertIn("makeDraggable(card, face)", html)
-        self.assertIn('board.querySelectorAll(".card, .analog-gauge")', html)
-        self.assertIn("function deleteCurrentAnalogGauge()", html)
-        self.assertIn("function removeAnalogGauge(id)", html)
-        self.assertNotIn("Переместить выше:", html)
-        self.assertNotIn('createAnalogGaugeControl("×"', html)
-        self.assertIn("resize: both;", html)
-        self.assertIn(".analog-gauge-panel #analogGaugeSensor { flex: 1 1 240px;", html)
-        self.assertIn("ANALOG_GAUGE_SENTINELS", html)
-        self.assertIn("data-gauge-needle", html)
-        self.assertIn("data-gauge-meter", html)
-        self.assertIn("face.appendChild(settingsButton)", html)
-        self.assertIn('settingsButton.className = "analog-gauge-settings"', html)
-        self.assertIn('card.setAttribute("aria-label", gauge.name)', html)
-        self.assertIn('var gaugeName = el("div", "analog-gauge-name", gauge.name)', html)
-        self.assertIn("face.appendChild(gaugeName)", html)
-        self.assertNotIn("analog-gauge-sensor", html)
-        self.assertNotIn("ТЕКУЩЕЕ ПОКАЗАНИЕ", html)
-        self.assertIn('value < gauge.min ? "Ниже диапазона" : value > gauge.max ? "Выше диапазона" : ""', html)
-        self.assertIn(".analog-gauge-settings {", html)
-        self.assertIn("background: rgba(221, 240, 238, .08);", html)
-        self.assertIn("color: rgba(221, 240, 238, .48);", html)
-        self.assertIn("opacity: .68;", html)
-        self.assertIn("border: 0;\nbackground: transparent;\ncolor: #e2f0ef;", html)
-        self.assertIn("border: 1px solid #294044;", html)
-        self.assertIn("saveButton.disabled = !sensorSelect.value", html)
-        self.assertIn("value < gauge.min ? \"Ниже диапазона\"", html)
-        self.assertIn("size: size", html)
-        self.assertIn('card.style.setProperty("--analog-gauge-width", gauge.size + "px")', html)
-        self.assertIn("Math.round(size / 20) * 20", html)
-        self.assertIn('document.getElementById("analogGaugeSizeValue").value = this.value + " px"', html)
-        self.assertIn("display: block;\noverflow: auto;\nmin-height: min(60vh, 560px);", html)
-        self.assertIn(".analog-gauge.dragging { cursor: grabbing; }", html)
-        self.assertIn(".analog-gauge.locked { cursor: default; }", html)
-        self.assertIn("state.analogGauges", html)
-        self.assertIn("Пока нет приборов", html)
+    def test_analog_gauge_theme_is_a_single_importable_package(self):
+        package = self.client.get("/static/css/themes/analog-gauge-theme.js")
+        theme_files = self.client.get("/api/themes/files")
+        package_text = package.get_data(as_text=True)
+        project_themes = theme_files.get_json()["themes"]
+        package.close()
+        theme_files.close()
+        self.assertEqual(package.status_code, 200)
+        self.assertIn(".analog-gauge-face", package_text)
+        self.assertIn("SystemMonitorThemePackage", package_text)
+        self.assertIn("api.toolbarGroup.hidden = false", package_text)
+        self.assertIn("api.toolbarGroup.hidden = true", package_text)
+        self.assertIn("function createAnalogGaugeTheme(api)", package_text)
+        self.assertIn("function saveAnalogGaugeLayout()", package_text)
+        self.assertIn("saveLayout: saveLayout", package_text)
+        self.assertIn("layout[gauge.id]", package_text)
+        self.assertIn(
+            {
+                "name": "analog-gauge-theme.js",
+                "url": "/static/css/themes/analog-gauge-theme.js",
+            },
+            project_themes,
+        )
+        self.assertNotIn("analog-gauge-theme.css", [theme["name"] for theme in project_themes])
+        self.assertNotIn("/static/js/analog-gauge-theme.js", [theme["url"] for theme in project_themes])
+        self.assertEqual(self.client.get("/static/css/themes/analog-gauge-theme.css").status_code, 404)
+        self.assertEqual(self.client.get("/static/js/analog-gauge-theme.js").status_code, 404)
+
+        html = self.client.get("/dashboard").get_data(as_text=True)
+        self.assertNotIn("analog-gauge-theme.js", html)
+        self.assertNotIn('id="dashboardDisplayModeBtn"', html)
+        self.assertNotIn('id="analogGaugeThemeModeBtn"', html)
+        self.assertNotIn('id="analogGaugePanel"', html)
+        self.assertIn('id="importThemeBtn"', html)
+        self.assertIn("function createDashboardThemeApi()", html)
+        self.assertIn("function saveCurrentBoardLayout()", html)
+        self.assertIn("activeBoardView.saveLayout()", html)
+        self.assertIn("persistJsThemeImports", html)
+        self.assertIn("JavaScript-тема может выполнять произвольный код", html)
+        self.assertNotIn('id="themeFileBtn"', html)
+        self.assertNotIn("window.SystemMonitorDashboardUI", html)
 
     def test_mobile_dashboard_exposes_mobile_controls_and_minimum_refresh_interval(self):
         response = self.client.get("/mobile")
@@ -559,6 +623,7 @@ class HttpContractTests(unittest.TestCase):
         self.assertIn(".dashboard-scale-control button { min-height: 44px;", html)
         self.assertIn('<option value="1000">1 сек</option>', html)
         self.assertIn('<option value="cmd">CMD (Windows 11)</option>', html)
+        self.assertIn("value === null || value === undefined || value === '' ? '—' : value", html)
         self.assertIn(
             'href="https://dalink.to/monsterhairy"', html
         )

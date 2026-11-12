@@ -34,6 +34,8 @@ devices using a web browser, regardless of the device's operating system.
   layouts, themes, and sensor selections.
 - Show available sensors in a separate card for each detected GPU; custom
   cards can combine sensors from different adapters.
+- Display temperature history and configure per-computer CPU/GPU and per-drive
+  storage temperature warning thresholds.
 - Show detailed read-only drive SMART information in a separately configurable
   card, including health, firmware, serial number, interface, power-on time,
   power cycles, and NVMe host read/write totals when the drive reports them.
@@ -50,10 +52,15 @@ devices using a web browser, regardless of the device's operating system.
 Sensor availability and accuracy depend on the hardware, Windows, and
 installed drivers. Some CPU/MSR/EC readings require the PawnIO driver.
 
-The optional SMART card uses `smartctl` from smartmontools and is disabled by
-default. To enable it, install smartmontools, make `smartctl` available on
-`PATH`, set `SYSTEMMONITOR_ENABLE_SMART=True` in `env.env`, and restart
-SystemMonitor. SMART polling is read-only and does not change drive settings.
+The SMART card is enabled by default and uses `smartctl` from smartmontools.
+Install smartmontools in its default location or make `smartctl` available on
+`PATH`; restart SystemMonitor after installation. On Windows, the PCIe link
+mode is read from device properties when available. The card displays every drive detail
+reported by the device, including capacity, health, temperature, firmware,
+serial number, interface, power-on time, power cycles, and NVMe host
+read/write totals when available; the same set of rows remains visible with
+`—` when a device does not report a field. Polling is read-only. To disable SMART
+collection explicitly, set `SYSTEMMONITOR_ENABLE_SMART=False` in `env.env`.
 The card can include the drive serial number, which is also present in the
 `/stats` response visible to devices connected to the dashboard.
 
@@ -272,11 +279,12 @@ SystemMonitor — программа для Windows, которая помога
 - Показывает доступные датчики каждой обнаруженной видеокарты в отдельной
   карточке; в пользовательской карточке можно объединять датчики разных
   адаптеров.
+- Позволяет просматривать историю температур и задавать отдельные пороги
+  предупреждений для CPU, GPU и каждого накопителя.
 - Показывает подробные сведения SMART о накопителях в отдельной настраиваемой
-  карточке: состояние, прошивку, серийный номер, интерфейс, часы работы,
-  включения и счётчики чтения/записи NVMe, если они доступны.
-- Позволяет просматривать историю температур и задавать пороги предупреждений
-  для CPU, GPU и каждого накопителя.
+  карточке: ёмкость, состояние, температуру, прошивку, серийный номер,
+  интерфейс, часы работы, включения и счётчики чтения/записи NVMe, если они
+  доступны.
 - Может показывать сведения о батарее на поддерживаемых ноутбуках и
   использовании видеопамяти, если эти данные доступны от Windows и драйвера.
 - Отслеживает FPS одного процесса за раз с помощью PresentMon и Windows ETW.
@@ -287,6 +295,12 @@ SystemMonitor — программа для Windows, которая помога
 
 Набор и точность показаний зависят от оборудования, Windows и установленных
 драйверов. Для некоторых датчиков CPU/MSR/EC требуется драйвер PawnIO.
+
+Сбор SMART включён по умолчанию и требует установленный smartmontools
+(`smartctl` в стандартной папке установки или в `PATH`). Карточка показывает все сведения, которые сообщает
+каждый накопитель, и сохраняет последние успешные показания при временной
+ошибке опроса. Установите `SYSTEMMONITOR_ENABLE_SMART=False` в `env.env`,
+только если нужно отключить сбор.
 
 ### На каких компьютерах работает программа и где смотреть данные
 
