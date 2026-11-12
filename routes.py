@@ -649,11 +649,11 @@ loadLogs();
         try:
             theme_directory = os.path.join(app.static_folder or "", "css", "themes")
             if not app.static_folder or not os.path.isdir(theme_directory):
-                return jsonify({"error": "Каталог CSS-тем не найден"}), 404
+                return jsonify({"error": "Каталог тем не найден"}), 404
             themes = []
             with os.scandir(theme_directory) as entries:
                 for entry in entries:
-                    if entry.is_file(follow_symlinks=False) and entry.name.lower().endswith(".css"):
+                    if entry.is_file(follow_symlinks=False) and entry.name.lower().endswith((".css", ".js")):
                         themes.append({
                             "name": entry.name,
                             "url": url_for("static", filename="css/themes/" + entry.name),

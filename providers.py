@@ -1,7 +1,8 @@
 """Safe provider discovery and self-tests.
 
-The registry deliberately only performs local, bounded checks.  Optional
-hardware integrations are never imported at module import time and are
+The registry deliberately only performs local, bounded checks. Optional
+integrations are never imported at module import time; SMART collection is
+read-only and enabled by default, while other optional integrations remain
 disabled unless explicitly enabled in the configuration.
 """
 
@@ -77,6 +78,22 @@ def _env_bool(name: str, default: bool = False) -> bool:
     if value is None:
         return default
     return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _find_smartctl():
+    executable = shutil.which("smartctl")
+    if executable or os.name != "nt":
+        return executable
+    install_roots = (
+        os.environ.get("ProgramFiles"),
+        os.environ.get("ProgramFiles(x86)"),
+    )
+    for root in install_roots:
+        if root:
+            candidate = os.path.join(root, "smartmontools", "bin", "smartctl.exe")
+            if os.path.isfile(candidate):
+                return candidate
+    return None
 
 
 @dataclass
@@ -569,6 +586,100 @@ def _smart_windows_volumes():
         return {}
 
 
+def _smart_windows_model_volumes():
+    """Map Windows disk models to mounted drive letters for smartctl aliases."""
+    if os.name != "nt":
+        return {}
+    command = [
+        "powershell.exe",
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        "Get-CimInstance Win32_DiskDrive | ForEach-Object { "
+        "$disk = $_; "
+        "$letters = @(Get-Partition -DiskNumber $disk.Index -ErrorAction SilentlyContinue | "
+        "Where-Object DriveLetter | ForEach-Object { \"$($_.DriveLetter):\" }); "
+        "[pscustomobject]@{ Model = $disk.Model; Volume = ($letters -join ', ') } "
+        "} | ConvertTo-Json -Compress",
+    ]
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=4,
+            check=False,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+        if result.returncode != 0:
+            logger.warning("Could not map SMART device models to Windows volumes: %s", result.stderr.strip())
+            return {}
+        payload = json.loads(result.stdout) if result.stdout else []
+        disks = payload if isinstance(payload, list) else [payload]
+        return {
+            str(disk["Model"]).strip().casefold(): str(disk["Volume"]).strip()
+            for disk in disks
+            if isinstance(disk, dict) and disk.get("Model") and disk.get("Volume")
+        }
+    except (OSError, subprocess.TimeoutExpired, ValueError) as exc:
+        logger.warning("Could not map SMART device models to Windows volumes: %s", exc)
+        return {}
+
+
+def _smart_windows_model_transfer_modes():
+    """Read the PCIe link speed and width exposed by Windows for each NVMe disk."""
+    if os.name != "nt":
+        return {}
+    command = [
+        "powershell.exe",
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        "$disks = @(Get-PnpDevice -Class DiskDrive -PresentOnly); "
+        "$speedNames = @{ 1 = 'PCIe 1.0'; 2 = 'PCIe 2.0'; 3 = 'PCIe 3.0'; "
+        "4 = 'PCIe 4.0'; 5 = 'PCIe 5.0'; 6 = 'PCIe 6.0' }; "
+        "Get-PnpDevice -Class SCSIAdapter -PresentOnly | ForEach-Object { "
+        "$properties = Get-PnpDeviceProperty -InstanceId $_.InstanceId -ErrorAction SilentlyContinue; "
+        "$relations = @((($properties | Where-Object KeyName -eq 'DEVPKEY_Device_BusRelations').Data)); "
+        "$speed = ($properties | Where-Object KeyName -eq 'DEVPKEY_PciDevice_CurrentLinkSpeed').Data; "
+        "$width = ($properties | Where-Object KeyName -eq 'DEVPKEY_PciDevice_CurrentLinkWidth').Data; "
+        "if ($speedNames.ContainsKey([int]$speed) -and [int]$width -gt 0) { "
+        "foreach ($disk in $disks) { if ($relations -contains $disk.InstanceId) { "
+        "[pscustomobject]@{ Model = $disk.FriendlyName; "
+        "TransferMode = ($speedNames[[int]$speed] + ' x' + [string]$width) } "
+        "} } } } | ConvertTo-Json -Compress",
+    ]
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=4,
+            check=False,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+        if result.returncode != 0:
+            logger.warning("Could not read Windows PCIe link modes: %s", result.stderr.strip())
+            return {}
+        payload = json.loads(result.stdout) if result.stdout else []
+        devices = payload if isinstance(payload, list) else [payload]
+        modes_by_model = {}
+        for device in devices:
+            if not isinstance(device, dict) or not device.get("Model") or not device.get("TransferMode"):
+                continue
+            modes_by_model.setdefault(str(device["Model"]).strip().casefold(), set()).add(
+                str(device["TransferMode"]).strip()
+            )
+        return {
+            model: next(iter(modes))
+            for model, modes in modes_by_model.items()
+            if len(modes) == 1
+        }
+    except (OSError, subprocess.TimeoutExpired, ValueError) as exc:
+        logger.warning("Could not read Windows PCIe link modes: %s", exc)
+        return {}
+
+
 def _smart_scan_devices(output):
     devices = []
     for line in output.splitlines():
@@ -587,6 +698,12 @@ def _smart_scan_devices(output):
 
 
 def _collect_smart_data(executable):
+    with _SMART_LOCK:
+        previous_devices = {
+            device.get("device"): dict(device)
+            for device in _SMART_CACHE["value"]
+            if isinstance(device, dict) and device.get("device")
+        }
     try:
         scan = subprocess.run(
             [executable, "--scan-open"],
@@ -599,6 +716,8 @@ def _collect_smart_data(executable):
         devices = []
         scanned_devices = _smart_scan_devices(scan.stdout or "")
         volume_map = _smart_windows_volumes()
+        model_volume_map = _smart_windows_model_volumes()
+        model_transfer_modes = _smart_windows_model_transfer_modes()
         failed_reads = 0
         for path, device_type in scanned_devices:
             command = [executable, "--json=o", "--all", path]
@@ -619,40 +738,61 @@ def _collect_smart_data(executable):
                     match = re.search(r"PhysicalDrive(\d+)$", path, re.IGNORECASE)
                     if match:
                         device["volume"] = volume_map.get(int(match.group(1)))
+                    else:
+                        model_key = str(device.get("model") or "").strip().casefold()
+                        device["volume"] = model_volume_map.get(model_key)
+                        if not device.get("transfer_mode"):
+                            device["transfer_mode"] = model_transfer_modes.get(model_key)
                     devices.append(device)
                 else:
                     logger.warning("smartctl returned invalid JSON for device %s", path)
+                    if path in previous_devices:
+                        stale_device = previous_devices[path]
+                        stale_device["stale"] = True
+                        devices.append(stale_device)
                     failed_reads += 1
             except subprocess.TimeoutExpired:
                 logger.warning("smartctl timed out while reading device %s", path)
+                if path in previous_devices:
+                    stale_device = previous_devices[path]
+                    stale_device["stale"] = True
+                    devices.append(stale_device)
                 failed_reads += 1
             except (OSError, ValueError) as exc:
                 logger.warning("Could not read SMART data for device %s: %s", path, exc)
+                if path in previous_devices:
+                    stale_device = previous_devices[path]
+                    stale_device["stale"] = True
+                    devices.append(stale_device)
                 failed_reads += 1
         with _SMART_LOCK:
-            status = "ready" if devices else "error" if scanned_devices and failed_reads else "empty"
-            if devices:
-                reason = None
+            if devices and failed_reads:
+                status, reason = "partial", "device_read_failed"
+            elif devices:
+                status, reason = "ready", None
             elif scanned_devices and failed_reads:
-                reason = "device_read_failed"
+                status, reason = "error", "device_read_failed"
             elif scan.returncode != 0:
                 status, reason = "error", "scan_failed"
             else:
-                reason = "no_devices"
+                status, reason = "empty", "no_devices"
+            if devices or (scan.returncode == 0 and not scanned_devices):
+                _SMART_CACHE["value"] = devices
+            if status == "ready":
+                reason = None
             _SMART_CACHE.update({
                 "timestamp": time.time(),
-                "value": devices,
                 "status": status,
                 "reason": reason,
             })
     except subprocess.TimeoutExpired:
         logger.warning("smartctl device scan timed out")
         with _SMART_LOCK:
-            _SMART_CACHE.update(timestamp=time.time(), value=[], status="error", reason="scan_timeout")
+            _SMART_CACHE.update(timestamp=time.time(), status="error", reason="scan_timeout")
     except OSError as exc:
         logger.warning("smartctl device scan failed: %s", exc)
         with _SMART_LOCK:
-            _SMART_CACHE.update(timestamp=time.time(), value=[], status="error", reason="scan_failed")
+            _SMART_CACHE.update(timestamp=time.time(), status="error", reason="scan_failed")
 
 
 def _start_smart_refresh(executable):
@@ -674,10 +814,10 @@ def _start_smart_refresh(executable):
 
 
 def get_smart_devices():
-    """Return cached read-only SMART metrics when smartctl is explicitly enabled."""
-    if not _env_bool("SYSTEMMONITOR_ENABLE_SMART", False):
+    """Return cached read-only SMART metrics when smart collection is enabled."""
+    if not _env_bool("SYSTEMMONITOR_ENABLE_SMART", True):
         return []
-    executable = shutil.which("smartctl")
+    executable = _find_smartctl()
     if not executable:
         return []
     _start_smart_refresh(executable)
@@ -687,7 +827,7 @@ def get_smart_devices():
 
 def get_smart_status():
     """Return SMART provider status and cached metrics for dashboard cards."""
-    if not _env_bool("SYSTEMMONITOR_ENABLE_SMART", False):
+    if not _env_bool("SYSTEMMONITOR_ENABLE_SMART", True):
         return {
             "enabled": False,
             "available": False,
@@ -695,7 +835,7 @@ def get_smart_status():
             "reason": "feature_disabled",
             "devices": [],
         }
-    executable = shutil.which("smartctl")
+    executable = _find_smartctl()
     if not executable:
         return {
             "enabled": True,
@@ -710,7 +850,7 @@ def get_smart_status():
         reason = _SMART_CACHE["reason"]
     return {
         "enabled": True,
-        "available": status == "ready",
+        "available": status in {"ready", "partial"},
         "status": status,
         "reason": reason,
         "devices": devices,
@@ -726,7 +866,7 @@ def create_default_registry(
     """Create the standard registry without requiring optional packages."""
     nvml = _env_bool("SYSTEMMONITOR_ENABLE_NVML", False) if enable_nvml is None else enable_nvml
     smi = _env_bool("SYSTEMMONITOR_ENABLE_NVIDIA_SMI", False) if enable_nvidia_smi is None else enable_nvidia_smi
-    smart = _env_bool("SYSTEMMONITOR_ENABLE_SMART", False) if enable_smart is None else enable_smart
+    smart = _env_bool("SYSTEMMONITOR_ENABLE_SMART", True) if enable_smart is None else enable_smart
     vendor_apis = _env_bool("SYSTEMMONITOR_ENABLE_VENDOR_APIS", True) if enable_vendor_apis is None else enable_vendor_apis
     registry = ProviderRegistry()
     registry.register("psutil", _module_checker("psutil"), description="CPU, RAM, disk and network fallback")

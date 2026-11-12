@@ -294,23 +294,79 @@ class SmartDataTests(unittest.TestCase):
         self.assertEqual(volumes, {1: "D:, E:", 2: "F:"})
         self.assertEqual(run.call_args.kwargs["timeout"], 4)
 
+    def test_windows_smart_model_volume_map_matches_smartctl_aliases(self):
+        response = SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps([
+                {"Model": "Samsung SSD 970 EVO Plus 500GB", "Volume": "C:"},
+                {"Model": "XPG GAMMIX S11 Pro", "Volume": "D:"},
+            ]),
+            stderr="",
+        )
+        with patch.object(providers, "os", SimpleNamespace(name="nt")):
+            with patch("providers.subprocess.run", return_value=response) as run:
+                volumes = providers._smart_windows_model_volumes()
+
+        self.assertEqual(volumes["samsung ssd 970 evo plus 500gb"], "C:")
+        self.assertEqual(volumes["xpg gammix s11 pro"], "D:")
+        self.assertEqual(run.call_args.kwargs["timeout"], 4)
+
+    def test_windows_smart_model_transfer_mode_map_uses_pcie_link_details(self):
+        response = SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps([
+                {"Model": "Samsung SSD 970 EVO Plus 500GB", "TransferMode": "PCIe 3.0 x4"},
+                {"Model": "XPG GAMMIX S11 Pro", "TransferMode": "PCIe 3.0 x4"},
+            ]),
+            stderr="",
+        )
+        with patch.object(providers, "os", SimpleNamespace(name="nt")):
+            with patch("providers.subprocess.run", return_value=response) as run:
+                modes = providers._smart_windows_model_transfer_modes()
+
+        self.assertEqual(modes["samsung ssd 970 evo plus 500gb"], "PCIe 3.0 x4")
+        self.assertEqual(modes["xpg gammix s11 pro"], "PCIe 3.0 x4")
+        self.assertEqual(run.call_args.kwargs["timeout"], 4)
+
+    def test_smartctl_resolves_default_windows_install_location(self):
+        root = r"C:\Program Files"
+        expected = providers.os.path.join(
+            root, "smartmontools", "bin", "smartctl.exe"
+        )
+        with patch.object(providers.os, "name", "nt"):
+            with patch.dict(providers.os.environ, {"ProgramFiles": root}):
+                with patch("providers.shutil.which", return_value=None):
+                    with patch("providers.os.path.isfile", side_effect=lambda path: path == expected):
+                        executable = providers._find_smartctl()
+
+        self.assertEqual(executable, expected)
+
     def test_smart_status_reports_disabled_without_scanning(self):
         with patch.dict(providers.os.environ, {"SYSTEMMONITOR_ENABLE_SMART": "False"}):
-            with patch("providers.shutil.which") as which:
+            with patch("providers._find_smartctl") as find_smartctl:
                 status = providers.get_smart_status()
 
         self.assertEqual(status["status"], "disabled")
         self.assertEqual(status["devices"], [])
-        which.assert_not_called()
+        find_smartctl.assert_not_called()
 
     def test_smart_status_explains_missing_smartctl(self):
         with patch.dict(providers.os.environ, {"SYSTEMMONITOR_ENABLE_SMART": "True"}):
-            with patch("providers.shutil.which", return_value=None):
+            with patch("providers._find_smartctl", return_value=None):
                 status = providers.get_smart_status()
 
         self.assertEqual(status["status"], "unavailable")
         self.assertEqual(status["reason"], "smartctl_not_found")
         self.assertEqual(status["devices"], [])
+
+    def test_smart_collection_is_enabled_by_default(self):
+        with patch.dict(providers.os.environ, {}, clear=True):
+            with patch("providers._find_smartctl", return_value=None):
+                status = providers.get_smart_status()
+
+        self.assertTrue(status["enabled"])
+        self.assertEqual(status["status"], "unavailable")
+        self.assertEqual(status["reason"], "smartctl_not_found")
 
     def test_smart_collection_uses_read_only_smartctl_query_and_caches_results(self):
         payload = {
@@ -318,7 +374,11 @@ class SmartDataTests(unittest.TestCase):
             "smart_status": {"passed": True},
             "nvme_smart_health_information_log": {"temperature": 42},
         }
-        scan_result = SimpleNamespace(stdout=r'\\.\PhysicalDrive0 -d nvme # drive' + "\n")
+        scan_result = SimpleNamespace(
+            stdout="/dev/sda -d nvme # drive\n",
+            returncode=0,
+            stderr="",
+        )
         smart_result = SimpleNamespace(stdout=json.dumps(payload))
         with patch.dict(providers._SMART_CACHE, {
             "timestamp": 0.0,
@@ -326,18 +386,46 @@ class SmartDataTests(unittest.TestCase):
             "status": "idle",
             "reason": None,
         }):
-            with patch("providers._smart_windows_volumes", return_value={0: "D:"}):
-                with patch("providers.subprocess.run", side_effect=[scan_result, smart_result]) as run:
-                    providers._collect_smart_data("smartctl")
+            with patch("providers._smart_windows_volumes", return_value={}):
+                with patch("providers._smart_windows_model_volumes", return_value={"example nvme": "D:"}):
+                    with patch("providers._smart_windows_model_transfer_modes", return_value={"example nvme": "PCIe 3.0 x4"}):
+                        with patch("providers.subprocess.run", side_effect=[scan_result, smart_result]) as run:
+                            providers._collect_smart_data("smartctl")
             self.assertEqual(providers._SMART_CACHE["status"], "ready")
             self.assertEqual(providers._SMART_CACHE["value"][0]["temperature"], 42)
             self.assertEqual(providers._SMART_CACHE["value"][0]["volume"], "D:")
+            self.assertEqual(providers._SMART_CACHE["value"][0]["transfer_mode"], "PCIe 3.0 x4")
 
         self.assertIn("--scan-open", run.call_args_list[0].args[0])
         self.assertEqual(
             run.call_args_list[1].args[0],
-            ["smartctl", "--json=o", "--all", r"\\.\PhysicalDrive0", "-d", "nvme"],
+            ["smartctl", "--json=o", "--all", "/dev/sda", "-d", "nvme"],
         )
+
+    def test_smart_refresh_keeps_last_readings_when_a_device_temporarily_fails(self):
+        device_path = r"\\.\PhysicalDrive0"
+        previous_device = {"device": device_path, "model": "Previously read NVMe"}
+        scan_result = SimpleNamespace(
+            returncode=0,
+            stdout=device_path + " -d nvme # drive\n",
+            stderr="",
+        )
+        failed_read = SimpleNamespace(stdout="", returncode=2, stderr="temporary error")
+        with patch.dict(providers._SMART_CACHE, {
+            "timestamp": 0.0,
+            "value": [previous_device],
+            "status": "ready",
+            "reason": None,
+        }):
+            with patch("providers._smart_windows_volumes", return_value={}):
+                with patch("providers._smart_windows_model_volumes", return_value={}):
+                    with patch("providers._smart_windows_model_transfer_modes", return_value={}):
+                        with patch("providers.subprocess.run", side_effect=[scan_result, failed_read]):
+                            providers._collect_smart_data("smartctl")
+
+            self.assertEqual(providers._SMART_CACHE["status"], "partial")
+            self.assertEqual(providers._SMART_CACHE["value"][0]["model"], "Previously read NVMe")
+            self.assertTrue(providers._SMART_CACHE["value"][0]["stale"])
 
     def test_nvme_smart_json_includes_detailed_drive_information(self):
         disk = _parse_smartctl_output({

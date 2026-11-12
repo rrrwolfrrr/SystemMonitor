@@ -1909,7 +1909,11 @@
                 ['Ожидающие секторы', Number.isFinite(disk.pending_sectors) ? formatValue(disk.pending_sectors, 0) : null, disk.pending_sectors > 0 ? 'danger' : ''],
                 ['Неисправимые ошибки', Number.isFinite(disk.uncorrectable_errors) ? formatValue(disk.uncorrectable_errors, 0) : null, disk.uncorrectable_errors > 0 ? 'danger' : ''],
                 ['Ошибки носителя', Number.isFinite(disk.media_errors) ? formatValue(disk.media_errors, 0) : null, disk.media_errors > 0 ? 'danger' : '']
-            ].filter(([label, value]) => value !== null && value !== undefined && value !== '');
+            ].map(([label, value, tone]) => [
+                label,
+                value === null || value === undefined || value === '' ? '—' : value,
+                tone
+            ]);
             const detailsHTML = details.map(([label, value, tone]) =>
                 `<div class="smart-drive-detail"><span class="smart-drive-detail-label">${escapeHtml(label)}</span><span class="smart-drive-detail-value${tone ? ' ' + escapeHtml(tone) : ''}">${escapeHtml(value)}</span></div>`
             ).join('');
