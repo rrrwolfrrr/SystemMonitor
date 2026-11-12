@@ -361,6 +361,16 @@ class HttpContractTests(unittest.TestCase):
                     self.assertIn('id="fpsStatus"', html)
                     self.assertNotIn('id="fpsPanelCollapseBtn"', html)
                     self.assertIn('createFpsCardMetric("fpsCardCurrent"', response.get_data(as_text=True))
+                    self.assertNotIn("scaleCardsToBoardSize", html)
+                    self.assertNotIn("layoutEmbeddedCards", html)
+                    self.assertIn(
+                        "return { rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height } };",
+                        html,
+                    )
+                    self.assertIn(
+                        "if (!embeddedMode) {\nsetWindowRect(fullscreenSnapshot.rect.left, fullscreenSnapshot.rect.top, fullscreenSnapshot.rect.width, fullscreenSnapshot.rect.height);\n}",
+                        html,
+                    )
 
     def test_desktop_analog_gauge_theme_exposes_sensor_picker_and_saved_gauge_controls(self):
         response = self.client.get("/dashboard")

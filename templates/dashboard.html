@@ -2897,78 +2897,6 @@ function saveWindowRect() {
 var rect = win.getBoundingClientRect();
 localStorage.setItem(WINDOW_SIZE_KEY, JSON.stringify({ w: rect.width, h: rect.height, x: rect.left, y: rect.top }));
 }
-function scaleCardsToBoardSize(cards, toWidth, toHeight) {
-if (!cards.length) return;
-var minLeft = Infinity, minTop = Infinity, maxRight = -Infinity, maxBottom = -Infinity;
-cards.forEach(function (card) {
-minLeft = Math.min(minLeft, card.offsetLeft);
-minTop = Math.min(minTop, card.offsetTop);
-maxRight = Math.max(maxRight, card.offsetLeft + card.offsetWidth);
-maxBottom = Math.max(maxBottom, card.offsetTop + card.offsetHeight);
-});
-var sourceWidth = Math.max(1, maxRight - minLeft), sourceHeight = Math.max(1, maxBottom - minTop);
-var scaleX = Math.max(1, toWidth - 24) / sourceWidth;
-var scaleY = Math.max(1, toHeight - 24) / sourceHeight;
-cards.forEach(function (card) {
-card.el.style.left = Math.round(12 + (card.offsetLeft - minLeft) * scaleX) + "px";
-card.el.style.top = Math.round(12 + (card.offsetTop - minTop) * scaleY) + "px";
-card.el.style.width = Math.max(140, Math.round(card.offsetWidth * scaleX)) + "px";
-card.el.style.height = Math.max(100, Math.round(card.offsetHeight * scaleY)) + "px";
-});
-var gap = 12;
-var orderedCards = cards.map(function (card) { return card.el; }).sort(function (a, b) {
-return a.offsetTop - b.offsetTop || a.offsetLeft - b.offsetLeft;
-});
-var positioned = [];
-orderedCards.forEach(function (card) {
-var left = card.offsetLeft, top = card.offsetTop;
-while (true) {
-var colliding = positioned.filter(function (other) {
-return left < other.right + gap &&
-left + card.offsetWidth + gap > other.left &&
-top < other.bottom + gap &&
-top + card.offsetHeight + gap > other.top;
-});
-if (!colliding.length) break;
-top = Math.max.apply(null, colliding.map(function (other) { return other.bottom + gap; }));
-}
-card.style.top = top + "px";
-positioned.push({
-left: left,
-top: top,
-right: left + card.offsetWidth,
-bottom: top + card.offsetHeight
-});
-});
-}
-var embeddedCardHeights = new WeakMap();
-function layoutEmbeddedCards() {
-var cards = Array.prototype.slice.call(board.querySelectorAll(".card"));
-if (!cards.length) return;
-var gap = 16, inset = 12, minCardWidth = 300;
-var availableWidth = Math.max(1, board.clientWidth - inset * 2);
-var columns = Math.max(1, Math.floor((availableWidth + gap) / (minCardWidth + gap)));
-var cardWidth = Math.max(140, Math.floor((availableWidth - gap * (columns - 1)) / columns));
-var rowCount = Math.ceil(cards.length / columns);
-var rowTop = inset;
-for (var row = 0; row < rowCount; row++) {
-var rowCards = cards.slice(row * columns, (row + 1) * columns);
-var rowHeight = 220;
-rowCards.forEach(function (card) {
-if (!embeddedCardHeights.has(card)) {
-embeddedCardHeights.set(card, Math.max(220, card.offsetHeight));
-}
-rowHeight = Math.max(rowHeight, embeddedCardHeights.get(card));
-});
-rowCards.forEach(function (card, column) {
-card.style.left = (inset + column * (cardWidth + gap)) + "px";
-card.style.top = rowTop + "px";
-card.style.width = cardWidth + "px";
-card.style.height = rowHeight + "px";
-});
-rowTop += rowHeight + gap;
-}
-}
 function sizeWindowToEmbeddedViewport() {
 win.classList.add("window-resizable");
 board.style.minHeight = "0";
@@ -2985,23 +2913,17 @@ fullscreenButton.setAttribute("aria-pressed", isFullscreen ? "true" : "false");
 }
 function captureFullscreenSnapshot() {
 var rect = win.getBoundingClientRect();
-var cards = [];
-board.querySelectorAll(".card").forEach(function (card) {
-cards.push({ el: card, left: card.style.left || card.offsetLeft + "px", top: card.style.top || card.offsetTop + "px", width: card.style.width || card.offsetWidth + "px", height: card.style.height || card.offsetHeight + "px", offsetLeft: card.offsetLeft, offsetTop: card.offsetTop, offsetWidth: card.offsetWidth, offsetHeight: card.offsetHeight });
-});
-return { rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height }, cards: cards };
+return { rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height } };
 }
 function setFullscreenGeometry() {
 if (!fullscreenSnapshot || document.fullscreenElement !== fullscreenTarget) return;
 if (embeddedMode) {
 sizeWindowToEmbeddedViewport();
-layoutEmbeddedCards();
 return;
 }
 var width = window.innerWidth, height = window.innerHeight;
 setWindowRect(0, 0, width, height);
 if (board) board.style.minHeight = "0";
-scaleCardsToBoardSize(fullscreenSnapshot.cards, board.clientWidth, board.clientHeight);
 }
 function handleFullscreenChange() {
 var active = document.fullscreenElement === fullscreenTarget;
@@ -3012,16 +2934,8 @@ setFullscreenGeometry();
 return;
 }
 if (!fullscreenSnapshot) return;
-if (embeddedMode) {
-layoutEmbeddedCards();
-} else {
+if (!embeddedMode) {
 setWindowRect(fullscreenSnapshot.rect.left, fullscreenSnapshot.rect.top, fullscreenSnapshot.rect.width, fullscreenSnapshot.rect.height);
-fullscreenSnapshot.cards.forEach(function (card) {
-card.el.style.left = card.left;
-card.el.style.top = card.top;
-card.el.style.width = card.width;
-card.el.style.height = card.height;
-});
 }
 fullscreenSnapshot = null;
 if (!embeddedMode) {
@@ -3058,14 +2972,6 @@ if (document.fullscreenElement === fullscreenTarget) setFullscreenGeometry();
 });
 if (embeddedMode) {
 sizeWindowToEmbeddedViewport();
-layoutEmbeddedCards();
-window.addEventListener("resize", function () {
-layoutEmbeddedCards();
-});
-if (typeof ResizeObserver === "function") {
-new ResizeObserver(layoutEmbeddedCards).observe(board);
-}
-new MutationObserver(layoutEmbeddedCards).observe(board, { childList: true });
 return;
 }
 var handles = win.querySelectorAll(".window-resize-handle");
@@ -3080,16 +2986,6 @@ try { handle.setPointerCapture(ev.pointerId); } catch (e) {}
 var bounds = getViewportBounds();
 var minW = Math.min(700, Math.max(1, bounds.right - bounds.left));
 var minH = Math.min(400, Math.max(1, bounds.bottom - bounds.top));
-var cardStart = [];
-board.querySelectorAll(".card").forEach(function (card) {
-cardStart.push({
-el: card,
-offsetLeft: card.offsetLeft,
-offsetTop: card.offsetTop,
-offsetWidth: card.offsetWidth,
-offsetHeight: card.offsetHeight
-});
-});
 function onMove(e) {
 var dx = e.clientX - sx, dy = e.clientY - sy;
 var left = startRect.left, right = startRect.right, top = startRect.top, bottom = startRect.bottom;
@@ -3111,7 +3007,6 @@ top = Math.max(bounds.top, Math.min(startRect.top + dy, bottom - minH));
 }
 var nw = right - left, nh = bottom - top;
 setWindowRect(left, top, nw, nh);
-scaleCardsToBoardSize(cardStart, board.clientWidth, board.clientHeight);
 }
 function onUp(e) {
 try { handle.releasePointerCapture(e.pointerId); } catch (e) {}
@@ -3145,12 +3040,7 @@ var initialWidth = Math.min(initialRect.width, bounds.right - bounds.left);
 var initialHeight = Math.min(initialRect.height, bounds.bottom - bounds.top);
 var initialX = bounds.left + (bounds.right - bounds.left - initialWidth) / 2;
 var initialY = bounds.top + (bounds.bottom - bounds.top - initialHeight) / 2;
-var initialCards = [];
-board.querySelectorAll(".card").forEach(function (card) {
-initialCards.push({ el: card, offsetLeft: card.offsetLeft, offsetTop: card.offsetTop, offsetWidth: card.offsetWidth, offsetHeight: card.offsetHeight });
-});
 setWindowRect(initialX, initialY, initialWidth, initialHeight);
-scaleCardsToBoardSize(initialCards, board.clientWidth, board.clientHeight);
 }
 } catch (e) {}
 window.addEventListener("resize", function () {
